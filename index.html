@@ -128,11 +128,21 @@
                         <label>التصنيف *</label>
                         <select id="p-category"><option value="">-- اختر تصنيف --</option></select>
                     </div>
-                    <div class="form-group"><label>المقاس</label><input type="text" id="p-size" placeholder="M"></div>
-                    <div class="form-group"><label>اللون</label><input type="text" id="p-color" placeholder="أبيض"></div>
+                    <div class="form-group">
+                        <label>المقاس</label>
+                        <select id="p-size"><option value="">-- اختر مقاس --</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>اللون</label>
+                        <select id="p-color"><option value="">-- اختر لون --</option></select>
+                    </div>
                     <div class="form-group"><label>سعر التكلفة (₪) *</label><input type="number" step="0.01" id="p-cost" placeholder="10.00"></div>
                     <div class="form-group"><label>سعر البيع (₪) *</label><input type="number" step="0.01" id="p-price" placeholder="25.00"></div>
                     <div class="form-group"><label>الكمية الأولية</label><input type="number" id="p-qty" placeholder="0" value="0"></div>
+                    <div class="form-group">
+                        <label>صورة المنتج</label>
+                        <input type="file" id="p-image" accept="image/*" class="form-control" style="font-size: 0.9rem; padding: 6px 10px;">
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button class="btn btn-outline" onclick="cancelProductEdit()" id="cancelEditBtn" style="display:none;">إلغاء</button>
@@ -141,32 +151,94 @@
             </div>
         </div>
 
-        <!-- ============ التصنيفات ============ -->
+        <!-- ============ التصنيفات والألوان والمقاسات ============ -->
         <div id="screen-categories" class="screen">
-            <h1 class="section-title"><i class="fas fa-tags text-primary"></i> التصنيفات</h1>
-            <p class="section-subtitle">إدارة تصنيفات المنتجات</p>
-            <div class="card">
-                <div class="card-header"><h3><i class="fas fa-plus-circle"></i> إضافة تصنيف</h3></div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <input type="text" id="newCategoryInput" placeholder="اسم التصنيف الجديد..." style="flex:1;min-width:180px;padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;">
-                    <button class="btn btn-primary" onclick="saveCategory()"><i class="fas fa-save"></i> حفظ</button>
+            <h1 class="section-title"><i class="fas fa-tags text-primary"></i> التصنيفات، الألوان، والمقاسات</h1>
+            <p class="section-subtitle">إدارة الخصائص وتصنيفات المنتجات</p>
+            
+            <div class="row g-4 mb-4">
+                <!-- إضافة تصنيف -->
+                <div class="col-xl-4 col-lg-4 col-md-12">
+                    <div class="card h-100" style="margin-bottom: 0;">
+                        <div class="card-header"><h3><i class="fas fa-plus-circle"></i> إضافة تصنيف</h3></div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <input type="text" id="newCategoryInput" placeholder="اسم التصنيف الجديد..." style="flex:1;min-width:140px;padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;">
+                            <button class="btn btn-primary" onclick="saveCategory()"><i class="fas fa-save"></i> حفظ</button>
+                        </div>
+                        <input type="hidden" id="editingCategoryId">
+                    </div>
                 </div>
-                <input type="hidden" id="editingCategoryId">
+
+                <!-- إضافة لون -->
+                <div class="col-xl-4 col-lg-4 col-md-12">
+                    <div class="card h-100" style="margin-bottom: 0;">
+                        <div class="card-header"><h3><i class="fas fa-palette"></i> إضافة لون</h3></div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <input type="text" id="newColorInput" placeholder="اسم اللون الجديد..." style="flex:1;min-width:140px;padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;">
+                            <button class="btn btn-primary" onclick="typeof saveColor === 'function' ? saveColor() : alert('سيتم تفعيل هذه الخاصية لاحقاً أو عند إضافة الكود البرمجي')"><i class="fas fa-save"></i> حفظ</button>
+                        </div>
+                        <input type="hidden" id="editingColorId">
+                    </div>
+                </div>
+
+                <!-- إضافة مقاس -->
+                <div class="col-xl-4 col-lg-4 col-md-12">
+                    <div class="card h-100" style="margin-bottom: 0;">
+                        <div class="card-header"><h3><i class="fas fa-ruler"></i> إضافة مقاس</h3></div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <input type="text" id="newSizeInput" placeholder="اسم المقاس الجديد..." style="flex:1;min-width:140px;padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;">
+                            <button class="btn btn-primary" onclick="typeof saveSize === 'function' ? saveSize() : alert('سيتم تفعيل هذه الخاصية لاحقاً أو عند إضافة الكود البرمجي')"><i class="fas fa-save"></i> حفظ</button>
+                        </div>
+                        <input type="hidden" id="editingSizeId">
+                    </div>
+                </div>
             </div>
-            <div class="card">
-                <div class="card-header"><h3><i class="fas fa-list"></i> قائمة التصنيفات</h3></div>
-                <div class="table-responsive">
-                    <table>
-                        <thead><tr><th>التصنيف</th><th>عدد المنتجات</th><th>إجراءات</th></tr></thead>
-                        <tbody id="categoriesTableBody"></tbody>
-                    </table>
+
+            <div class="row g-4">
+                <!-- قائمة التصنيفات -->
+                <div class="col-xl-4 col-lg-4 col-md-12">
+                    <div class="card h-100" style="margin-bottom: 0;">
+                        <div class="card-header"><h3><i class="fas fa-list"></i> قائمة التصنيفات</h3></div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>التصنيف</th><th>المنتجات</th><th>إجراءات</th></tr></thead>
+                                <tbody id="categoriesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قائمة الألوان -->
+                <div class="col-xl-4 col-lg-4 col-md-12">
+                    <div class="card h-100" style="margin-bottom: 0;">
+                        <div class="card-header"><h3><i class="fas fa-list"></i> قائمة الألوان</h3></div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>اللون</th><th>المنتجات</th><th>إجراءات</th></tr></thead>
+                                <tbody id="colorsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قائمة المقاسات -->
+                <div class="col-xl-4 col-lg-4 col-md-12">
+                    <div class="card h-100" style="margin-bottom: 0;">
+                        <div class="card-header"><h3><i class="fas fa-list"></i> قائمة المقاسات</h3></div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>المقاس</th><th>المنتجات</th><th>إجراءات</th></tr></thead>
+                                <tbody id="sizesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ============ نقطة البيع ============ -->
+        <!-- ============ الكاشير ============ -->
         <div id="screen-pos" class="screen">
-            <h1 class="section-title"><i class="fas fa-cash-register text-primary"></i> نقطة البيع</h1>
+            <h1 class="section-title"><i class="fas fa-cash-register text-primary"></i> الكاشير</h1>
             <p class="section-subtitle">اضغط على المنتج لإضافته للسلة</p>
             <div class="pos-layout">
                 <div class="pos-products">

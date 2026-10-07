@@ -6,6 +6,8 @@ const KEYS = {
     USERS: 'store_users_v6',
     BRANCHES: 'store_branches_v6',
     CATEGORIES: 'store_categories_v6',
+    COLORS: 'store_colors_v6',
+    SIZES: 'store_sizes_v6',
     PRODUCTS: 'store_products_v6',
     SALES: 'store_sales_v6',
     PURCHASES: 'store_purchases_v6',
@@ -48,6 +50,8 @@ function initData() {
     ];
 
     const categories = ['أطفال', 'بناتي', 'أولادي', 'أحذية'];
+    const colors = ['أبيض', 'أسود', 'أحمر', 'أزرق', 'وردي', 'رمادي'];
+    const sizes = ['S', 'M', 'L', 'XL', 'XXL', '38', '39', '40'];
 
     const products = [
         { id: 1, code: '#101', name: 'قميص أطفال', category: 'أطفال', size: 'M', color: 'أبيض', base_cost: 10, price: 25 },
@@ -117,6 +121,8 @@ function initData() {
     localStorage.setItem(KEYS.USERS, JSON.stringify(users));
     localStorage.setItem(KEYS.BRANCHES, JSON.stringify(branches));
     localStorage.setItem(KEYS.CATEGORIES, JSON.stringify(categories));
+    localStorage.setItem(KEYS.COLORS, JSON.stringify(colors));
+    localStorage.setItem(KEYS.SIZES, JSON.stringify(sizes));
     localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(products));
     localStorage.setItem(KEYS.SALES, JSON.stringify(sales));
     localStorage.setItem(KEYS.PURCHASES, JSON.stringify(purchases));
@@ -141,6 +147,26 @@ const saveBranches = (x) => localStorage.setItem(KEYS.BRANCHES, JSON.stringify(x
 
 const getCategories = () => JSON.parse(localStorage.getItem(KEYS.CATEGORIES)) || [];
 const saveCategories = (x) => localStorage.setItem(KEYS.CATEGORIES, JSON.stringify(x));
+
+const getColors = () => {
+    let colors = JSON.parse(localStorage.getItem(KEYS.COLORS));
+    if (!colors || colors.length === 0) {
+        colors = ['أبيض', 'أسود', 'أحمر', 'أزرق', 'وردي', 'رمادي'];
+        saveColors(colors);
+    }
+    return colors;
+};
+const saveColors = (x) => localStorage.setItem(KEYS.COLORS, JSON.stringify(x));
+
+const getSizes = () => {
+    let sizes = JSON.parse(localStorage.getItem(KEYS.SIZES));
+    if (!sizes || sizes.length === 0) {
+        sizes = ['S', 'M', 'L', 'XL', 'XXL', '38', '39', '40'];
+        saveSizes(sizes);
+    }
+    return sizes;
+};
+const saveSizes = (x) => localStorage.setItem(KEYS.SIZES, JSON.stringify(x));
 
 const getProducts = () => JSON.parse(localStorage.getItem(KEYS.PRODUCTS)) || [];
 const saveProducts = (x) => localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(x));

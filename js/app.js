@@ -104,7 +104,7 @@ function buildSidebar() {
     nav += `
         <div class="nav-title">العمليات</div>
         <div class="nav-item ${isCashier ? 'active' : ''}" onclick="switchScreen('pos')">
-            <i class="fas fa-cash-register"></i><span>نقطة البيع</span>
+            <i class="fas fa-cash-register"></i><span>الكاشير</span>
         </div>
         <div class="nav-item" onclick="switchScreen('sales-record')">
             <i class="fas fa-history"></i><span>سجل المبيعات</span>
@@ -181,7 +181,11 @@ function switchScreen(screenId) {
 
     if (screenId === 'dashboard') loadDashboard();
     if (screenId === 'inventory') loadInventoryTable();
-    if (screenId === 'categories') loadCategoriesTable();
+    if (screenId === 'categories') {
+        loadCategoriesTable();
+        loadColorsTable();
+        loadSizesTable();
+    }
     if (screenId === 'pos') loadPosProducts();
     if (screenId === 'sales-record') loadSalesHistory();
     if (screenId === 'purchases') loadPurchasesTable();
@@ -204,6 +208,18 @@ function fillAllDropdowns() {
     if (catSelect) {
         catSelect.innerHTML = '<option value="">-- اختر تصنيف --</option>' +
             getCategories().map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    const colorSelect = document.getElementById('p-color');
+    if (colorSelect) {
+        colorSelect.innerHTML = '<option value="">-- اختر لون --</option>' +
+            getColors().map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    const sizeSelect = document.getElementById('p-size');
+    if (sizeSelect) {
+        sizeSelect.innerHTML = '<option value="">-- اختر مقاس --</option>' +
+            getSizes().map(s => `<option value="${s}">${s}</option>`).join('');
     }
 
     const restockSelect = document.getElementById('restockProduct');
@@ -315,12 +331,24 @@ function loadInventoryTable() {
         const stockBadge = isOut ? 'danger' : (isLow ? 'warning' : 'success');
         const isLoss = Number(p.price) <= avgCost;
 
+        const imageHtml = p.image 
+            ? `<img src="${p.image}" alt="${p.name}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee;">`
+            : `<div style="width: 48px; height: 48px; border-radius: 12px; background: #f8fafc; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 18px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); border: 1px solid #e2e8f0;"><i class="fas fa-tshirt"></i></div>`;
+
         return `
             <tr>
                 <td><span class="badge primary">${p.code || '-'}</span></td>
-                <td><strong>${p.name}</strong>${isLoss ? ' <span class="badge danger">خاسر</span>' : ''}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        ${imageHtml}
+                        <div style="display: flex; flex-direction: column; align-items: start;">
+                            <strong style="font-size: 1.05rem; color: #1e293b;">${p.name}</strong>
+                            ${isLoss ? '<span class="badge danger" style="margin-top: 4px; font-size: 0.7rem; padding: 2px 6px;">خاسر</span>' : ''}
+                        </div>
+                    </div>
+                </td>
                 <td>${p.category}</td>
-                <td>${p.size || '-'} ${p.color ? '• ' + p.color : ''}</td>
+                <td>${p.size || '-'} ${p.color ? '<span style="color:#64748b; margin:0 4px;">•</span> ' + p.color : ''}</td>
                 <td>₪${avgCost.toFixed(2)}</td>
                 <td><strong style="color:var(--primary);">₪${Number(p.price).toFixed(2)}</strong></td>
                 <td><span class="badge ${stockBadge}">${qty}</span></td>
@@ -337,68 +365,80 @@ function saveProduct() {
     const code = document.getElementById('p-code').value.trim();
     const name = document.getElementById('p-name').value.trim();
     const category = document.getElementById('p-category').value;
-    const size = document.getElementById('p-size').value.trim();
-    const color = document.getElementById('p-color').value.trim();
+    const size = document.getElementById('p-size').value;
+    const color = document.getElementById('p-color').value;
     const cost = parseFloat(document.getElementById('p-cost').value);
     const price = parseFloat(document.getElementById('p-price').value);
     const qty = parseInt(document.getElementById('p-qty').value) || 0;
+    const imageInput = document.getElementById('p-image');
 
     if (!name || !category || isNaN(cost) || isNaN(price)) {
         showToast('يرجى تعبئة الحقول المطلوبة', 'error');
         return;
     }
 
-    const products = getProducts();
+    const doSave = (imgStr) => {
+        const products = getProducts();
 
-    if (editId) {
-        const id = parseInt(editId);
-        const index = products.findIndex(p => p.id === id);
-        if (index !== -1) {
-            products[index] = {
-                ...products[index],
-                code: code || products[index].code,
-                name, category, size, color,
-                base_cost: cost, price
-            };
+        if (editId) {
+            const id = parseInt(editId);
+            const index = products.findIndex(p => p.id === id);
+            if (index !== -1) {
+                products[index] = {
+                    ...products[index],
+                    code: code || products[index].code,
+                    name, category, size, color,
+                    base_cost: cost, price
+                };
+                if (imgStr) products[index].image = imgStr;
+            }
+            saveProducts(products);
+            showToast('تم تحديث المنتج');
+        } else {
+            if (IS_DEMO && products.length >= DEMO_LIMITS.products) {
+                showDemoLimit('منتج', DEMO_LIMITS.products);
+                return;
+            }
+
+            const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+            const newCode = code || '#' + (100 + newId);
+
+            products.push({ id: newId, code: newCode, name, category, size, color, base_cost: cost, price, image: imgStr });
+            saveProducts(products);
+
+            if (qty > 0) {
+                const purchases = getPurchases();
+                purchases.push({
+                    id: purchases.length > 0 ? Math.max(...purchases.map(p => p.id)) + 1 : 1,
+                    product_id: newId,
+                    product_name: name,
+                    size,
+                    quantity: qty,
+                    unit_cost: cost,
+                    total_cost: qty * cost,
+                    supplier: 'رصيد افتتاحي',
+                    note: 'كمية أولية',
+                    created_at: new Date().toISOString(),
+                });
+                savePurchases(purchases);
+            }
+
+            showToast('تمت إضافة المنتج');
         }
-        saveProducts(products);
-        showToast('تم تحديث المنتج');
+
+        cancelProductEdit();
+        fillAllDropdowns();
+        loadInventoryTable();
+        switchScreen('inventory');
+    };
+
+    if (imageInput && imageInput.files.length > 0) {
+        const reader = new FileReader();
+        reader.onload = (e) => doSave(e.target.result);
+        reader.readAsDataURL(imageInput.files[0]);
     } else {
-        if (IS_DEMO && products.length >= DEMO_LIMITS.products) {
-            showDemoLimit('منتج', DEMO_LIMITS.products);
-            return;
-        }
-
-        const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-        const newCode = code || '#' + (100 + newId);
-
-        products.push({ id: newId, code: newCode, name, category, size, color, base_cost: cost, price });
-        saveProducts(products);
-
-        if (qty > 0) {
-            const purchases = getPurchases();
-            purchases.push({
-                id: purchases.length > 0 ? Math.max(...purchases.map(p => p.id)) + 1 : 1,
-                product_id: newId,
-                product_name: name,
-                size,
-                quantity: qty,
-                unit_cost: cost,
-                total_cost: qty * cost,
-                supplier: 'رصيد افتتاحي',
-                note: 'كمية أولية',
-                created_at: new Date().toISOString(),
-            });
-            savePurchases(purchases);
-        }
-
-        showToast('تمت إضافة المنتج');
+        doSave(null);
     }
-
-    cancelProductEdit();
-    fillAllDropdowns();
-    loadInventoryTable();
-    switchScreen('inventory');
 }
 
 function editProduct(id) {
@@ -415,6 +455,9 @@ function editProduct(id) {
     document.getElementById('p-price').value = p.price;
     document.getElementById('p-qty').value = getProductQuantity(p.id);
 
+    const imgInput = document.getElementById('p-image');
+    if (imgInput) imgInput.value = '';
+
     document.getElementById('productFormTitle').innerHTML = '<i class="fas fa-edit text-warning"></i> تعديل المنتج';
     document.getElementById('cancelEditBtn').style.display = 'inline-flex';
     switchScreen('add-product');
@@ -422,7 +465,7 @@ function editProduct(id) {
 
 function cancelProductEdit() {
     document.getElementById('editingProductId').value = '';
-    ['p-code', 'p-name', 'p-category', 'p-size', 'p-color', 'p-cost', 'p-price'].forEach(id => {
+    ['p-code', 'p-name', 'p-category', 'p-size', 'p-color', 'p-cost', 'p-price', 'p-image'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
@@ -523,6 +566,178 @@ function deleteCategory(name) {
     showToast('تم حذف التصنيف');
 }
 
+/* --- ألوان --- */
+function loadColorsTable() {
+    const tbody = document.getElementById('colorsTableBody');
+    const colors = getColors();
+    const products = getProducts();
+
+    if (colors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty">لا توجد ألوان</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = colors.map(col => {
+        const count = products.filter(p => p.color === col).length;
+        return `
+            <tr>
+                <td><strong>${col}</strong></td>
+                <td><span class="badge primary">${count} منتج</span></td>
+                <td>
+                    <button class="btn-icon" onclick="editColor('${col}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon danger" onclick="deleteColor('${col}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function saveColor() {
+    const input = document.getElementById('newColorInput');
+    const name = input.value.trim();
+    const editId = document.getElementById('editingColorId').value;
+
+    if (!name) {
+        showToast('أدخل اسم اللون', 'error');
+        return;
+    }
+
+    const colors = getColors();
+
+    if (editId) {
+        const index = colors.indexOf(editId);
+        if (index !== -1) colors[index] = name;
+
+        const products = getProducts();
+        products.forEach(p => {
+            if (p.color === editId) p.color = name;
+        });
+        saveProducts(products);
+
+        document.getElementById('editingColorId').value = '';
+        showToast('تم تحديث اللون');
+    } else {
+        if (colors.includes(name)) {
+            showToast('اللون موجود مسبقاً', 'error');
+            return;
+        }
+        colors.push(name);
+        showToast('تمت إضافة اللون');
+    }
+
+    saveColors(colors);
+    input.value = '';
+    fillAllDropdowns();
+    loadColorsTable();
+}
+
+function editColor(name) {
+    document.getElementById('newColorInput').value = name;
+    document.getElementById('editingColorId').value = name;
+    document.getElementById('newColorInput').focus();
+}
+
+function deleteColor(name) {
+    const products = getProducts().filter(p => p.color === name);
+
+    if (products.length > 0) {
+        if (!confirm(`يوجد ${products.length} منتج بهذا اللون. سيتم حذف اللون فقط. متابعة؟`)) return;
+    } else {
+        if (!confirm('حذف هذا اللون؟')) return;
+    }
+
+    saveColors(getColors().filter(c => c !== name));
+    fillAllDropdowns();
+    loadColorsTable();
+    showToast('تم حذف اللون');
+}
+
+/* --- مقاسات --- */
+function loadSizesTable() {
+    const tbody = document.getElementById('sizesTableBody');
+    const sizes = getSizes();
+    const products = getProducts();
+
+    if (sizes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty">لا توجد مقاسات</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = sizes.map(sz => {
+        const count = products.filter(p => p.size === sz).length;
+        return `
+            <tr>
+                <td><strong>${sz}</strong></td>
+                <td><span class="badge primary">${count} منتج</span></td>
+                <td>
+                    <button class="btn-icon" onclick="editSize('${sz}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon danger" onclick="deleteSize('${sz}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function saveSize() {
+    const input = document.getElementById('newSizeInput');
+    const name = input.value.trim();
+    const editId = document.getElementById('editingSizeId').value;
+
+    if (!name) {
+        showToast('أدخل اسم المقاس', 'error');
+        return;
+    }
+
+    const sizes = getSizes();
+
+    if (editId) {
+        const index = sizes.indexOf(editId);
+        if (index !== -1) sizes[index] = name;
+
+        const products = getProducts();
+        products.forEach(p => {
+            if (p.size === editId) p.size = name;
+        });
+        saveProducts(products);
+
+        document.getElementById('editingSizeId').value = '';
+        showToast('تم تحديث المقاس');
+    } else {
+        if (sizes.includes(name)) {
+            showToast('المقاس موجود مسبقاً', 'error');
+            return;
+        }
+        sizes.push(name);
+        showToast('تمت إضافة المقاس');
+    }
+
+    saveSizes(sizes);
+    input.value = '';
+    fillAllDropdowns();
+    loadSizesTable();
+}
+
+function editSize(name) {
+    document.getElementById('newSizeInput').value = name;
+    document.getElementById('editingSizeId').value = name;
+    document.getElementById('newSizeInput').focus();
+}
+
+function deleteSize(name) {
+    const products = getProducts().filter(p => p.size === name);
+
+    if (products.length > 0) {
+        if (!confirm(`يوجد ${products.length} منتج بهذا المقاس. سيتم حذف المقاس فقط. متابعة؟`)) return;
+    } else {
+        if (!confirm('حذف هذا المقاس؟')) return;
+    }
+
+    saveSizes(getSizes().filter(c => c !== name));
+    fillAllDropdowns();
+    loadSizesTable();
+    showToast('تم حذف المقاس');
+}
+
 /* ============================================
    10. نقطة البيع (POS)
    ============================================ */
@@ -553,7 +768,9 @@ function loadPosProducts(filter = '') {
 
         return `
             <div class="product-card ${isOut ? 'disabled' : ''}" onclick="${isOut ? '' : `addToCart(${p.id})`}">
-                <div class="product-img"><i class="fas fa-tshirt"></i></div>
+                <div class="product-img">
+                    ${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;">` : '<i class="fas fa-tshirt"></i>'}
+                </div>
                 <h6>${p.name}</h6>
                 <span class="code">${p.size || '-'} ${p.color ? '• ' + p.color : ''}</span>
                 <div class="price">₪${Number(p.price).toFixed(2)}</div>
