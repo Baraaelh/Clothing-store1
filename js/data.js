@@ -13,6 +13,7 @@ const KEYS = {
     PURCHASES: 'store_purchases_v6',
     FIXED_EXPENSES: 'store_fixed_expenses_v6',
     VARIABLE_EXPENSES: 'store_variable_expenses_v6',
+    MERCHANTS: 'store_merchants_v6',
     MERCHANT_TRANSACTIONS: 'store_merchant_tx_v6',
     CUSTOMER_DEBTS: 'store_customer_debts_v6',
     AUDIT_LOG: 'store_audit_log_v6',
@@ -188,6 +189,43 @@ const saveVariableExpenses = (x) => localStorage.setItem(KEYS.VARIABLE_EXPENSES,
 const getMerchantTx = () => JSON.parse(localStorage.getItem(KEYS.MERCHANT_TRANSACTIONS)) || [];
 const saveMerchantTx = (x) => localStorage.setItem(KEYS.MERCHANT_TRANSACTIONS, JSON.stringify(x));
 
+const getMerchants = () => {
+    let list = JSON.parse(localStorage.getItem(KEYS.MERCHANTS || 'store_merchants_v6'));
+    if (!list || !Array.isArray(list) || list.length === 0) {
+        let defaults = [
+            { id: 1, name: 'مصنع الأمل', phone: '0599112233', balance: 0 },
+            { id: 2, name: 'مصنع الجينز', phone: '0599445566', balance: 0 },
+            { id: 3, name: 'شركة الأحذية', phone: '0599778899', balance: 0 },
+            { id: 4, name: 'شركة الملابس المتحدة', phone: '0598123456', balance: 0 },
+            { id: 5, name: 'مؤسسة النور للأقمشة', phone: '0597654321', balance: 0 }
+        ];
+        try {
+            const existingPurchases = typeof getPurchases === 'function' ? getPurchases() : [];
+            const existingTx = typeof getMerchantTx === 'function' ? getMerchantTx() : [];
+            const names = new Set(defaults.map(d => d.name));
+            existingPurchases.forEach(p => {
+                if (p.supplier && !names.has(p.supplier)) {
+                    names.add(p.supplier);
+                    defaults.push({ id: defaults.length + 1, name: p.supplier, phone: '', balance: 0 });
+                }
+            });
+            existingTx.forEach(t => {
+                if (t.merchant_name && !names.has(t.merchant_name)) {
+                    names.add(t.merchant_name);
+                    defaults.push({ id: defaults.length + 1, name: t.merchant_name, phone: '', balance: 0 });
+                }
+            });
+        } catch(e) {}
+        localStorage.setItem(KEYS.MERCHANTS || 'store_merchants_v6', JSON.stringify(defaults));
+        return defaults;
+    }
+    return list;
+};
+const saveMerchants = (x) => localStorage.setItem(KEYS.MERCHANTS || 'store_merchants_v6', JSON.stringify(x));
+const getMerchantTransactions = () => getMerchantTx();
+const saveMerchantTransactions = (x) => saveMerchantTx(x);
+
+
 const getCustomerDebts = () => JSON.parse(localStorage.getItem(KEYS.CUSTOMER_DEBTS)) || [];
 const saveCustomerDebts = (x) => localStorage.setItem(KEYS.CUSTOMER_DEBTS, JSON.stringify(x));
 
@@ -268,8 +306,12 @@ function getDebtSalesRevenue() {
         .reduce((s, x) => s + Number(x.total || 0), 0);
 }
 
+function getActualRevenue() {
+    return getCashRevenue() + getDebtPaymentsReceived();
+}
+
 function getTotalRevenue() {
-    return getAccruedRevenue();
+    return getActualRevenue();
 }
 
 function getCOGS() {
@@ -289,7 +331,7 @@ function getTotalExpenses() {
 }
 
 function getNetProfit() {
-    return getAccruedRevenue() - getCOGS() - getTotalExpenses().total;
+    return getActualRevenue() - getCOGS() - getTotalExpenses().total;
 }
 
 function getNetProfitCash() {

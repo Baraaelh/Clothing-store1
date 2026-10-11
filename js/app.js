@@ -57,6 +57,7 @@ function startApp() {
 
     loadDashboard();
     loadInventoryTable();
+    loadPurchasesManagement();
     loadPosProducts();
     loadSalesHistory();
     loadPurchasesTable();
@@ -66,6 +67,8 @@ function startApp() {
     loadMerchantsTable();
     loadExpensesTable();
     loadReports();
+    renderOnlineOrders();
+    updateOnlineOrdersBadge();
 
     if (user.role === 'cashier') switchScreen('pos');
 }
@@ -106,6 +109,10 @@ function buildSidebar() {
         <div class="nav-item ${isCashier ? 'active' : ''}" onclick="switchScreen('pos')">
             <i class="fas fa-cash-register"></i><span>الكاشير</span>
         </div>
+        <div class="nav-item" onclick="switchScreen('online-orders')">
+            <i class="fas fa-globe"></i><span>طلبات الموقع</span>
+            <span class="badge danger" id="onlineOrdersBadge" style="margin-right:auto;border-radius:50%;padding:2px 6px;font-size:0.7rem;display:none;">0</span>
+        </div>
         <div class="nav-item" onclick="switchScreen('sales-record')">
             <i class="fas fa-history"></i><span>سجل المبيعات</span>
         </div>
@@ -114,13 +121,10 @@ function buildSidebar() {
     if (!isCashier) {
         nav += `
             <div class="nav-item" onclick="switchScreen('inventory')">
-                <i class="fas fa-boxes"></i><span>المنتجات والمخزون</span>
+                <i class="fas fa-dolly-flatbed"></i><span>إدارة المشتريات</span>
             </div>
             <div class="nav-item" onclick="switchScreen('categories')">
-                <i class="fas fa-tags"></i><span>التصنيفات</span>
-            </div>
-            <div class="nav-item" onclick="switchScreen('purchases')">
-                <i class="fas fa-truck"></i><span>المشتريات</span>
+                <i class="fas fa-tags"></i><span>التصنيفات والسمات</span>
             </div>
 
             <div class="nav-title">الإدارة</div>
@@ -180,7 +184,11 @@ function switchScreen(screenId) {
     });
 
     if (screenId === 'dashboard') loadDashboard();
-    if (screenId === 'inventory') loadInventoryTable();
+    if (screenId === 'inventory') {
+        loadPurchasesManagement();
+        loadInventoryTable();
+        loadPurchasesTable();
+    }
     if (screenId === 'categories') {
         loadCategoriesTable();
         loadColorsTable();
@@ -188,7 +196,11 @@ function switchScreen(screenId) {
     }
     if (screenId === 'pos') loadPosProducts();
     if (screenId === 'sales-record') loadSalesHistory();
-    if (screenId === 'purchases') loadPurchasesTable();
+    if (screenId === 'online-orders') renderOnlineOrders();
+    if (screenId === 'purchases') {
+        switchScreen('inventory');
+        return;
+    }
     if (screenId === 'debts') loadDebtsTable();
     if (screenId === 'employees') loadEmployeesTable();
     if (screenId === 'branches') loadBranchesTable();
@@ -210,16 +222,22 @@ function fillAllDropdowns() {
             getCategories().map(c => `<option value="${c}">${c}</option>`).join('');
     }
 
-    const colorSelect = document.getElementById('p-color');
-    if (colorSelect) {
-        colorSelect.innerHTML = '<option value="">-- اختر لون --</option>' +
-            getColors().map(c => `<option value="${c}">${c}</option>`).join('');
+    const colorDropdown = document.getElementById('ms-color-dropdown');
+    if (colorDropdown) {
+        colorDropdown.innerHTML = getColors().map(c => `
+            <label class="ms-item">
+                <input type="checkbox" name="p-colors" value="${c}" onchange="handleColorSelection()"> ${c}
+            </label>
+        `).join('');
     }
 
-    const sizeSelect = document.getElementById('p-size');
-    if (sizeSelect) {
-        sizeSelect.innerHTML = '<option value="">-- اختر مقاس --</option>' +
-            getSizes().map(s => `<option value="${s}">${s}</option>`).join('');
+    const sizeDropdown = document.getElementById('ms-size-dropdown');
+    if (sizeDropdown) {
+        sizeDropdown.innerHTML = getSizes().map(s => `
+            <label class="ms-item">
+                <input type="checkbox" name="p-sizes" value="${s}" onchange="updateSizeLabel()"> ${s}
+            </label>
+        `).join('');
     }
 
     const restockSelect = document.getElementById('restockProduct');
@@ -237,13 +255,87 @@ function fillAllDropdowns() {
     }
 }
 
+let colorImages = {};
+
+function updateSizeLabel() {
+    const selected = Array.from(document.querySelectorAll('input[name="p-sizes"]:checked')).map(cb => cb.value);
+    const label = document.getElementById('ms-size-label');
+    if (label) {
+        label.textContent = selected.length > 0 ? selected.join('، ') : '-- اختر المقاسات --';
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.multi-select')) {
+        document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('show'));
+    }
+});
+
+function handleColorSelection() {
+    const container = document.getElementById('color-images-container');
+    if (!container) return;
+    
+    const checkboxes = document.querySelectorAll('input[name="p-colors"]:checked');
+    const selectedColors = Array.from(checkboxes).map(cb => cb.value);
+    
+    const label = document.getElementById('ms-color-label');
+    if (label) {
+        label.textContent = selectedColors.length > 0 ? selectedColors.join('، ') : '-- اختر الألوان --';
+    }
+
+    Object.keys(colorImages).forEach(c => {
+        if (!selectedColors.includes(c)) delete colorImages[c];
+    });
+
+    if (selectedColors.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '<strong style="color:var(--gray);">صور الألوان المختارة:</strong>';
+    selectedColors.forEach(c => {
+        const hasImg = colorImages[c] ? 'تم رفع صورة' : 'لا يوجد صورة';
+        const colorStyle = colorImages[c] ? 'green' : '#64748b';
+        html += `
+            <div style="display:flex; align-items:center; gap:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                <div style="width:80px; font-weight:bold; color:var(--primary);">${c}</div>
+                <input type="file" accept="image/*" class="form-control" style="font-size: 0.9rem; padding: 6px 10px; flex:1;" onchange="handleColorImageUpload(this, '${c}')">
+                <span style="font-size:0.8rem; color:${colorStyle}; white-space:nowrap;" id="img-status-${c}">${hasImg}</span>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function handleColorImageUpload(input, color) {
+    if (input.files && input.files.length > 0) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            colorImages[color] = e.target.result;
+            const status = document.getElementById(`img-status-${color}`);
+            if (status) {
+                status.textContent = 'تم رفع صورة';
+                status.style.color = 'green';
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        delete colorImages[color];
+        const status = document.getElementById(`img-status-${color}`);
+        if (status) {
+            status.textContent = 'لا يوجد صورة';
+            status.style.color = '#64748b';
+        }
+    }
+}
+
 /* ============================================
    6. لوحة التحكم
    ============================================ */
 function loadDashboard() {
     const todaySales = getTodaySales();
     const netProfit = getNetProfit();
-    const revenue = getAccruedRevenue();
+    const revenue = getActualRevenue();
     const receivables = getReceivables();
     const lowStock = getProducts().filter(p => {
         const q = getProductQuantity(p.id);
@@ -263,7 +355,7 @@ function loadDashboard() {
         </div>
         <div class="stat-card">
             <div class="stat-icon info"><i class="fas fa-receipt"></i></div>
-            <div class="stat-label">إجمالي الإيرادات</div>
+            <div class="stat-label">إجمالي الإيرادات الفعلية</div>
             <div class="stat-value">₪${revenue.toFixed(2)}</div>
         </div>
         <div class="stat-card">
@@ -365,80 +457,100 @@ function saveProduct() {
     const code = document.getElementById('p-code').value.trim();
     const name = document.getElementById('p-name').value.trim();
     const category = document.getElementById('p-category').value;
-    const size = document.getElementById('p-size').value;
-    const color = document.getElementById('p-color').value;
     const cost = parseFloat(document.getElementById('p-cost').value);
     const price = parseFloat(document.getElementById('p-price').value);
     const qty = parseInt(document.getElementById('p-qty').value) || 0;
-    const imageInput = document.getElementById('p-image');
+
+    const sizeCheckboxes = document.querySelectorAll('input[name="p-sizes"]:checked');
+    const colorCheckboxes = document.querySelectorAll('input[name="p-colors"]:checked');
+    
+    let sizes = Array.from(sizeCheckboxes).map(cb => cb.value);
+    let colors = Array.from(colorCheckboxes).map(cb => cb.value);
+    
+    if (sizes.length === 0) sizes = [''];
+    if (colors.length === 0) colors = [''];
 
     if (!name || !category || isNaN(cost) || isNaN(price)) {
         showToast('يرجى تعبئة الحقول المطلوبة', 'error');
         return;
     }
 
-    const doSave = (imgStr) => {
-        const products = getProducts();
+    const products = getProducts();
+    const purchases = getPurchases();
 
-        if (editId) {
-            const id = parseInt(editId);
-            const index = products.findIndex(p => p.id === id);
-            if (index !== -1) {
-                products[index] = {
-                    ...products[index],
-                    code: code || products[index].code,
-                    name, category, size, color,
-                    base_cost: cost, price
-                };
-                if (imgStr) products[index].image = imgStr;
-            }
-            saveProducts(products);
-            showToast('تم تحديث المنتج');
-        } else {
-            if (IS_DEMO && products.length >= DEMO_LIMITS.products) {
-                showDemoLimit('منتج', DEMO_LIMITS.products);
-                return;
-            }
-
-            const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-            const newCode = code || '#' + (100 + newId);
-
-            products.push({ id: newId, code: newCode, name, category, size, color, base_cost: cost, price, image: imgStr });
-            saveProducts(products);
-
-            if (qty > 0) {
-                const purchases = getPurchases();
-                purchases.push({
-                    id: purchases.length > 0 ? Math.max(...purchases.map(p => p.id)) + 1 : 1,
-                    product_id: newId,
-                    product_name: name,
-                    size,
-                    quantity: qty,
-                    unit_cost: cost,
-                    total_cost: qty * cost,
-                    supplier: 'رصيد افتتاحي',
-                    note: 'كمية أولية',
-                    created_at: new Date().toISOString(),
-                });
-                savePurchases(purchases);
-            }
-
-            showToast('تمت إضافة المنتج');
+    if (editId) {
+        const id = parseInt(editId);
+        const index = products.findIndex(p => p.id === id);
+        if (index !== -1) {
+            const size = sizes[0] || '';
+            const color = colors[0] || '';
+            const imgStr = colorImages[color] || products[index].image;
+            
+            products[index] = {
+                ...products[index],
+                code: code || products[index].code,
+                name, category, size, color,
+                base_cost: cost, price
+            };
+            if (imgStr) products[index].image = imgStr;
+        }
+        saveProducts(products);
+        showToast('تم تحديث المنتج');
+    } else {
+        if (IS_DEMO && products.length + (sizes.length * colors.length) >= DEMO_LIMITS.products) {
+            showDemoLimit('منتج', DEMO_LIMITS.products);
+            return;
         }
 
-        cancelProductEdit();
-        fillAllDropdowns();
-        loadInventoryTable();
-        switchScreen('inventory');
-    };
+        let newId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
+        let newPurchaseId = purchases.length > 0 ? Math.max(...purchases.map(p => p.id)) : 0;
+        const newCode = code || '#' + (100 + newId + 1);
 
-    if (imageInput && imageInput.files.length > 0) {
-        const reader = new FileReader();
-        reader.onload = (e) => doSave(e.target.result);
-        reader.readAsDataURL(imageInput.files[0]);
-    } else {
-        doSave(null);
+        sizes.forEach(s => {
+            colors.forEach(c => {
+                newId++;
+                const imgStr = colorImages[c] || null;
+                
+                products.push({ 
+                    id: newId, 
+                    code: newCode, 
+                    name, 
+                    category, 
+                    size: s, 
+                    color: c, 
+                    base_cost: cost, 
+                    price, 
+                    image: imgStr 
+                });
+
+                if (qty > 0) {
+                    newPurchaseId++;
+                    purchases.push({
+                        id: newPurchaseId,
+                        product_id: newId,
+                        product_name: name,
+                        size: s,
+                        quantity: qty,
+                        unit_cost: cost,
+                        total_cost: qty * cost,
+                        supplier: 'رصيد افتتاحي',
+                        note: 'كمية أولية',
+                        created_at: new Date().toISOString(),
+                    });
+                }
+            });
+        });
+        
+        saveProducts(products);
+        if (qty > 0) savePurchases(purchases);
+
+        showToast('تمت إضافة المنتجات بنجاح');
     }
+
+    cancelProductEdit();
+    fillAllDropdowns();
+    loadInventoryTable();
+    switchScreen('inventory');
 }
 
 function editProduct(id) {
@@ -449,14 +561,27 @@ function editProduct(id) {
     document.getElementById('p-code').value = p.code || '';
     document.getElementById('p-name').value = p.name;
     document.getElementById('p-category').value = p.category;
-    document.getElementById('p-size').value = p.size || '';
-    document.getElementById('p-color').value = p.color || '';
     document.getElementById('p-cost').value = p.base_cost || 0;
     document.getElementById('p-price').value = p.price;
     document.getElementById('p-qty').value = getProductQuantity(p.id);
-
-    const imgInput = document.getElementById('p-image');
-    if (imgInput) imgInput.value = '';
+    
+    document.querySelectorAll('input[name="p-sizes"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="p-colors"]').forEach(cb => cb.checked = false);
+    
+    if (p.size) {
+        const sCb = document.querySelector(`input[name="p-sizes"][value="${p.size}"]`);
+        if (sCb) sCb.checked = true;
+    }
+    if (p.color) {
+        const cCb = document.querySelector(`input[name="p-colors"][value="${p.color}"]`);
+        if (cCb) cCb.checked = true;
+        if (p.image) {
+            colorImages[p.color] = p.image;
+        }
+    }
+    
+    handleColorSelection();
+    updateSizeLabel();
 
     document.getElementById('productFormTitle').innerHTML = '<i class="fas fa-edit text-warning"></i> تعديل المنتج';
     document.getElementById('cancelEditBtn').style.display = 'inline-flex';
@@ -465,10 +590,18 @@ function editProduct(id) {
 
 function cancelProductEdit() {
     document.getElementById('editingProductId').value = '';
-    ['p-code', 'p-name', 'p-category', 'p-size', 'p-color', 'p-cost', 'p-price', 'p-image'].forEach(id => {
+    ['p-code', 'p-name', 'p-category', 'p-cost', 'p-price'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
+    
+    document.querySelectorAll('input[name="p-sizes"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[name="p-colors"]').forEach(cb => cb.checked = false);
+    
+    colorImages = {};
+    handleColorSelection();
+    updateSizeLabel();
+
     document.getElementById('p-qty').value = '0';
     document.getElementById('productFormTitle').innerHTML = '<i class="fas fa-plus-circle text-primary"></i> إضافة منتج جديد';
     document.getElementById('cancelEditBtn').style.display = 'none';
@@ -932,6 +1065,127 @@ function clearCart() {
 /* ============================================
    11. طرق الدفع
    ============================================ */
+
+/* ============================================
+   حسابات المتجر البنكية والمحافظ للدفع الإلكتروني
+   ============================================ */
+const STORE_PAYMENT_ACCOUNTS = {
+    'PalPay': {
+        name: 'محفظة PalPay',
+        type: 'محفظة إلكترونية',
+        label: 'رقم المحفظة / الهاتف:',
+        accountNo: '0599-887766',
+        iban: '',
+        title: 'متجر الأناقة للملابس'
+    },
+    'Jawwal Pay': {
+        name: 'جوال باي (Jawwal Pay)',
+        type: 'محفظة إلكترونية',
+        label: 'رقم المحفظة:',
+        accountNo: '0599-887766',
+        iban: '',
+        title: 'متجر الأناقة للملابس'
+    },
+    'بنك فلسطين': {
+        name: 'بنك فلسطين',
+        type: 'حساب بنكي',
+        label: 'رقم الحساب / الفرع:',
+        accountNo: '1234567 (فرع 450)',
+        iban: 'PS04 PALS 0000 0000 0001 2345 67',
+        title: 'متجر الأناقة للملابس'
+    },
+    'البنك الإسلامي الفلسطيني': {
+        name: 'البنك الإسلامي الفلسطيني',
+        type: 'حساب بنكي',
+        label: 'رقم الحساب / الفرع:',
+        accountNo: '2345678 (فرع 210)',
+        iban: 'PS50 ISBK 0000 0000 0002 3456 78',
+        title: 'متجر الأناقة للملابس'
+    },
+    'البنك العربي': {
+        name: 'البنك العربي',
+        type: 'حساب بنكي',
+        label: 'رقم الحساب:',
+        accountNo: '3456789',
+        iban: 'PS30 ARAB 0000 0000 0003 4567 89',
+        title: 'متجر الأناقة للملابس'
+    },
+    'Zain Cash': {
+        name: 'زين كاش (Zain Cash)',
+        type: 'محفظة إلكترونية',
+        label: 'رقم المحفظة:',
+        accountNo: '0799-887766',
+        iban: '',
+        title: 'متجر الأناقة للملابس'
+    },
+    'PayPal': {
+        name: 'PayPal',
+        type: 'حساب باي بال',
+        label: 'البريد الإلكتروني:',
+        accountNo: 'payments@el-anaqa-store.com',
+        iban: '',
+        title: 'متجر الأناقة للملابس'
+    },
+    'أخرى': {
+        name: 'حساب آخر',
+        type: 'حساب دفع',
+        label: 'رقم الحساب:',
+        accountNo: '0599-887766',
+        iban: '',
+        title: 'متجر الأناقة للملابس'
+    }
+};
+
+function updateStoreAccountDisplay() {
+    const sel = document.getElementById('appName');
+    const card = document.getElementById('storeAccountInfoCard');
+    if (!sel || !card) return;
+
+    const val = sel.value;
+    const info = STORE_PAYMENT_ACCOUNTS[val] || STORE_PAYMENT_ACCOUNTS['PalPay'];
+
+    const typeBadge = document.getElementById('storeAccTypeBadge');
+    const titleEl = document.getElementById('storeAccTitle');
+    const labelEl = document.getElementById('storeAccLabel');
+    const noEl = document.getElementById('storeAccNo');
+    const ibanRow = document.getElementById('storeAccIbanRow');
+    const ibanEl = document.getElementById('storeAccIban');
+
+    if (typeBadge) typeBadge.textContent = info.type;
+    if (titleEl) titleEl.textContent = info.title;
+    if (labelEl) labelEl.textContent = info.label;
+    if (noEl) noEl.textContent = info.accountNo;
+
+    if (ibanRow && ibanEl) {
+        if (info.iban) {
+            ibanRow.style.display = 'block';
+            ibanEl.textContent = info.iban;
+        } else {
+            ibanRow.style.display = 'none';
+        }
+    }
+}
+
+function copyStoreAccNo() {
+    const text = document.getElementById('storeAccNo')?.textContent || '';
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('تم نسخ رقم الحساب بنجاح! 📋');
+    }).catch(() => {
+        showToast('تعذر النسخ التلقائي', 'info');
+    });
+}
+
+function copyStoreIban() {
+    const text = document.getElementById('storeAccIban')?.textContent || '';
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('تم نسخ رقم الآيبان بنجاح! 📋');
+    }).catch(() => {
+        showToast('تعذر النسخ التلقائي', 'info');
+    });
+}
+
 function selectPaymentMethod(method) {
     selectedPaymentMethod = method;
 
@@ -1014,6 +1268,7 @@ function checkout() {
     let debtCustomerName = null;
     let debtCustomerPhone = null;
     let debtNote = null;
+    let debtPaidAmount = 0;
 
     if (selectedPaymentMethod === 'app') {
         const senderName = document.getElementById('senderName').value.trim();
@@ -1040,6 +1295,7 @@ function checkout() {
         debtCustomerName = document.getElementById('debtCustomerName').value.trim();
         debtCustomerPhone = document.getElementById('debtCustomerPhone').value.trim();
         debtNote = document.getElementById('debtNote').value.trim();
+        debtPaidAmount = parseFloat(document.getElementById('debtPaidAmount').value) || 0;
 
         if (!debtCustomerName || debtCustomerName.length < 3) {
             showToast('يرجى إدخال اسم العميل', 'error');
@@ -1050,7 +1306,7 @@ function checkout() {
             return;
         }
 
-        paymentData = { method: 'debt' };
+        paymentData = { method: 'debt', paid_upfront: debtPaidAmount };
     } else {
         paymentData = { method: 'cash' };
     }
@@ -1058,6 +1314,11 @@ function checkout() {
     const subtotal = cart.reduce((s, i) => s + i.subtotal, 0);
     const discount = parseFloat(document.getElementById('cartDiscount').value) || 0;
     const total = Math.max(0, subtotal - discount);
+
+    if (debtPaidAmount > total) {
+        showToast('الدفعة الأولى لا يمكن أن تكون أكبر من الإجمالي', 'error');
+        return;
+    }
 
     const user = getCurrentUser();
 
@@ -1082,8 +1343,12 @@ function checkout() {
 
     if (selectedPaymentMethod === 'debt') {
         const debts = getCustomerDebts();
+        let newId = debts.length > 0 ? Math.max(...debts.map(d => d.id)) : 0;
+        
+        // سجل الفاتورة (إجمالي الدين)
+        newId++;
         debts.push({
-            id: debts.length > 0 ? Math.max(...debts.map(d => d.id)) + 1 : 1,
+            id: newId,
             customer_name: debtCustomerName,
             customer_phone: debtCustomerPhone,
             type: 'invoice',
@@ -1092,7 +1357,27 @@ function checkout() {
             note: debtNote || 'دين فاتورة #' + sale.id,
             created_at: new Date().toISOString(),
         });
+        
+        // سجل الدفعة الأولى إن وجدت
+        if (debtPaidAmount > 0) {
+            newId++;
+            debts.push({
+                id: newId,
+                customer_name: debtCustomerName,
+                customer_phone: debtCustomerPhone,
+                type: 'payment',
+                amount: debtPaidAmount,
+                sale_id: sale.id,
+                note: 'دفعة أولى لفاتورة #' + sale.id,
+                created_at: new Date().toISOString(),
+            });
+        }
+        
         saveCustomerDebts(debts);
+        // Refresh Debts UI if active
+        if (document.getElementById('debtsTableBody')) {
+            loadDebtsTable();
+        }
     }
 
     printInvoice(sale);
@@ -1104,6 +1389,7 @@ function checkout() {
     document.getElementById('senderPhone').value = '';
     document.getElementById('debtCustomerName').value = '';
     document.getElementById('debtCustomerPhone').value = '';
+    document.getElementById('debtPaidAmount').value = '';
     document.getElementById('debtNote').value = '';
     document.getElementById('paymentScreenshot').value = '';
     removeScreenshot();
@@ -1451,161 +1737,1004 @@ function viewPaymentDetails(id) {
 }
 
 /* ============================================
-   18. المشتريات
+   18. إدارة المشتريات التفاعلية (Purchases Management)
    ============================================ */
-function onRestockProductChange() {
-    const productId = parseInt(document.getElementById('restockProduct').value);
-    const infoEl = document.getElementById('restockCurrentInfo');
+let purchActiveItems = [];
+let purchActiveInvoiceId = 'INV-' + Math.floor(Math.random() * 9000 + 1000);
+let purchPosted = false;
 
-    if (!productId) {
-        infoEl.textContent = '';
-        document.getElementById('restockPreview').style.display = 'none';
-        return;
-    }
+const PURCH_COLORS = [
+    ['أحمر', '#e34b54'],
+    ['أسود', '#222831'],
+    ['أبيض', '#f1f5f9'],
+    ['أزرق', '#3b82f6'],
+    ['بني', '#9a633e'],
+    ['أخضر', '#10b981'],
+    ['رمادي', '#64748b'],
+    ['وردي', '#ec4899'],
+    ['أصفر', '#eab308']
+];
+const PURCH_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '38', '39', '40', '41', '42'];
 
-    const p = getProductById(productId);
-    if (!p) return;
-
-    infoEl.innerHTML = `
-        <i class="fas fa-info-circle text-info"></i> 
-        الكمية: <strong>${getProductQuantity(p.id)}</strong> • 
-        التكلفة: <strong>₪${getProductAvgCost(p.id).toFixed(2)}</strong> • 
-        سعر البيع: <strong>₪${Number(p.price).toFixed(2)}</strong>
-    `;
-
-    previewRestock();
+function switchPurchSubtab(tab) {
+    ['invoice', 'stock', 'history'].forEach(t => {
+        const btn = document.getElementById(`tabBtn-purch-${t}`);
+        const content = document.getElementById(`purchSubtab-${t}`);
+        if (btn) btn.classList.toggle('active', t === tab);
+        if (content) content.style.display = (t === tab ? 'block' : 'none');
+    });
+    if (tab === 'stock') loadInventoryTable();
+    if (tab === 'history') loadPurchasesTable();
 }
 
-function previewRestock() {
-    const productId = parseInt(document.getElementById('restockProduct').value);
-    const qty = parseInt(document.getElementById('restockQty').value) || 0;
-    const cost = parseFloat(document.getElementById('restockCost').value) || 0;
-    const editingId = document.getElementById('restockProduct').dataset.editingId;
-    const previewEl = document.getElementById('restockPreview');
-
-    if (!productId || qty <= 0 || cost <= 0) {
-        previewEl.style.display = 'none';
-        return;
+function loadPurchasesManagement() {
+    fillPurchSuppliers();
+    fillPurchNewCategories();
+    const dateInput = document.getElementById('purchDate');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().slice(0, 10);
+    }
+    const invInput = document.getElementById('purchInvoiceNo');
+    if (invInput && !invInput.value) {
+        invInput.value = 'SUP-' + Math.floor(Math.random() * 9000 + 1000);
     }
 
-    let purchases = getPurchases().filter(x => x.product_id === productId);
-    if (editingId) {
-        purchases = purchases.filter(x => x.id !== parseInt(editingId));
+    const hasDraft = loadPurchDraft();
+    if (!hasDraft) {
+        renderPurchProducts();
+        calcPurchTotals();
+        renderPurchDraftBox();
     }
-
-    const oldQty = purchases.reduce((s, x) => s + Number(x.quantity), 0);
-    const oldValue = purchases.reduce((s, x) => s + (Number(x.quantity) * Number(x.unit_cost)), 0);
-    const oldAvgCost = oldQty > 0 ? oldValue / oldQty : 0;
-
-    const newTotalQty = oldQty + qty;
-    const newTotalValue = oldValue + (qty * cost);
-    const newAvgCost = newTotalQty > 0 ? newTotalValue / newTotalQty : 0;
-
-    document.getElementById('previewCurrentQty').textContent = oldQty;
-    document.getElementById('previewCurrentCost').textContent = '₪' + oldAvgCost.toFixed(2);
-    document.getElementById('previewNewTotalQty').textContent = newTotalQty;
-    document.getElementById('previewNewCost').textContent = '₪' + newAvgCost.toFixed(2);
-
-    previewEl.style.display = 'block';
 }
 
-function saveRestock() {
-    const productId = parseInt(document.getElementById('restockProduct').value);
-    const qty = parseInt(document.getElementById('restockQty').value);
-    const cost = parseFloat(document.getElementById('restockCost').value);
-    const supplier = document.getElementById('restockSupplier').value.trim();
-    const note = document.getElementById('restockNote').value.trim();
-    const editingId = document.getElementById('restockProduct').dataset.editingId;
+function fillPurchSuppliers() {
+    const merchants = typeof getMerchants === 'function' ? getMerchants() : [];
+    
+    // 1. Datalist for input combo
+    const dl = document.getElementById('purchSupplierList');
+    if (dl) {
+        dl.innerHTML = merchants.map(m => `<option value="${m.name}">${m.name} ${m.phone ? '(' + m.phone + ')' : ''}</option>`).join('');
+    }
 
-    if (!productId || !qty || qty <= 0 || !cost || cost < 0) {
-        showToast('يرجى ملء الحقول المطلوبة', 'error');
+    // 2. Fallback if purchSupplier is still a select
+    const sel = document.getElementById('purchSupplier');
+    if (sel && sel.tagName === 'SELECT') {
+        const currentVal = sel.value;
+        let html = '<option value="">اختر المورد</option>';
+        merchants.forEach(m => {
+            html += `<option value="${m.name}">${m.name} (${m.phone || 'مورد'})</option>`;
+        });
+        html += '<option value="__new__">+ مورد جديد...</option>';
+        sel.innerHTML = html;
+        if (currentVal) sel.value = currentVal;
+    }
+}
+
+function onPurchMethodChange() {
+    const sel = document.getElementById('purchMethod');
+    const bankBox = document.getElementById('purchBankDetailsBox');
+    const paidInput = document.getElementById('purchPaid');
+    if (!sel) return;
+
+    if (bankBox) {
+        if (sel.value === 'bank') {
+            bankBox.style.display = 'block';
+        } else {
+            bankBox.style.display = 'none';
+        }
+    }
+
+    if (sel.value === 'credit' && paidInput) {
+        paidInput.value = '0';
+    } else if ((sel.value === 'cash' || sel.value === 'bank') && paidInput) {
+        const t = typeof calcPurchTotals === 'function' ? calcPurchTotals() : null;
+        if ((!paidInput.value || Number(paidInput.value) === 0) && t && t.totalAmount > 0) {
+            paidInput.value = t.totalAmount;
+        }
+    }
+
+    if (typeof calcPurchTotals === 'function') calcPurchTotals();
+    savePurchDraft(true);
+}
+
+function onPurchSupplierInput() {
+    savePurchDraft(true);
+}
+
+function openQuickAddSupplierModal() {
+    const currentVal = (document.getElementById('purchSupplier')?.value || '').trim();
+    if (document.getElementById('quickSupplierName')) {
+        document.getElementById('quickSupplierName').value = currentVal;
+    }
+    if (document.getElementById('quickSupplierPhone')) {
+        document.getElementById('quickSupplierPhone').value = '';
+    }
+    if (document.getElementById('quickSupplierNote')) {
+        document.getElementById('quickSupplierNote').value = '';
+    }
+    openModal('quickSupplierModal');
+}
+
+function saveQuickSupplier() {
+    const name = (document.getElementById('quickSupplierName')?.value || '').trim();
+    const phone = (document.getElementById('quickSupplierPhone')?.value || '').trim();
+    if (!name) {
+        showToast('يرجى إدخال اسم المورد', 'error');
+        return;
+    }
+    const merchants = typeof getMerchants === 'function' ? getMerchants() : [];
+    let existing = merchants.find(m => m.name.toLowerCase() === name.toLowerCase());
+    if (!existing) {
+        let newId = merchants.length > 0 ? Math.max(...merchants.map(m => m.id)) : 0;
+        merchants.push({ id: newId + 1, name: name, phone: phone, balance: 0 });
+        if (typeof saveMerchants === 'function') saveMerchants(merchants);
+    } else if (phone && !existing.phone) {
+        existing.phone = phone;
+        if (typeof saveMerchants === 'function') saveMerchants(merchants);
+    }
+
+    fillPurchSuppliers();
+    const supInput = document.getElementById('purchSupplier');
+    if (supInput) supInput.value = name;
+    savePurchDraft(true);
+    closeModal('quickSupplierModal');
+    showToast('تمت إضافة المورد واختياره بنجاح! ✅');
+}
+
+function onPurchSearchInput() {
+    const q = (document.getElementById('purchSearch')?.value || '').toLowerCase().trim();
+    const resultsContainer = document.getElementById('purchSearchResults');
+    if (!resultsContainer) return;
+
+    if (!q) {
+        resultsContainer.innerHTML = '';
         return;
     }
 
-    const p = getProductById(productId);
-    if (!p) return;
+    const allProducts = getProducts();
+    const grouped = [];
+    allProducts.forEach(p => {
+        const existing = grouped.find(g => (g.name || '').toLowerCase() === (p.name || '').toLowerCase() || (g.code && p.code && g.code === p.code));
+        if (!existing) {
+            grouped.push({
+                id: p.id,
+                name: p.name,
+                code: p.code || '',
+                category: p.category || '',
+                price: p.price,
+                base_cost: p.base_cost
+            });
+        }
+    });
 
+    const matches = grouped.filter(p =>
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.code || '').toLowerCase().includes(q) ||
+        (p.category || '').toLowerCase().includes(q)
+    );
+
+    if (matches.length > 0) {
+        resultsContainer.innerHTML = matches.map(p => `
+            <div class="purch-search-item">
+                <div>
+                    <strong style="color:var(--dark);font-size:0.92rem;">${p.name}</strong>
+                    <div style="font-size:0.75rem;color:var(--gray);margin-top:2px;">
+                        ${p.code ? `<span class="badge primary" style="font-size:0.7rem;padding:2px 6px;">${p.code}</span>` : ''} 
+                        ${p.category ? `• ${p.category}` : ''}
+                    </div>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="addExistingToPurchInvoice(${p.id})">
+                    <i class="fas fa-plus"></i> إضافة للفاتورة
+                </button>
+            </div>
+        `).join('');
+    } else {
+        const cleanQuery = (document.getElementById('purchSearch')?.value || '').replace(/'/g, "\\'");
+        resultsContainer.innerHTML = `
+            <div class="purch-search-item" style="border-style:dashed;">
+                <div>
+                    <strong style="color:var(--dark);">لم يُعثر على تطابق واضح</strong>
+                    <small style="color:var(--gray);display:block;margin-top:2px;">تحقق من الاسم أو أدخل منتجاً جديداً مباشرة</small>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="openPurchNewProductModal('${cleanQuery}')">
+                    <i class="fas fa-plus"></i> إدخال منتج جديد
+                </button>
+            </div>
+        `;
+    }
+}
+
+function clearPurchSearch() {
+    const input = document.getElementById('purchSearch');
+    if (input) input.value = '';
+    const resultsContainer = document.getElementById('purchSearchResults');
+    if (resultsContainer) resultsContainer.innerHTML = '';
+}
+
+function addExistingToPurchInvoice(productId) {
+    if (purchPosted) {
+        showToast('الفاتورة معتمدة. ابدأ فاتورة جديدة.', 'warning');
+        return;
+    }
+    const allProducts = getProducts();
+    const baseProd = allProducts.find(p => p.id === productId);
+    if (!baseProd) return;
+
+    if (purchActiveItems.some(p => p.catalogId === baseProd.id || (p.code && baseProd.code && p.code === baseProd.code))) {
+        showToast('المنتج موجود بالفعل في الفاتورة؛ يمكنك تعديل جدول كمياته.', 'info');
+        clearPurchSearch();
+        return;
+    }
+
+    const matchingVariants = allProducts.filter(p =>
+        p.name === baseProd.name && (baseProd.code ? p.code === baseProd.code : true)
+    );
+
+    const variants = matchingVariants.map(mv => {
+        const col = PURCH_COLORS.find(c => c[0] === mv.color);
+        const stock = getProductQuantity(mv.id);
+        const avg = getProductAvgCost(mv.id);
+        return {
+            productId: mv.id,
+            color: mv.color || '',
+            hex: col ? col[1] : '#cbd5e1',
+            size: mv.size || '',
+            stock: stock,
+            avg: avg,
+            qty: 0,
+            cost: mv.base_cost || avg || 0
+        };
+    });
+
+    const hasColor = variants.some(v => v.color);
+    const hasSize = variants.some(v => v.size);
+    let mode = 'none';
+    if (hasColor && hasSize) mode = 'both';
+    else if (hasColor) mode = 'color';
+    else if (hasSize) mode = 'size';
+
+    if (variants.length === 0) {
+        variants.push({
+            productId: baseProd.id,
+            color: baseProd.color || '',
+            hex: '#cbd5e1',
+            size: baseProd.size || '',
+            stock: getProductQuantity(baseProd.id),
+            avg: getProductAvgCost(baseProd.id),
+            qty: 0,
+            cost: baseProd.base_cost || 0
+        });
+    }
+
+    purchActiveItems.push({
+        uid: 'UID-' + Math.random().toString(36).slice(2, 9),
+        catalogId: baseProd.id,
+        name: baseProd.name,
+        code: baseProd.code || '',
+        category: baseProd.category || 'عام',
+        retail: Number(baseProd.price || 0),
+        min: Number(baseProd.price || 0) * 0.8,
+        mode: mode,
+        isNew: false,
+        variants: variants
+    });
+
+    clearPurchSearch();
+    renderPurchProducts();
+    calcPurchTotals();
+    savePurchDraft(true);
+    showToast('أُضيف المنتج إلى الفاتورة');
+}
+
+function fillPurchNewCategories() {
+    const sel = document.getElementById('purchNewCategory');
+    if (!sel) return;
+    const cats = typeof getCategories === 'function' ? getCategories() : [];
+    sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function openPurchNewProductModal(prefillName = '') {
+    fillPurchNewCategories();
+    document.getElementById('purchNewName').value = prefillName || '';
+    document.getElementById('purchNewCode').value = '';
+    document.getElementById('purchNewRetail').value = '';
+    document.getElementById('purchNewMinPrice').value = '';
+    document.getElementById('purchNewMode').value = 'both';
+    openModal('purchNewProductModal');
+    setTimeout(() => document.getElementById('purchNewName')?.focus(), 200);
+}
+
+function addPurchNewProduct() {
+    const name = document.getElementById('purchNewName').value.trim();
+    const code = document.getElementById('purchNewCode').value.trim();
+    const category = document.getElementById('purchNewCategory').value;
+    const retail = parseFloat(document.getElementById('purchNewRetail').value) || 0;
+    const min = parseFloat(document.getElementById('purchNewMinPrice').value) || (retail * 0.8);
+    const mode = document.getElementById('purchNewMode').value;
+
+    if (!name) {
+        showToast('يرجى كتابة اسم المنتج', 'error');
+        return;
+    }
+
+    let variants = [];
+    if (mode === 'both') {
+        variants.push({ color: 'أحمر', hex: '#e34b54', size: 'M', stock: 0, avg: 0, qty: 0, cost: 0 });
+    } else if (mode === 'color') {
+        variants.push({ color: 'أسود', hex: '#222831', size: '', stock: 0, avg: 0, qty: 0, cost: 0 });
+    } else if (mode === 'size') {
+        variants.push({ color: '', hex: '', size: 'M', stock: 0, avg: 0, qty: 0, cost: 0 });
+    } else {
+        variants.push({ color: '', hex: '', size: '', stock: 0, avg: 0, qty: 0, cost: 0 });
+    }
+
+    purchActiveItems.push({
+        uid: 'UID-' + Math.random().toString(36).slice(2, 9),
+        catalogId: null,
+        name: name,
+        code: code || 'NEW-' + Math.floor(Math.random() * 900 + 100),
+        category: category,
+        retail: retail,
+        min: min,
+        mode: mode,
+        isNew: true,
+        variants: variants
+    });
+
+    closeModal('purchNewProductModal');
+    renderPurchProducts();
+    calcPurchTotals();
+    savePurchDraft(true);
+    showToast('أُضيف المنتج الجديد للمسودة');
+}
+
+function addVariantToPurchProduct(pUid) {
+    const p = purchActiveItems.find(x => x.uid === pUid);
+    if (!p) return;
+    const colSel = document.getElementById(`sel-col-${pUid}`);
+    const sizeSel = document.getElementById(`sel-size-${pUid}`);
+
+    const color = (p.mode === 'both' || p.mode === 'color') ? (colSel ? colSel.value : 'أسود') : '';
+    const size = (p.mode === 'both' || p.mode === 'size') ? (sizeSel ? sizeSel.value : 'M') : '';
+
+    if (p.variants.some(v => v.color === color && v.size === size)) {
+        showToast('هذه التركيبة مضافة بالفعل لهذا المنتج', 'warning');
+        return;
+    }
+
+    const cObj = PURCH_COLORS.find(c => c[0] === color);
+    p.variants.push({
+        color: color,
+        hex: cObj ? cObj[1] : '#cbd5e1',
+        size: size,
+        stock: 0,
+        avg: 0,
+        qty: 0,
+        cost: 0
+    });
+
+    renderPurchProducts();
+    calcPurchTotals();
+    savePurchDraft(true);
+}
+
+function removeVariantFromPurchProduct(pUid, index) {
+    const p = purchActiveItems.find(x => x.uid === pUid);
+    if (!p) return;
+    p.variants.splice(index, 1);
+    if (p.variants.length === 0) {
+        p.variants.push({ color: '', hex: '', size: '', stock: 0, avg: 0, qty: 0, cost: 0 });
+    }
+    renderPurchProducts();
+    calcPurchTotals();
+    savePurchDraft(true);
+}
+
+function removeProductFromPurchInvoice(pUid) {
+    if (!confirm('هل تريد إزالة هذا الصنف بالكامل من الفاتورة؟')) return;
+    purchActiveItems = purchActiveItems.filter(x => x.uid !== pUid);
+    renderPurchProducts();
+    calcPurchTotals();
+    savePurchDraft(true);
+}
+
+function onPurchVariantFieldChange(pUid, index, field, val) {
+    const p = purchActiveItems.find(x => x.uid === pUid);
+    if (!p || !p.variants[index]) return;
+    const num = Math.max(0, parseFloat(val) || 0);
+    p.variants[index][field] = (field === 'qty' ? Math.floor(num) : num);
+    renderPurchProducts();
+    calcPurchTotals();
+    savePurchDraft(true);
+}
+
+function onPurchProductControlChange(pUid, field, val) {
+    const p = purchActiveItems.find(x => x.uid === pUid);
+    if (!p) return;
+    if (field === 'mode') {
+        p.mode = val;
+        if (val === 'none') {
+            p.variants.forEach(v => { v.color = ''; v.size = ''; });
+        } else if (val === 'color') {
+            p.variants.forEach(v => { v.size = ''; });
+        } else if (val === 'size') {
+            p.variants.forEach(v => { v.color = ''; });
+        }
+    } else {
+        p[field] = Math.max(0, parseFloat(val) || 0);
+    }
+    renderPurchProducts();
+    calcPurchTotals();
+    savePurchDraft(true);
+}
+
+function renderPurchProducts() {
+    const container = document.getElementById('purchProductsContainer');
+    if (!container) return;
+
+    if (purchActiveItems.length === 0) {
+        container.innerHTML = `
+            <div class="empty" style="border:2px dashed #cbd5e1;border-radius:14px;padding:36px;text-align:center;color:var(--gray);">
+                <i class="fas fa-boxes" style="font-size:2.4rem;color:#cbd5e1;margin-bottom:12px;display:block;"></i>
+                لم تتم إضافة أصناف بعد. ابحث عن منتج موجود أو أدخل منتجاً جديداً من الزر أعلاه.
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = purchActiveItems.map(p => {
+        const colorMode = (p.mode === 'both' || p.mode === 'color');
+        const sizeMode = (p.mode === 'both' || p.mode === 'size');
+
+        let headers = '';
+        if (colorMode) headers += '<th>اللون</th>';
+        if (sizeMode) headers += '<th>المقاس</th>';
+        headers += `
+            <th>المخزون الحالي</th>
+            <th>كمية الدفعة</th>
+            <th>سعر شراء الوحدة</th>
+            <th>إجمالي السطر</th>
+            <th>المخزون بعد الاعتماد</th>
+            <th>متوسط التكلفة الجديد</th>
+            <th>إجراء</th>
+        `;
+
+        const rows = p.variants.map((v, i) => {
+            const qty = Number(v.qty || 0);
+            const cost = Number(v.cost || 0);
+            const stock = Number(v.stock || 0);
+            const avg = Number(v.avg || 0);
+            const lineTotal = qty * cost;
+            const newStock = stock + qty;
+            const newAvg = newStock > 0 ? ((stock * avg) + (qty * cost)) / newStock : 0;
+
+            let rowHtml = '<tr>';
+            if (colorMode) {
+                rowHtml += `
+                    <td>
+                        <span class="variant-pill">
+                            <span class="variant-dot" style="background:${v.hex || '#222831'};"></span>
+                            ${v.color || 'بدون'}
+                        </span>
+                    </td>
+                `;
+            }
+            if (sizeMode) {
+                rowHtml += `<td><strong>${v.size || 'بدون'}</strong></td>`;
+            }
+            rowHtml += `
+                <td style="color:var(--gray);">${stock}</td>
+                <td>
+                    <input type="number" min="0" step="1" class="purch-qty-input" value="${v.qty || ''}" placeholder="كمية"
+                        onchange="onPurchVariantFieldChange('${p.uid}', ${i}, 'qty', this.value)" ${purchPosted ? 'disabled' : ''}>
+                </td>
+                <td>
+                    <input type="number" min="0" step="0.01" class="purch-cost-input" value="${v.cost || ''}" placeholder="السعر"
+                        onchange="onPurchVariantFieldChange('${p.uid}', ${i}, 'cost', this.value)" ${purchPosted ? 'disabled' : ''}>
+                </td>
+                <td><strong style="color:var(--primary);">₪${lineTotal.toFixed(2)}</strong></td>
+                <td><span class="badge ${newStock > 0 ? 'success' : 'danger'}">${newStock}</span></td>
+                <td><strong>${newStock > 0 ? '₪' + newAvg.toFixed(2) : '—'}</strong></td>
+                <td>
+                    <button class="btn-icon danger" onclick="removeVariantFromPurchProduct('${p.uid}', ${i})" ${purchPosted ? 'disabled' : ''} title="حذف التركيبة">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+            return rowHtml;
+        }).join('');
+
+        const colOptions = PURCH_COLORS.map(c => `<option value="${c[0]}">${c[0]}</option>`).join('');
+        const sizeOptions = PURCH_SIZES.map(s => `<option value="${s}">${s}</option>`).join('');
+
+        const totalBatchQty = p.variants.reduce((acc, v) => acc + (Number(v.qty) || 0), 0);
+        const totalBatchCost = p.variants.reduce((acc, v) => acc + ((Number(v.qty) || 0) * (Number(v.cost) || 0)), 0);
+
+        return `
+            <article class="purch-product">
+                <div class="purch-prod-head">
+                    <div>
+                        <h4>${p.name}</h4>
+                        <div style="font-size:0.78rem;color:var(--gray);margin-top:2px;">
+                            ${p.code ? `<span class="badge primary" style="font-size:0.7rem;padding:2px 6px;">${p.code}</span>` : ''} 
+                            • ${p.category || 'ملابس'} 
+                            • <span style="color:${p.isNew ? 'var(--warning)' : 'var(--success)'};font-weight:700;">${p.isNew ? 'منتج جديد — مسودة' : 'منتج موجود في المتجر'}</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:#fecaca;" onclick="removeProductFromPurchInvoice('${p.uid}')" ${purchPosted ? 'disabled' : ''}>
+                        <i class="fas fa-times"></i> إزالة الصنف
+                    </button>
+                </div>
+                <div class="purch-prod-body">
+                    <div class="purch-prod-controls">
+                        <div class="form-group">
+                            <label style="font-size:0.78rem;margin-bottom:4px;">سعر البيع الافتراضي</label>
+                            <input type="number" step="0.01" style="height:38px!important;" value="${p.retail || 0}"
+                                onchange="onPurchProductControlChange('${p.uid}', 'retail', this.value)" ${purchPosted ? 'disabled' : ''}>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.78rem;margin-bottom:4px;">الحد الأدنى للبيع</label>
+                            <input type="number" step="0.01" style="height:38px!important;" value="${p.min || 0}"
+                                onchange="onPurchProductControlChange('${p.uid}', 'min', this.value)" ${purchPosted ? 'disabled' : ''}>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:0.78rem;margin-bottom:4px;">طبيعة المنتج</label>
+                            <select style="height:38px!important;" onchange="onPurchProductControlChange('${p.uid}', 'mode', this.value)" ${purchPosted ? 'disabled' : ''}>
+                                <option value="both" ${p.mode === 'both' ? 'selected' : ''}>لون ومقاس</option>
+                                <option value="color" ${p.mode === 'color' ? 'selected' : ''}>لون فقط</option>
+                                <option value="size" ${p.mode === 'size' ? 'selected' : ''}>مقاس فقط</option>
+                                <option value="none" ${p.mode === 'none' ? 'selected' : ''}>بدون لون أو مقاس</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px;font-size:0.85rem;font-weight:700;">
+                        <span><i class="fas fa-layer-group text-primary"></i> تركيبات المنتج وكميات هذه الدفعة</span>
+                        <small style="color:var(--gray);font-weight:normal;font-size:0.75rem;">سعر الوحدة هو سعر الشراء في هذه الفاتورة</small>
+                    </div>
+
+                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-radius:10px;">
+                        <table class="purch-variant-table">
+                            <thead><tr>${headers}</tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+
+                    <div class="purch-tools">
+                        ${colorMode ? `<select id="sel-col-${p.uid}">${colOptions}</select>` : ''}
+                        ${sizeMode ? `<select id="sel-size-${p.uid}">${sizeOptions}</select>` : ''}
+                        <button class="btn btn-outline btn-sm" onclick="addVariantToPurchProduct('${p.uid}')" ${purchPosted ? 'disabled' : ''}>
+                            <i class="fas fa-plus"></i> إضافة تركيبة / لون / مقاس
+                        </button>
+                    </div>
+
+                    <div class="purch-metrics">
+                        <div class="purch-metric-chip">كمية الدفعة: <b>${totalBatchQty}</b></div>
+                        <div class="purch-metric-chip">قيمة المنتج: <b>₪${totalBatchCost.toFixed(2)}</b></div>
+                        <div class="purch-metric-chip">عدد التركيبات: <b>${p.variants.length}</b></div>
+                    </div>
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
+function calcPurchTotals() {
+    let totalItems = purchActiveItems.length;
+    let totalQty = 0;
+    let totalAmount = 0;
+
+    purchActiveItems.forEach(p => {
+        p.variants.forEach(v => {
+            const q = Number(v.qty || 0);
+            const c = Number(v.cost || 0);
+            totalQty += q;
+            totalAmount += (q * c);
+        });
+    });
+
+    const paidInput = document.getElementById('purchPaid');
+    const paid = Math.max(0, parseFloat(paidInput ? paidInput.value : 0) || 0);
+    const remaining = Math.max(0, totalAmount - paid);
+
+    const cView = document.getElementById('purchCountView');
+    const qView = document.getElementById('purchQtyTotalView');
+    const tView = document.getElementById('purchTotalView');
+    const pView = document.getElementById('purchPaidView');
+    const rView = document.getElementById('purchRemainingView');
+
+    if (cView) cView.textContent = totalItems;
+    if (qView) qView.textContent = totalQty;
+    if (tView) tView.textContent = '₪' + totalAmount.toFixed(2);
+    if (pView) pView.textContent = '₪' + paid.toFixed(2);
+    if (rView) rView.textContent = '₪' + remaining.toFixed(2);
+
+    return { totalItems, totalQty, totalAmount, paid, remaining };
+}
+
+function savePurchDraft(silent = false) {
+    if (purchPosted) return;
+    const draftData = {
+        invoiceId: purchActiveInvoiceId,
+        supplier: document.getElementById('purchSupplier')?.value || '',
+        invoiceNo: document.getElementById('purchInvoiceNo')?.value || '',
+        date: document.getElementById('purchDate')?.value || '',
+        method: document.getElementById('purchMethod')?.value || 'cash',
+        paid: document.getElementById('purchPaid')?.value || 0,
+        note: document.getElementById('purchNote')?.value || '',
+        bankName: document.getElementById('purchBankName')?.value || '',
+        bankAccount: document.getElementById('purchBankAccount')?.value || '',
+        bankRef: document.getElementById('purchBankRef')?.value || '',
+        items: purchActiveItems,
+        savedAt: new Date().toISOString()
+    };
+
+    localStorage.setItem('clothing_store_purch_draft', JSON.stringify(draftData));
+    const statusBadge = document.getElementById('purchSaveStatus');
+    if (statusBadge) {
+        statusBadge.className = 'purch-status-badge saved';
+        statusBadge.innerHTML = '<i class="fas fa-check"></i> تم حفظ المسودة محلياً';
+    }
+    renderPurchDraftBox();
+    if (!silent) showToast('تم حفظ مسودة الفاتورة');
+}
+
+function loadPurchDraft() {
+    const raw = localStorage.getItem('clothing_store_purch_draft');
+    if (!raw) return false;
+    try {
+        const d = JSON.parse(raw);
+        if (!d || !d.items) return false;
+        purchActiveInvoiceId = d.invoiceId || purchActiveInvoiceId;
+        if (document.getElementById('purchSupplier')) document.getElementById('purchSupplier').value = d.supplier || '';
+        if (document.getElementById('purchInvoiceNo')) document.getElementById('purchInvoiceNo').value = d.invoiceNo || '';
+        if (document.getElementById('purchDate')) document.getElementById('purchDate').value = d.date || '';
+        if (document.getElementById('purchMethod')) document.getElementById('purchMethod').value = d.method || 'cash';
+        if (document.getElementById('purchPaid')) document.getElementById('purchPaid').value = d.paid || 0;
+        if (document.getElementById('purchNote')) document.getElementById('purchNote').value = d.note || '';
+        if (document.getElementById('purchBankName')) document.getElementById('purchBankName').value = d.bankName || '';
+        if (document.getElementById('purchBankAccount')) document.getElementById('purchBankAccount').value = d.bankAccount || '';
+        if (document.getElementById('purchBankRef')) document.getElementById('purchBankRef').value = d.bankRef || '';
+
+        const bankBox = document.getElementById('purchBankDetailsBox');
+        if (bankBox) {
+            bankBox.style.display = (d.method === 'bank' ? 'block' : 'none');
+        }
+
+        purchActiveItems = d.items || [];
+        purchPosted = false;
+
+        const statusBadge = document.getElementById('purchSaveStatus');
+        if (statusBadge) {
+            statusBadge.className = 'purch-status-badge saved';
+            statusBadge.innerHTML = '<i class="fas fa-history"></i> تم استرجاع المسودة';
+        }
+
+        renderPurchProducts();
+        calcPurchTotals();
+        renderPurchDraftBox();
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function discardPurchDraft() {
+    if (!confirm('هل تريد حذف المسودة المحلية والبدء من جديد؟')) return;
+    localStorage.removeItem('clothing_store_purch_draft');
+    startNewPurchInvoice();
+    showToast('تم حذف المسودة المحلية');
+}
+
+function renderPurchDraftBox() {
+    const box = document.getElementById('purchDraftListView');
+    if (!box) return;
+    const raw = localStorage.getItem('clothing_store_purch_draft');
+    if (!raw) {
+        box.innerHTML = 'لا توجد مسودة محفوظة.';
+        return;
+    }
+    try {
+        const d = JSON.parse(raw);
+        box.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <div>
+                    <strong style="display:block;color:var(--dark);">${d.invoiceNo || 'فاتورة بدون رقم'}</strong>
+                    <small style="color:var(--gray);">${d.supplier || 'لم يحدد المورد'} · ${d.date || ''}</small>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="loadPurchDraft();showToast('تم استرجاع المسودة');">
+                    استكمال
+                </button>
+            </div>
+        `;
+    } catch (e) {
+        box.innerHTML = 'تعذر قراءة المسودة.';
+    }
+}
+
+function startNewPurchInvoice() {
+    purchActiveItems = [];
+    purchPosted = false;
+    purchActiveInvoiceId = 'INV-' + Math.floor(Math.random() * 9000 + 1000);
+
+    if (document.getElementById('purchSupplier')) document.getElementById('purchSupplier').value = '';
+    if (document.getElementById('purchInvoiceNo')) document.getElementById('purchInvoiceNo').value = 'SUP-' + Math.floor(Math.random() * 9000 + 1000);
+    if (document.getElementById('purchDate')) document.getElementById('purchDate').value = new Date().toISOString().slice(0, 10);
+    if (document.getElementById('purchMethod')) document.getElementById('purchMethod').value = 'cash';
+    if (document.getElementById('purchPaid')) document.getElementById('purchPaid').value = '0';
+    if (document.getElementById('purchNote')) document.getElementById('purchNote').value = '';
+    if (document.getElementById('purchBankName')) document.getElementById('purchBankName').value = '';
+    if (document.getElementById('purchBankAccount')) document.getElementById('purchBankAccount').value = '';
+    if (document.getElementById('purchBankRef')) document.getElementById('purchBankRef').value = '';
+    const bBox = document.getElementById('purchBankDetailsBox');
+    if (bBox) bBox.style.display = 'none';
+
+    const statusBadge = document.getElementById('purchSaveStatus');
+    if (statusBadge) {
+        statusBadge.className = 'purch-status-badge';
+        statusBadge.innerHTML = 'مسودة — غير معتمدة';
+    }
+
+    renderPurchProducts();
+    calcPurchTotals();
+    renderPurchDraftBox();
+}
+
+function loadPurchDemo() {
+    purchPosted = false;
+    purchActiveInvoiceId = 'DEMO-1258';
+
+    const supSel = document.getElementById('purchSupplier');
+    if (supSel) {
+        supSel.value = 'شركة الملابس المتحدة';
+    }
+
+    if (document.getElementById('purchInvoiceNo')) document.getElementById('purchInvoiceNo').value = 'SUP-1258';
+    if (document.getElementById('purchDate')) document.getElementById('purchDate').value = new Date().toISOString().slice(0, 10);
+    if (document.getElementById('purchMethod')) document.getElementById('purchMethod').value = 'partial';
+    if (document.getElementById('purchPaid')) document.getElementById('purchPaid').value = 250;
+    if (document.getElementById('purchNote')) document.getElementById('purchNote').value = 'فاتورة تجريبية تضم منتجات موجودة وجديدة';
+
+    purchActiveItems = [
+        {
+            uid: 'UID-demo-1',
+            catalogId: 1,
+            name: 'تيشيرت Nike',
+            code: 'NK-100',
+            category: 'ملابس رجالية',
+            retail: 50,
+            min: 40,
+            mode: 'both',
+            isNew: false,
+            variants: [
+                { color: 'أحمر', hex: '#e34b54', size: 'M', stock: 7, avg: 18, qty: 5, cost: 20 },
+                { color: 'أحمر', hex: '#e34b54', size: 'L', stock: 4, avg: 18.5, qty: 3, cost: 21 },
+                { color: 'أحمر', hex: '#e34b54', size: 'XL', stock: 2, avg: 19, qty: 0, cost: 0 },
+                { color: 'أسود', hex: '#222831', size: 'M', stock: 9, avg: 17, qty: 0, cost: 0 },
+                { color: 'أسود', hex: '#222831', size: 'L', stock: 6, avg: 17.5, qty: 0, cost: 0 },
+                { color: 'أسود', hex: '#222831', size: 'XL', stock: 3, avg: 18, qty: 0, cost: 0 }
+            ]
+        },
+        {
+            uid: 'UID-demo-2',
+            catalogId: null,
+            name: 'جاكيت شتوي بريميوم',
+            code: 'JK-2026',
+            category: 'ملابس رجالية',
+            retail: 120,
+            min: 95,
+            mode: 'both',
+            isNew: true,
+            variants: [
+                { color: 'أزرق', hex: '#3b82f6', size: 'M', stock: 0, avg: 0, qty: 6, cost: 48 },
+                { color: 'أزرق', hex: '#3b82f6', size: 'L', stock: 0, avg: 0, qty: 4, cost: 50 },
+                { color: 'أسود', hex: '#222831', size: 'M', stock: 0, avg: 0, qty: 3, cost: 47 }
+            ]
+        }
+    ];
+
+    renderPurchProducts();
+    calcPurchTotals();
+    savePurchDraft(true);
+    showToast('تم تحميل مثال الفاتورة بنجاح!');
+}
+
+function exportPurchJSON() {
+    const t = calcPurchTotals();
+    const invoiceData = {
+        invoiceId: purchActiveInvoiceId,
+        supplier: document.getElementById('purchSupplier')?.value || '',
+        invoiceNo: document.getElementById('purchInvoiceNo')?.value || '',
+        date: document.getElementById('purchDate')?.value || '',
+        method: document.getElementById('purchMethod')?.value || '',
+        paid: t.paid,
+        remaining: t.remaining,
+        totals: t,
+        items: purchActiveItems,
+        exportedAt: new Date().toISOString()
+    };
+
+    const blob = new Blob([JSON.stringify(invoiceData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `purchase-invoice-${invoiceData.invoiceNo || 'draft'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('تم تصدير ملف الفاتورة بنجاح');
+}
+
+function requestConfirmPurchInvoice() {
+    const sup = document.getElementById('purchSupplier')?.value || '';
+    const invNo = (document.getElementById('purchInvoiceNo')?.value || '').trim();
+    if (!sup) {
+        showToast('يرجى اختيار المورد أولاً', 'error');
+        return;
+    }
+    if (!invNo) {
+        showToast('يرجى إدخال رقم فاتورة المورد', 'error');
+        return;
+    }
+    const t = calcPurchTotals();
+    if (purchActiveItems.length === 0 || t.totalQty <= 0) {
+        showToast('يرجى إدخال كمية لمنتج واحد على الأقل', 'error');
+        return;
+    }
+    if (t.paid > t.totalAmount) {
+        showToast('المبلغ المدفوع لا يمكن أن يتجاوز إجمالي الفاتورة', 'error');
+        return;
+    }
+
+    let missingCost = false;
+    purchActiveItems.forEach(p => {
+        p.variants.forEach(v => {
+            if (Number(v.qty) > 0 && (!v.cost || Number(v.cost) <= 0)) {
+                missingCost = true;
+            }
+        });
+    });
+    if (missingCost) {
+        showToast('يرجى تحديد سعر الشراء لكل صنف تم إدخال كمية له', 'error');
+        return;
+    }
+
+    openModal('purchConfirmModal');
+}
+
+function postPurchInvoice() {
+    closeModal('purchConfirmModal');
+    const sup = document.getElementById('purchSupplier')?.value || 'مورد عام';
+    const invNo = (document.getElementById('purchInvoiceNo')?.value || '').trim();
+    const date = document.getElementById('purchDate')?.value || new Date().toISOString().slice(0, 10);
+    const method = document.getElementById('purchMethod')?.value || 'cash';
+    const note = (document.getElementById('purchNote')?.value || '').trim();
+    const t = calcPurchTotals();
+
+    const products = getProducts();
     const purchases = getPurchases();
+    let maxProdId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
+    let maxPurchId = purchases.length > 0 ? Math.max(...purchases.map(p => p.id)) : 0;
 
-    if (editingId) {
-        const index = purchases.findIndex(x => x.id === parseInt(editingId));
-        if (index !== -1) {
-            purchases[index] = {
-                ...purchases[index],
-                product_id: productId,
-                product_name: p.name,
-                size: p.size,
+    purchActiveItems.forEach(item => {
+        item.variants.forEach(v => {
+            const qty = Number(v.qty || 0);
+            const cost = Number(v.cost || 0);
+            if (qty <= 0) return;
+
+            let prodRecord = products.find(p =>
+                (p.name || '').toLowerCase() === (item.name || '').toLowerCase() &&
+                (v.size ? p.size === v.size : true) &&
+                (v.color ? p.color === v.color : true)
+            );
+
+            if (!prodRecord) {
+                maxProdId++;
+                prodRecord = {
+                    id: maxProdId,
+                    code: item.code || '#' + (100 + maxProdId),
+                    name: item.name,
+                    category: item.category || 'عام',
+                    size: v.size || '',
+                    color: v.color || '',
+                    base_cost: cost,
+                    price: Number(item.retail) || (cost * 1.5),
+                    image: null
+                };
+                products.push(prodRecord);
+            } else {
+                if (item.retail && Number(item.retail) > 0) {
+                    prodRecord.price = Number(item.retail);
+                }
+                prodRecord.base_cost = cost;
+            }
+
+            maxPurchId++;
+            purchases.push({
+                id: maxPurchId,
+                invoice_id: invNo,
+                product_id: prodRecord.id,
+                product_name: prodRecord.name,
+                size: prodRecord.size || '',
                 quantity: qty,
                 unit_cost: cost,
                 total_cost: qty * cost,
-                supplier,
-                note,
-                updated_at: new Date().toISOString(),
-            };
-        }
-        showToast('✅ تم تعديل الفاتورة');
-    } else {
-        if (IS_DEMO && purchases.length >= DEMO_LIMITS.purchases) {
-            showDemoLimit('فاتورة توريد', DEMO_LIMITS.purchases);
-            return;
-        }
-
-        purchases.push({
-            id: purchases.length > 0 ? Math.max(...purchases.map(x => x.id)) + 1 : 1,
-            product_id: productId,
-            product_name: p.name,
-            size: p.size,
-            quantity: qty,
-            unit_cost: cost,
-            total_cost: qty * cost,
-            supplier,
-            note,
-            created_at: new Date().toISOString(),
+                supplier: sup,
+                payment_method: method,
+                bank_name: (document.getElementById('purchBankName')?.value || '').trim() || null,
+                bank_account: (document.getElementById('purchBankAccount')?.value || '').trim() || null,
+                bank_ref: (document.getElementById('purchBankRef')?.value || '').trim() || null,
+                note: note || `توريد من فاتورة ${invNo}`,
+                created_at: new Date(date).toISOString()
+            });
         });
-        showToast('✅ تم تسجيل التوريد');
-    }
+    });
 
+    saveProducts(products);
     savePurchases(purchases);
 
-    document.getElementById('restockProduct').value = '';
-    document.getElementById('restockProduct').dataset.editingId = '';
-    ['restockQty', 'restockCost', 'restockSupplier', 'restockNote'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-    document.getElementById('restockCurrentInfo').textContent = '';
-    document.getElementById('restockPreview').style.display = 'none';
+    const merchants = typeof getMerchants === 'function' ? getMerchants() : [];
+    let merchant = merchants.find(m => m.name === sup);
+    if (!merchant && sup) {
+        let maxMId = merchants.length > 0 ? Math.max(...merchants.map(m => m.id)) : 0;
+        merchant = { id: maxMId + 1, name: sup, phone: '', balance: 0 };
+        merchants.push(merchant);
+        if (typeof saveMerchants === 'function') saveMerchants(merchants);
+    }
+
+    if (sup && typeof getMerchantTransactions === 'function' && typeof saveMerchantTransactions === 'function') {
+        const txs = getMerchantTransactions();
+        let maxTxId = txs.length > 0 ? Math.max(...txs.map(x => x.id)) : 0;
+
+        maxTxId++;
+        txs.push({
+            id: maxTxId,
+            merchant_name: sup,
+            type: 'invoice',
+            reference: invNo,
+            amount: t.totalAmount,
+            note: note || `فاتورة مشتريات #${invNo}`,
+            created_at: new Date(date).toISOString()
+        });
+
+        if (t.paid > 0) {
+            maxTxId++;
+            txs.push({
+                id: maxTxId,
+                merchant_name: sup,
+                type: 'payment',
+                reference: 'PAY-' + invNo,
+                amount: t.paid,
+                note: `دفعة لفاتورة مشتريات #${invNo}`,
+                created_at: new Date(date).toISOString()
+            });
+        }
+        saveMerchantTransactions(txs);
+    }
+
+    localStorage.removeItem('clothing_store_purch_draft');
+    purchPosted = true;
+
+    showToast('🎉 تم اعتماد فاتورة المشتريات وتحديث المخزون بنجاح!', 'success');
 
     fillAllDropdowns();
+    fillPurchSuppliers();
     loadPurchasesTable();
     loadInventoryTable();
     loadPosProducts();
     loadDashboard();
+    loadReports();
+
+    setTimeout(() => {
+        startNewPurchInvoice();
+    }, 1200);
 }
 
-function editPurchase(id) {
-    const purchase = getPurchases().find(p => p.id === id);
-    if (!purchase) return;
-
-    document.getElementById('restockProduct').value = purchase.product_id;
-    document.getElementById('restockQty').value = purchase.quantity;
-    document.getElementById('restockCost').value = purchase.unit_cost;
-    document.getElementById('restockSupplier').value = purchase.supplier || '';
-    document.getElementById('restockNote').value = purchase.note || '';
-    document.getElementById('restockProduct').dataset.editingId = id;
-
-    onRestockProductChange();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast('وضع تعديل الفاتورة #' + id, 'warning');
-}
-
-function deletePurchase(id) {
-    const p = getPurchases().find(x => x.id === id);
-    if (!p) return;
-
-    if (!confirm(`حذف فاتورة التوريد #${p.id}؟\n\nسيتم إعادة حساب المخزون.`)) return;
-
-    savePurchases(getPurchases().filter(x => x.id !== id));
+function deletePurchaseInvoice(invId) {
+    if (!confirm('هل أنت متأكد من حذف هذه الفاتورة بالكامل؟ سيتم إعادة حساب المخزون.')) return;
+    
+    const purchases = getPurchases().filter(p => (p.invoice_id || 'OLD-' + p.id) !== invId);
+    savePurchases(purchases);
+    
     showToast('✅ تم حذف الفاتورة');
     fillAllDropdowns();
     loadPurchasesTable();
@@ -1616,25 +2745,46 @@ function deletePurchase(id) {
 
 function loadPurchasesTable() {
     const tbody = document.getElementById('purchasesTableBody');
-    const purchases = getPurchases().slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+    if (!tbody) return;
+    
+    const purchases = getPurchases();
+    
     if (purchases.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty">لا توجد مشتريات</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">لا توجد مشتريات</td></tr>';
         return;
     }
 
-    tbody.innerHTML = purchases.map((p, i) => `
+    const invoicesMap = {};
+    purchases.forEach(p => {
+        const invId = p.invoice_id || 'OLD-' + p.id; 
+        if (!invoicesMap[invId]) {
+            invoicesMap[invId] = {
+                id: invId,
+                date: p.created_at,
+                supplier: p.supplier || '-',
+                note: p.note || '',
+                itemsCount: 0,
+                totalQty: 0,
+                totalCost: 0
+            };
+        }
+        invoicesMap[invId].itemsCount++;
+        invoicesMap[invId].totalQty += Number(p.quantity);
+        invoicesMap[invId].totalCost += Number(p.total_cost);
+    });
+
+    const invoices = Object.values(invoicesMap).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    tbody.innerHTML = invoices.map((inv, i) => `
         <tr>
-            <td>${purchases.length - i}</td>
-            <td style="font-size:.8rem;">${new Date(p.created_at).toLocaleDateString('ar-EG')}</td>
-            <td><strong>${p.product_name}</strong> ${p.size ? `(${p.size})` : ''}</td>
-            <td><span class="badge success">${p.quantity}</span></td>
-            <td>₪${Number(p.unit_cost).toFixed(2)}</td>
-            <td><strong>₪${Number(p.total_cost).toFixed(2)}</strong></td>
-            <td>${p.supplier || '-'}</td>
+            <td>${invoices.length - i}</td>
+            <td style="font-size:.8rem;">${new Date(inv.date).toLocaleDateString('ar-EG')}</td>
+            <td><strong>${inv.supplier}</strong> <br><small style="color:var(--gray); font-size:0.75rem;">${inv.note}</small></td>
+            <td><span class="badge primary">${inv.itemsCount} أصناف</span></td>
+            <td><span class="badge success">${inv.totalQty} قطع</span></td>
+            <td><strong style="color:var(--primary);">₪${inv.totalCost.toFixed(2)}</strong></td>
             <td>
-                <button class="btn-icon" onclick="editPurchase(${p.id})" title="تعديل"><i class="fas fa-edit"></i></button>
-                <button class="btn-icon danger" onclick="deletePurchase(${p.id})" title="حذف"><i class="fas fa-trash"></i></button>
+                <button class="btn-icon danger" onclick="deletePurchaseInvoice('${inv.id}')" title="حذف الفاتورة بالكامل"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
     `).join('');
@@ -2245,16 +3395,16 @@ function deleteExpense(type, id) {
 let topChart = null;
 
 function loadReports() {
-    const accrued = getAccruedRevenue();
+    const actualRevenue = getActualRevenue();
     const cash = getCashRevenue();
     const receivables = getReceivables();
-    const debtSales = getDebtSalesRevenue();
+    const debtPayments = getDebtPaymentsReceived();
 
     const cogs = getCOGS();
     const expenses = getTotalExpenses();
-    const netProfit = accrued - cogs - expenses.total;
+    const netProfit = getNetProfit();
 
-    document.getElementById('repRevenue').textContent = '₪' + accrued.toFixed(2);
+    document.getElementById('repRevenue').textContent = '₪' + actualRevenue.toFixed(2);
     document.getElementById('repCOGS').textContent = '₪' + cogs.toFixed(2);
     document.getElementById('repExpenses').textContent = '₪' + expenses.total.toFixed(2);
     document.getElementById('repNetProfit').textContent = '₪' + netProfit.toFixed(2);
@@ -2262,8 +3412,8 @@ function loadReports() {
     if (document.getElementById('repCashRevenue')) {
         document.getElementById('repCashRevenue').textContent = '₪' + cash.toFixed(2);
     }
-    if (document.getElementById('repDebtSales')) {
-        document.getElementById('repDebtSales').textContent = '₪' + debtSales.toFixed(2);
+    if (document.getElementById('repDebtPayments')) {
+        document.getElementById('repDebtPayments').textContent = '₪' + debtPayments.toFixed(2);
     }
     if (document.getElementById('repReceivables')) {
         document.getElementById('repReceivables').textContent = '₪' + receivables.toFixed(2);
@@ -2313,7 +3463,108 @@ function loadReports() {
 }
 
 /* ============================================
-   25. بدء التشغيل
+   25. طلبات الموقع (Online Orders) - محاكاة
+   ============================================ */
+let mockOnlineOrders = [];
+
+function simulateNewOnlineOrder() {
+    const products = getProducts();
+    if(products.length === 0) {
+        showToast('يجب إضافة منتجات للمخزون أولاً', 'error');
+        return;
+    }
+    const p = products[Math.floor(Math.random() * products.length)];
+    const qty = Math.floor(Math.random() * 3) + 1;
+    
+    mockOnlineOrders.push({
+        id: 'WEB-' + Math.floor(Math.random() * 90000 + 10000),
+        date: new Date().toISOString(),
+        customer: 'زبون تجريبي',
+        productName: p.name,
+        quantity: qty,
+        total: qty * Number(p.price),
+        status: 'pending' // pending, accepted, rejected
+    });
+    
+    showToast('تم استقبال طلب جديد من الموقع!');
+    updateOnlineOrdersBadge();
+    renderOnlineOrders();
+}
+
+function updateOnlineOrdersBadge() {
+    const badge = document.getElementById('onlineOrdersBadge');
+    if(!badge) return;
+    
+    const pendingCount = mockOnlineOrders.filter(o => o.status === 'pending').length;
+    if (pendingCount > 0) {
+        badge.textContent = pendingCount;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function acceptOnlineOrder(index) {
+    if(!confirm('هل تريد الموافقة على هذا الطلب وتحويله للكاشير؟')) return;
+    
+    const order = mockOnlineOrders[index];
+    order.status = 'accepted';
+    showToast('تم الموافقة على الطلب! يرجى تحضيره.');
+    updateOnlineOrdersBadge();
+    renderOnlineOrders();
+    // Here you would typically send the order to POS cart or automatically register a sale
+}
+
+function rejectOnlineOrder(index) {
+    if(!confirm('هل تريد رفض هذا الطلب؟')) return;
+    
+    mockOnlineOrders[index].status = 'rejected';
+    showToast('تم رفض الطلب', 'warning');
+    updateOnlineOrdersBadge();
+    renderOnlineOrders();
+}
+
+function renderOnlineOrders() {
+    const tbody = document.getElementById('onlineOrdersTableBody');
+    if(!tbody) return;
+    
+    if (mockOnlineOrders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">لا توجد طلبات جديدة حالياً</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = mockOnlineOrders.slice().reverse().map((o, i) => {
+        const realIndex = mockOnlineOrders.length - 1 - i;
+        let statusBadge = '<span class="badge warning">قيد الانتظار</span>';
+        let actions = `
+            <button class="btn-icon success" onclick="acceptOnlineOrder(${realIndex})" title="قبول الطلب"><i class="fas fa-check"></i></button>
+            <button class="btn-icon danger" onclick="rejectOnlineOrder(${realIndex})" title="رفض الطلب"><i class="fas fa-times"></i></button>
+        `;
+        
+        if (o.status === 'accepted') {
+            statusBadge = '<span class="badge success">مقبول</span>';
+            actions = '<span style="color:var(--success);font-size:.8rem;"><i class="fas fa-check-double"></i> تم المعالجة</span>';
+        } else if (o.status === 'rejected') {
+            statusBadge = '<span class="badge danger">مرفوض</span>';
+            actions = '<span style="color:var(--danger);font-size:.8rem;"><i class="fas fa-ban"></i> ملغى</span>';
+        }
+
+        return `
+            <tr>
+                <td><strong>${o.id}</strong></td>
+                <td style="font-size:.8rem;">${new Date(o.date).toLocaleString('ar-EG', { dateStyle:'short', timeStyle:'short' })}</td>
+                <td>${o.customer}</td>
+                <td>${o.productName} <span class="badge primary">x${o.quantity}</span></td>
+                <td><strong>₪${o.total.toFixed(2)}</strong></td>
+                <td>${statusBadge}</td>
+                <td>${actions}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+/* ============================================
+   26. بدء التشغيل
    ============================================ */
 document.addEventListener('DOMContentLoaded', () => {
     const user = getCurrentUser();
