@@ -71,6 +71,7 @@ function startApp() {
     buildSidebar();
     showDemoBanner();
     fillAllDropdowns();
+    initTopBarAndNotifications();
 
     loadDashboard();
     loadInventoryTable();
@@ -225,6 +226,7 @@ function switchScreen(screenId) {
     if (screenId === 'expenses') loadExpensesTable();
     if (screenId === 'reports') loadReports();
 
+    if (typeof updateNotifications === 'function') updateNotifications();
     if (window.innerWidth < 768) closeSidebar();
     window.scrollTo(0, 0);
 }
@@ -3926,4 +3928,394 @@ document.addEventListener('click', (e) => {
     if (e.target && e.target.classList && e.target.classList.contains('modal-overlay')) {
         e.target.classList.remove('show');
     }
+    const notifDropdown = document.getElementById('notifDropdown');
+    const notifBtnDesk = document.getElementById('notifBellBtn');
+    const notifBtnMob = document.getElementById('notifBellBtnMobile');
+    if (notifDropdown && notifDropdown.classList.contains('show')) {
+        if (!notifDropdown.contains(e.target) &&
+            (!notifBtnDesk || !notifBtnDesk.contains(e.target)) &&
+            (!notifBtnMob || !notifBtnMob.contains(e.target))) {
+            notifDropdown.classList.remove('show');
+        }
+    }
 });
+
+
+/* ============================================
+   نظام جرس التنبيهات الذكي والشريط العلوي
+   ============================================ */
+let currentNotifFilterTab = 'all';
+
+function getDismissedNotifIds() {
+    try {
+        return JSON.parse(localStorage.getItem('store_dismissed_notifs_v6') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveDismissedNotifIds(ids) {
+    try {
+        localStorage.setItem('store_dismissed_notifs_v6', JSON.stringify(ids));
+    } catch (e) {}
+}
+
+function getReadNotifIds() {
+    try {
+        return JSON.parse(localStorage.getItem('store_read_notifs_v6') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveReadNotifIds(ids) {
+    try {
+        localStorage.setItem('store_read_notifs_v6', JSON.stringify(ids));
+    } catch (e) {}
+}
+
+function initTopBarAndNotifications() {
+    // 1. تحديث التاريخ في الشريط العلوي
+    const dateEl = document.getElementById('topbarDate');
+    if (dateEl) {
+        try {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            dateEl.innerHTML = `<i class="far fa-calendar-alt"></i> ${dateStr}`;
+        } catch (e) {
+            dateEl.innerHTML = `<i class="far fa-calendar-alt"></i> ${new Date().toLocaleDateString('ar-EG')}`;
+        }
+    }
+
+    // 2. تحديث معلومات المستخدم في التوب بار
+    const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const nameEl = document.getElementById('topbarUserName');
+    const avatarEl = document.getElementById('topbarUserAvatar');
+    if (user && nameEl) nameEl.textContent = user.name;
+    if (user && avatarEl) avatarEl.textContent = user.name.charAt(0);
+
+    // 3. تحديث التنبيهات
+    updateNotifications();
+}
+
+function getStoreNotificationsList() {
+    const list = [];
+    const dismissedIds = getDismissedNotifIds();
+    const readIds = getReadNotifIds();
+
+    // أ. منتجات نفدت كميتها تماماً
+    if (typeof getOutOfStockProducts === 'function') {
+        const outProds = getOutOfStockProducts();
+        outProds.forEach(p => {
+            const id = 'stock-out-' + p.id;
+            if (!dismissedIds.includes(id)) {
+                list.push({
+                    id: id,
+                    type: 'stock',
+                    severity: 'danger',
+                    icon: 'fas fa-ban',
+                    tag: 'نفاد المخزون',
+                    title: `نفاد الكمية: ${p.name}`,
+                    desc: `المقاس: ${p.size || 'عادي'} | اللون: ${p.color || 'عام'} - الرصيد الحالي 0 قطعة`,
+                    actionText: 'طلب توريد',
+                    actionCode: "switchScreen('inventory'); closeNotifDropdown();",
+                    time: 'عاجل',
+                    isRead: readIds.includes(id)
+                });
+            }
+        });
+    }
+
+    // ب. منتجات مخزونها منخفض (أوشكت على النفاد)
+    if (typeof getProducts === 'function' && typeof getProductQuantity === 'function') {
+        const threshold = (typeof LOW_STOCK !== 'undefined') ? LOW_STOCK : 5;
+        const lowProds = getProducts().filter(p => {
+            const q = getProductQuantity(p.id);
+            return q > 0 && q <= threshold;
+        });
+
+        lowProds.forEach(p => {
+            const id = 'stock-low-' + p.id;
+            if (!dismissedIds.includes(id)) {
+                const q = getProductQuantity(p.id);
+                list.push({
+                    id: id,
+                    type: 'stock',
+                    severity: 'warning',
+                    icon: 'fas fa-exclamation-triangle',
+                    tag: 'مخزون منخفض',
+                    title: `أوشك على النفاد: ${p.name}`,
+                    desc: `المقاس: ${p.size || 'عادي'} | اللون: ${p.color || 'عام'} - المتبقي: ${q} قطع فقط`,
+                    actionText: 'طلب توريد',
+                    actionCode: "switchScreen('inventory'); closeNotifDropdown();",
+                    time: 'تنبيه',
+                    isRead: readIds.includes(id)
+                });
+            }
+        });
+    }
+
+    // ج. ديون العملاء المستحقة
+    if (typeof getCustomerDebtSummary === 'function') {
+        const debts = getCustomerDebtSummary();
+        Object.values(debts).filter(c => c.balance > 0.01).forEach(c => {
+            const id = 'debt-' + encodeURIComponent(c.name);
+            if (!dismissedIds.includes(id)) {
+                list.push({
+                    id: id,
+                    type: 'debts',
+                    severity: 'danger',
+                    icon: 'fas fa-hand-holding-usd',
+                    tag: 'دين عميل',
+                    title: `دين مستحق: ${c.name}`,
+                    desc: `المتبقي بذمته: ₪${c.balance.toFixed(2)}${c.phone ? ' | هاتف: ' + c.phone : ''}`,
+                    actionText: 'متابعة الدين',
+                    actionCode: "switchScreen('debts'); closeNotifDropdown();",
+                    time: 'مستحق',
+                    isRead: readIds.includes(id)
+                });
+            }
+        });
+    }
+
+    // د. طلبات الموقع الإلكتروني قيد الانتظار
+    if (typeof mockOnlineOrders !== 'undefined' && Array.isArray(mockOnlineOrders)) {
+        mockOnlineOrders.filter(o => o.status === 'pending').forEach(o => {
+            const id = 'order-' + o.id;
+            if (!dismissedIds.includes(id)) {
+                list.push({
+                    id: id,
+                    type: 'orders',
+                    severity: 'info',
+                    icon: 'fas fa-shopping-bag',
+                    tag: 'طلب إلكتروني',
+                    title: `طلب موقع معلق #${o.id}`,
+                    desc: `العميل: ${o.customer} | الصنف: ${o.productName} (x${o.quantity}) | الإجمالي: ₪${Number(o.total).toFixed(2)}`,
+                    actionText: 'معالجة الطلب',
+                    actionCode: "switchScreen('online-orders'); closeNotifDropdown();",
+                    time: 'جديد',
+                    isRead: readIds.includes(id)
+                });
+            }
+        });
+    }
+
+    // هـ. منتجات بسعر بيع خاسر
+    if (typeof getLossProducts === 'function') {
+        const lossProds = getLossProducts();
+        lossProds.forEach(p => {
+            const id = 'loss-' + p.id;
+            if (!dismissedIds.includes(id)) {
+                const avgCost = typeof getProductAvgCost === 'function' ? getProductAvgCost(p.id) : 0;
+                list.push({
+                    id: id,
+                    type: 'stock',
+                    severity: 'warning',
+                    icon: 'fas fa-arrow-trend-down',
+                    tag: 'سعر غير مربح',
+                    title: `مراجعة السعر: ${p.name}`,
+                    desc: `سعر البيع ₪${p.price} يقل عن متوسط التكلفة ₪${avgCost.toFixed(2)}`,
+                    actionText: 'تعديل السعر',
+                    actionCode: "switchScreen('categories'); closeNotifDropdown();",
+                    time: 'تنبيه مالي',
+                    isRead: readIds.includes(id)
+                });
+            }
+        });
+    }
+
+    return list;
+}
+
+function updateNotifications() {
+    const list = getStoreNotificationsList();
+
+    // حساب غير المقروء
+    const unreadCount = list.filter(n => !n.isRead).length;
+
+    // 1. تحديث شارة الجرس للكمبيوتر والهاتف
+    const badgeDesktop = document.getElementById('notifBadge');
+    const badgeMobile = document.getElementById('notifBadgeMobile');
+    const bellBtnDesktop = document.getElementById('notifBellBtn');
+    const bellBtnMobile = document.getElementById('notifBellBtnMobile');
+
+    [badgeDesktop, badgeMobile].forEach(b => {
+        if (!b) return;
+        if (unreadCount > 0) {
+            b.textContent = unreadCount > 99 ? '+99' : unreadCount;
+            b.classList.add('show');
+        } else {
+            b.textContent = '0';
+            b.classList.remove('show');
+        }
+    });
+
+    [bellBtnDesktop, bellBtnMobile].forEach(btn => {
+        if (!btn) return;
+        if (unreadCount > 0) {
+            btn.classList.add('has-unread');
+        } else {
+            btn.classList.remove('has-unread');
+        }
+    });
+
+    // 2. تحديث عدادات التبويبات
+    const countPill = document.getElementById('notifCountPill');
+    if (countPill) countPill.textContent = `${list.length} تنبيه`;
+
+    const tabAllEl = document.getElementById('notifTabAll');
+    const tabStockEl = document.getElementById('notifTabStock');
+    const tabDebtsEl = document.getElementById('notifTabDebts');
+    const tabOrdersEl = document.getElementById('notifTabOrders');
+
+    if (tabAllEl) tabAllEl.textContent = list.length;
+    if (tabStockEl) tabStockEl.textContent = list.filter(n => n.type === 'stock').length;
+    if (tabDebtsEl) tabDebtsEl.textContent = list.filter(n => n.type === 'debts').length;
+    if (tabOrdersEl) tabOrdersEl.textContent = list.filter(n => n.type === 'orders').length;
+
+    // 3. عرض القائمة
+    renderNotifList(list);
+}
+
+function renderNotifList(allList = null) {
+    const listEl = document.getElementById('notifList');
+    if (!listEl) return;
+
+    const list = allList || getStoreNotificationsList();
+
+    let filtered = list;
+    if (currentNotifFilterTab !== 'all') {
+        filtered = list.filter(n => n.type === currentNotifFilterTab);
+    }
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = `
+            <div class="notif-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>لا توجد تنبيهات ${currentNotifFilterTab !== 'all' ? 'في هذا القسم' : 'حالياً'}</p>
+                <small>كل شيء يسير بسلاسة والمخزون والديون في حالة ممتازة!</small>
+            </div>
+        `;
+        return;
+    }
+
+    listEl.innerHTML = filtered.map(item => `
+        <div class="notif-item ${item.severity} ${item.isRead ? 'read' : 'unread'}">
+            <div class="notif-item-icon ${item.severity}">
+                <i class="${item.icon}"></i>
+            </div>
+            <div class="notif-item-content">
+                <div class="notif-item-top">
+                    <span class="notif-tag ${item.severity}">${item.tag}</span>
+                    <span class="notif-time">${item.time}</span>
+                </div>
+                <h6 class="notif-item-title">${item.title}</h6>
+                <p class="notif-item-desc">${item.desc}</p>
+                <div class="notif-item-footer">
+                    <button class="notif-item-btn" onclick="${item.actionCode}">
+                        ${item.actionText} <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button class="notif-dismiss-btn" onclick="dismissNotification('${item.id}', event)" title="إخفاء التنبيه">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleNotifDropdown(event) {
+    if (event) event.stopPropagation();
+    const dropdown = document.getElementById('notifDropdown');
+    if (!dropdown) return;
+
+    const isOpen = dropdown.classList.contains('show');
+    if (isOpen) {
+        closeNotifDropdown();
+    } else {
+        dropdown.classList.add('show');
+        updateNotifications();
+    }
+}
+
+function closeNotifDropdown() {
+    const dropdown = document.getElementById('notifDropdown');
+    if (dropdown) dropdown.classList.remove('show');
+}
+
+function filterNotifTab(tabName) {
+    currentNotifFilterTab = tabName;
+    document.querySelectorAll('.notif-tab').forEach(t => {
+        if (t.getAttribute('data-tab') === tabName) t.classList.add('active');
+        else t.classList.remove('active');
+    });
+    renderNotifList();
+}
+
+function dismissNotification(id, event) {
+    if (event) event.stopPropagation();
+    const dismissed = getDismissedNotifIds();
+    if (!dismissed.includes(id)) {
+        dismissed.push(id);
+        saveDismissedNotifIds(dismissed);
+    }
+    updateNotifications();
+    showToast('تم إخفاء التنبيه', 'info');
+}
+
+function markAllNotificationsAsRead() {
+    const list = getStoreNotificationsList();
+    const readIds = list.map(n => n.id);
+    saveReadNotifIds(readIds);
+    updateNotifications();
+    showToast('تم تحديد جميع التنبيهات كمقروءة', 'success');
+}
+
+function refreshNotifications() {
+    updateNotifications();
+    showToast('تم فحص وتحديث التنبيهات الآن');
+    playNotificationChime();
+}
+
+function playNotificationChime() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now);
+        gain1.gain.setValueAtTime(0.08, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.3);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, now + 0.12);
+        gain2.gain.setValueAtTime(0.1, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.45);
+    } catch (e) {}
+}
+
+window.initTopBarAndNotifications = initTopBarAndNotifications;
+window.getStoreNotificationsList = getStoreNotificationsList;
+window.updateNotifications = updateNotifications;
+window.renderNotifList = renderNotifList;
+window.toggleNotifDropdown = toggleNotifDropdown;
+window.closeNotifDropdown = closeNotifDropdown;
+window.filterNotifTab = filterNotifTab;
+window.dismissNotification = dismissNotification;
+window.markAllNotificationsAsRead = markAllNotificationsAsRead;
+window.refreshNotifications = refreshNotifications;
+window.playNotificationChime = playNotificationChime;

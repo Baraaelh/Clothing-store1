@@ -37,8 +37,16 @@
 <!-- ============ التطبيق ============ -->
 <div id="appScreen">
     <div class="mobile-header">
-        <h2>👕 متجر الأناقة</h2>
-        <button onclick="toggleSidebar()">☰</button>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="toggleSidebar()" class="mobile-toggle-btn" title="القائمة الرئيسية"><i class="fas fa-bars"></i></button>
+            <h2>👕 متجر الأناقة</h2>
+        </div>
+        <div class="mobile-header-actions" style="display:flex;align-items:center;gap:8px;">
+            <button class="notif-bell-btn mobile" id="notifBellBtnMobile" onclick="toggleNotifDropdown(event)" title="التنبيهات">
+                <i class="fas fa-bell"></i>
+                <span class="notif-badge" id="notifBadgeMobile">0</span>
+            </button>
+        </div>
     </div>
 
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -58,6 +66,85 @@
     </aside>
 
     <main class="main-content">
+        <!-- الشريط العلوي والتنبيهات (Topbar) -->
+        <header class="app-topbar">
+            <div class="topbar-right">
+                <div class="topbar-store-info">
+                    <span class="topbar-store-name"><i class="fas fa-store text-primary"></i> متجر الأناقة</span>
+                    <span class="topbar-branch-tag"><i class="fas fa-map-marker-alt"></i> الفرع الرئيسي</span>
+                    <span class="topbar-date" id="topbarDate"><i class="far fa-calendar-alt"></i> —</span>
+                </div>
+            </div>
+            <div class="topbar-left">
+                <!-- زر الكاشير السريع -->
+                <button class="topbar-quick-pos-btn" onclick="switchScreen('pos')" title="الانتقال السريع للكاشير">
+                    <i class="fas fa-cash-register"></i>
+                    <span>الكاشير السريع</span>
+                </button>
+
+                <!-- زر جرس التنبيهات مع القائمة المنسدلة -->
+                <div class="notif-dropdown-wrapper" id="notifWrapper">
+                    <button class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifDropdown(event)" title="التنبيهات والإشعارات">
+                        <i class="fas fa-bell"></i>
+                        <span class="notif-badge" id="notifBadge">0</span>
+                    </button>
+
+                    <!-- القائمة المنسدلة للتنبيهات -->
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-header">
+                            <div class="notif-header-title">
+                                <i class="fas fa-bell text-primary"></i>
+                                <strong>التنبيهات والإشعارات</strong>
+                                <span class="notif-count-pill" id="notifCountPill">0</span>
+                            </div>
+                            <div class="notif-header-actions">
+                                <button class="notif-action-btn" onclick="refreshNotifications()" title="تحديث">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button class="notif-action-btn" onclick="markAllNotificationsAsRead()" title="تحديد الكل كمقروء">
+                                    <i class="fas fa-check-double"></i>
+                                </button>
+                                <button class="notif-action-btn" onclick="closeNotifDropdown()" title="إغلاق">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="notif-tabs">
+                            <button class="notif-tab active" data-tab="all" onclick="filterNotifTab('all')">
+                                الكل <span class="notif-tab-badge" id="notifTabAll">0</span>
+                            </button>
+                            <button class="notif-tab" data-tab="stock" onclick="filterNotifTab('stock')">
+                                المخزون <span class="notif-tab-badge" id="notifTabStock">0</span>
+                            </button>
+                            <button class="notif-tab" data-tab="debts" onclick="filterNotifTab('debts')">
+                                الديون <span class="notif-tab-badge" id="notifTabDebts">0</span>
+                            </button>
+                            <button class="notif-tab" data-tab="orders" onclick="filterNotifTab('orders')">
+                                الطلبات <span class="notif-tab-badge" id="notifTabOrders">0</span>
+                            </button>
+                        </div>
+
+                        <div class="notif-list" id="notifList">
+                            <!-- يتم ملؤها ديناميكياً بواسطة JavaScript -->
+                        </div>
+
+                        <div class="notif-footer">
+                            <button class="notif-view-all-btn" onclick="switchScreen('dashboard'); closeNotifDropdown();">
+                                <i class="fas fa-chart-pie"></i> لوحة التحكم والتنبيهات العامة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شارة المستخدم في التوب بار -->
+                <div class="topbar-user-pill" onclick="switchScreen('dashboard')" title="حساب المستخدم">
+                    <div class="user-avatar-sm" id="topbarUserAvatar">م</div>
+                    <span class="user-name-sm" id="topbarUserName">محمد</span>
+                </div>
+            </div>
+        </header>
+
         <div id="demoBanner"></div>
 
         <!-- ============ لوحة التحكم ============ -->
