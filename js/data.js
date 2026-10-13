@@ -455,10 +455,24 @@ function showDemoLimit(feature, limit) {
     if (modal) modal.classList.add('show');
 }
 
+/* ============================================
+   النوافذ المنبثقة (Modals)
+   ============================================ */
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.add('show');
+    const firstInput = modal.querySelector('input:not([type="hidden"]), select');
+    if (firstInput) setTimeout(() => firstInput.focus(), 150);
+}
+window.openModal = openModal;
+
 function closeModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.classList.remove('show');
+    if (!modal) return;
+    modal.classList.remove('show');
 }
+window.closeModal = closeModal;
 
 /* ============================================
    تشغيل التهيئة

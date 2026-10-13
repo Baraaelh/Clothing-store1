@@ -1,3 +1,20 @@
+
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.add('show');
+    const firstInput = modal.querySelector('input:not([type="hidden"]), select');
+    if (firstInput) setTimeout(() => firstInput.focus(), 150);
+}
+window.openModal = openModal;
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.classList.remove('show');
+}
+window.closeModal = closeModal;
+
 /* ============================================
    نظام إدارة المتجر - طبقة الوظائف
    ============================================ */
@@ -999,6 +1016,160 @@ function updateCartPrice(productId, newPrice) {
     renderCart();
 }
 
+/* ============================================
+   مساعدات ألوان ومقاسات السلة في الكاشير
+   ============================================ */
+function getColorHex(color) {
+    if (!color) return '#64748b';
+    const c = String(color).trim().toLowerCase();
+    const map = {
+        'أبيض': '#f8fafc',
+        'ابيض': '#f8fafc',
+        'white': '#f8fafc',
+        'أسود': '#1e293b',
+        'اسود': '#1e293b',
+        'black': '#1e293b',
+        'أحمر': '#ef4444',
+        'احمر': '#ef4444',
+        'red': '#ef4444',
+        'أزرق': '#3b82f6',
+        'ازرق': '#3b82f6',
+        'blue': '#3b82f6',
+        'وردي': '#ec4899',
+        'زهري': '#ec4899',
+        'pink': '#ec4899',
+        'رمادي': '#94a3b8',
+        'رصاصي': '#94a3b8',
+        'gray': '#94a3b8',
+        'grey': '#94a3b8',
+        'أخضر': '#10b981',
+        'اخضر': '#10b981',
+        'green': '#10b981',
+        'أصفر': '#f59e0b',
+        'اصفر': '#f59e0b',
+        'yellow': '#f59e0b',
+        'برتقالي': '#f97316',
+        'orange': '#f97316',
+        'كحلي': '#1e3a8a',
+        'navy': '#1e3a8a',
+        'بني': '#78350f',
+        'brown': '#78350f',
+        'بيج': '#d7c4a3',
+        'beige': '#d7c4a3',
+        'بنفسجي': '#8b5cf6',
+        'موف': '#8b5cf6',
+        'purple': '#8b5cf6',
+        'خمري': '#881337',
+        'عنابي': '#881337',
+        'maroon': '#881337',
+        'سماوي': '#38bdf8',
+        'cyan': '#38bdf8',
+        'زيتي': '#4d7c0f',
+        'olive': '#4d7c0f',
+        'ذهبي': '#eab308',
+        'gold': '#eab308',
+        'فضي': '#cbd5e1',
+        'silver': '#cbd5e1',
+        'جينز': '#2563eb',
+        'خردلي': '#d97706',
+        'سكري': '#fef3c7',
+        'أوف وايت': '#fdfbf7',
+        'اوف وايت': '#fdfbf7',
+        'مشجر': '#06b6d4',
+        'كروهات': '#6366f1'
+    };
+    return map[c] || '#64748b';
+}
+
+function renderCartVariantChip(v, currentProductId, inColorGroup) {
+    const vStock = typeof getProductQuantity === 'function' ? getProductQuantity(v.id) : 0;
+    const isCurrent = (v.id === currentProductId);
+    const isOut = vStock <= 0;
+    const sizeLabel = v.size ? `مقاس ${v.size}` : 'عادي';
+    const label = inColorGroup ? sizeLabel : `${v.color || 'عام'} - ${sizeLabel}`;
+    const stockClass = isOut ? 'out' : (vStock <= 3 ? 'low' : 'ok');
+    const stockText = isOut ? 'نفد (0)' : `${vStock} متوفر`;
+
+    return `
+        <div class="cart-variant-chip ${isCurrent ? 'current' : ''} ${isOut ? 'out' : ''} ${!isCurrent && !isOut ? 'clickable' : ''}"
+             ${!isCurrent && !isOut ? `onclick="addToCart(${v.id})"` : ''}
+             title="${isCurrent ? 'الصنف المحدد حالياً بالسلة' : (isOut ? 'نفد من المخزون' : `اضغط لإضافة ${label} إلى السلة`)}">
+            ${!inColorGroup && v.color ? `<span class="variant-dot" style="background:${getColorHex(v.color)};"></span>` : ''}
+            <span class="chip-label">${label}</span>
+            <span class="chip-qty ${stockClass}">${stockText}</span>
+            ${isCurrent ? '<span class="chip-badge-current"><i class="fas fa-check"></i> الحالي</span>' : (!isOut ? '<span class="chip-badge-add"><i class="fas fa-plus"></i></span>' : '')}
+        </div>
+    `;
+}
+
+function renderCartVariantsBox(item) {
+    const allProducts = typeof getProducts === 'function' ? getProducts() : [];
+    const prod = typeof getProductById === 'function' ? getProductById(item.product_id) : null;
+    const targetName = (item.name || (prod && prod.name) || '').trim().toLowerCase();
+
+    if (!targetName) return '';
+
+    const variants = allProducts.filter(p => (p.name || '').trim().toLowerCase() === targetName);
+    if (variants.length === 0) return '';
+
+    // تجميع الخيارات حسب اللون
+    const colorGroups = {};
+    variants.forEach(v => {
+        const c = (v.color || '').trim() || 'عام';
+        if (!colorGroups[c]) colorGroups[c] = [];
+        colorGroups[c].push(v);
+    });
+
+    const totalStock = variants.reduce((sum, v) => sum + Math.max(0, typeof getProductQuantity === 'function' ? getProductQuantity(v.id) : 0), 0);
+    const colorKeys = Object.keys(colorGroups);
+
+    let bodyHtml = '';
+
+    if (colorKeys.length === 1 && colorKeys[0] === 'عام') {
+        bodyHtml = `
+            <div class="cart-variants-chips">
+                ${variants.map(v => renderCartVariantChip(v, item.product_id, false)).join('')}
+            </div>
+        `;
+    } else {
+        bodyHtml = colorKeys.map(color => {
+            const groupVars = colorGroups[color];
+            const groupTotal = groupVars.reduce((sum, v) => sum + Math.max(0, typeof getProductQuantity === 'function' ? getProductQuantity(v.id) : 0), 0);
+            const hex = getColorHex(color);
+
+            return `
+                <div class="cart-color-group">
+                    <div class="cart-color-title">
+                        <span class="variant-dot" style="background:${hex};"></span>
+                        <span class="cart-color-name">${color}</span>
+                        <span class="cart-color-qty">(${groupTotal} متوفر)</span>
+                    </div>
+                    <div class="cart-variants-chips">
+                        ${groupVars.map(v => renderCartVariantChip(v, item.product_id, true)).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    return `
+        <div class="cart-variants-box">
+            <div class="cart-variants-header" onclick="this.closest('.cart-variants-box').classList.toggle('collapsed')">
+                <span class="cart-variants-title">
+                    <i class="fas fa-boxes text-primary"></i> المتوفر لكل لون ومقاس (${variants.length} خيارات):
+                </span>
+                <span class="cart-variants-total">
+                    إجمالي: <strong>${totalStock} قطعة</strong>
+                    <i class="fas fa-chevron-down chevron-icon"></i>
+                </span>
+            </div>
+            <div class="cart-variants-body">
+                ${bodyHtml}
+            </div>
+        </div>
+    `;
+}
+
 function renderCart() {
     const container = document.getElementById('cartItems');
 
@@ -1015,12 +1186,19 @@ function renderCart() {
 
     container.innerHTML = cart.map(item => {
         const isModified = item.sold_price !== item.base_price;
+        const variantsHtml = renderCartVariantsBox(item);
 
         return `
             <div class="cart-item">
                 <div class="cart-item-header">
-                    <div class="cart-item-name">${item.name} <small style="color:var(--gray);">(${item.size || '-'})</small></div>
-                    <button class="cart-item-remove" onclick="removeFromCart(${item.product_id})">
+                    <div class="cart-item-title-wrap">
+                        <span class="cart-item-name">${item.name}</span>
+                        <div class="cart-item-tags">
+                            ${item.color ? `<span class="cart-item-badge color-badge"><span class="variant-dot" style="background:${getColorHex(item.color)};"></span>${item.color}</span>` : ''}
+                            ${item.size ? `<span class="cart-item-badge size-badge">مقاس ${item.size}</span>` : ''}
+                        </div>
+                    </div>
+                    <button class="cart-item-remove" onclick="removeFromCart(${item.product_id})" title="حذف من السلة">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -1038,12 +1216,18 @@ function renderCart() {
                     </div>
                     <div class="cart-item-subtotal">₪${item.subtotal.toFixed(2)}</div>
                 </div>
+                ${variantsHtml}
             </div>
         `;
     }).join('');
 
     updateCartTotals();
 }
+
+window.getColorHex = getColorHex;
+window.renderCartVariantChip = renderCartVariantChip;
+window.renderCartVariantsBox = renderCartVariantsBox;
+window.renderCart = renderCart;
 
 function updateCartTotals() {
     const subtotal = cart.reduce((s, i) => s + i.subtotal, 0);
@@ -1981,8 +2165,7 @@ function addExistingToPurchInvoice(productId) {
             size: mv.size || '',
             stock: stock,
             avg: avg,
-            qty: 0,
-            cost: mv.base_cost || avg || 0
+            qty: 1, cost: mv.base_cost || avg || 0
         };
     });
 
@@ -2033,40 +2216,77 @@ function fillPurchNewCategories() {
     sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
+function onPurchNewModeChange() {
+    const mode = document.getElementById('purchNewMode')?.value || 'both';
+    const colorGrp = document.getElementById('purchNewColorGroup');
+    const sizeGrp = document.getElementById('purchNewSizeGroup');
+    if (colorGrp) colorGrp.style.display = (mode === 'both' || mode === 'color') ? 'block' : 'none';
+    if (sizeGrp) sizeGrp.style.display = (mode === 'both' || mode === 'size') ? 'block' : 'none';
+}
+
 function openPurchNewProductModal(prefillName = '') {
     fillPurchNewCategories();
-    document.getElementById('purchNewName').value = prefillName || '';
-    document.getElementById('purchNewCode').value = '';
-    document.getElementById('purchNewRetail').value = '';
-    document.getElementById('purchNewMinPrice').value = '';
-    document.getElementById('purchNewMode').value = 'both';
+
+    // Populate colors
+    const colSel = document.getElementById('purchNewColor');
+    if (colSel) {
+        colSel.innerHTML = PURCH_COLORS.map(c => `<option value="${c[0]}">${c[0]}</option>`).join('');
+    }
+
+    // Populate sizes
+    const sizeSel = document.getElementById('purchNewSize');
+    if (sizeSel) {
+        sizeSel.innerHTML = PURCH_SIZES.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    if (document.getElementById('purchNewName')) document.getElementById('purchNewName').value = prefillName || '';
+    if (document.getElementById('purchNewCode')) document.getElementById('purchNewCode').value = '';
+    if (document.getElementById('purchNewCost')) document.getElementById('purchNewCost').value = '';
+    if (document.getElementById('purchNewQty')) document.getElementById('purchNewQty').value = '1';
+    if (document.getElementById('purchNewRetail')) document.getElementById('purchNewRetail').value = '';
+    if (document.getElementById('purchNewMinPrice')) document.getElementById('purchNewMinPrice').value = '';
+    if (document.getElementById('purchNewMode')) document.getElementById('purchNewMode').value = 'both';
+
+    onPurchNewModeChange();
     openModal('purchNewProductModal');
     setTimeout(() => document.getElementById('purchNewName')?.focus(), 200);
 }
 
 function addPurchNewProduct() {
-    const name = document.getElementById('purchNewName').value.trim();
-    const code = document.getElementById('purchNewCode').value.trim();
-    const category = document.getElementById('purchNewCategory').value;
-    const retail = parseFloat(document.getElementById('purchNewRetail').value) || 0;
-    const min = parseFloat(document.getElementById('purchNewMinPrice').value) || (retail * 0.8);
-    const mode = document.getElementById('purchNewMode').value;
+    const name = (document.getElementById('purchNewName')?.value || '').trim();
+    const code = (document.getElementById('purchNewCode')?.value || '').trim();
+    const category = document.getElementById('purchNewCategory')?.value || 'عام';
+    const cost = Math.max(0, parseFloat(document.getElementById('purchNewCost')?.value) || 0);
+    const qty = Math.max(1, parseInt(document.getElementById('purchNewQty')?.value) || 1);
+    let retail = parseFloat(document.getElementById('purchNewRetail')?.value) || 0;
+    const mode = document.getElementById('purchNewMode')?.value || 'both';
 
     if (!name) {
-        showToast('يرجى كتابة اسم المنتج', 'error');
+        showToast('يرجى إدخال اسم المنتج المطلوب', 'error');
+        document.getElementById('purchNewName')?.focus();
         return;
     }
 
-    let variants = [];
-    if (mode === 'both') {
-        variants.push({ color: 'أحمر', hex: '#e34b54', size: 'M', stock: 0, avg: 0, qty: 0, cost: 0 });
-    } else if (mode === 'color') {
-        variants.push({ color: 'أسود', hex: '#222831', size: '', stock: 0, avg: 0, qty: 0, cost: 0 });
-    } else if (mode === 'size') {
-        variants.push({ color: '', hex: '', size: 'M', stock: 0, avg: 0, qty: 0, cost: 0 });
-    } else {
-        variants.push({ color: '', hex: '', size: '', stock: 0, avg: 0, qty: 0, cost: 0 });
+    if (retail <= 0 && cost > 0) {
+        retail = Math.round(cost * 1.5);
     }
+    const min = parseFloat(document.getElementById('purchNewMinPrice')?.value) || (retail * 0.8);
+
+    const chosenColor = (mode === 'both' || mode === 'color') ? (document.getElementById('purchNewColor')?.value || 'أسود') : '';
+    const chosenSize = (mode === 'both' || mode === 'size') ? (document.getElementById('purchNewSize')?.value || 'M') : '';
+
+    const colObj = PURCH_COLORS.find(c => c[0] === chosenColor);
+    const hex = colObj ? colObj[1] : (chosenColor ? '#222831' : '#cbd5e1');
+
+    const variants = [{
+        color: chosenColor,
+        hex: hex,
+        size: chosenSize,
+        stock: 0,
+        avg: 0,
+        qty: qty,
+        cost: cost
+    }];
 
     purchActiveItems.push({
         uid: 'UID-' + Math.random().toString(36).slice(2, 9),
@@ -2085,7 +2305,7 @@ function addPurchNewProduct() {
     renderPurchProducts();
     calcPurchTotals();
     savePurchDraft(true);
-    showToast('أُضيف المنتج الجديد للمسودة');
+    showToast('✅ تم إضافة المنتج بنجاح إلى الفاتورة!');
 }
 
 function addVariantToPurchProduct(pUid) {
@@ -2623,8 +2843,8 @@ function postPurchInvoice() {
 
             let prodRecord = products.find(p =>
                 (p.name || '').toLowerCase() === (item.name || '').toLowerCase() &&
-                (v.size ? p.size === v.size : true) &&
-                (v.color ? p.color === v.color : true)
+                (p.size || '') === (v.size || '') &&
+                (p.color || '') === (v.color || '')
             );
 
             if (!prodRecord) {
@@ -2655,6 +2875,7 @@ function postPurchInvoice() {
                 product_id: prodRecord.id,
                 product_name: prodRecord.name,
                 size: prodRecord.size || '',
+                color: prodRecord.color || '',
                 quantity: qty,
                 unit_cost: cost,
                 total_cost: qty * cost,
@@ -2750,7 +2971,7 @@ function loadPurchasesTable() {
     const purchases = getPurchases();
     
     if (purchases.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">لا توجد مشتريات</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">لا توجد فواتير مشتريات مسجلة</td></tr>';
         return;
     }
 
@@ -2765,29 +2986,158 @@ function loadPurchasesTable() {
                 note: p.note || '',
                 itemsCount: 0,
                 totalQty: 0,
-                totalCost: 0
+                totalCost: 0,
+                items: []
             };
         }
         invoicesMap[invId].itemsCount++;
         invoicesMap[invId].totalQty += Number(p.quantity);
         invoicesMap[invId].totalCost += Number(p.total_cost);
+        invoicesMap[invId].items.push(p);
     });
 
     const invoices = Object.values(invoicesMap).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    tbody.innerHTML = invoices.map((inv, i) => `
+    tbody.innerHTML = invoices.map((inv) => `
         <tr>
-            <td>${invoices.length - i}</td>
-            <td style="font-size:.8rem;">${new Date(inv.date).toLocaleDateString('ar-EG')}</td>
-            <td><strong>${inv.supplier}</strong> <br><small style="color:var(--gray); font-size:0.75rem;">${inv.note}</small></td>
+            <td><strong style="color:var(--primary);font-family:monospace;font-size:0.95rem;">#${inv.id}</strong></td>
+            <td style="font-size:.82rem;">${new Date(inv.date).toLocaleDateString('ar-EG')}</td>
+            <td><strong>${inv.supplier}</strong> ${inv.note ? '<br><small style="color:var(--gray); font-size:0.75rem;">' + inv.note + '</small>' : ''}</td>
             <td><span class="badge primary">${inv.itemsCount} أصناف</span></td>
             <td><span class="badge success">${inv.totalQty} قطع</span></td>
-            <td><strong style="color:var(--primary);">₪${inv.totalCost.toFixed(2)}</strong></td>
+            <td><strong style="color:var(--primary);font-size:0.95rem;">₪${inv.totalCost.toFixed(2)}</strong></td>
             <td>
-                <button class="btn-icon danger" onclick="deletePurchaseInvoice('${inv.id}')" title="حذف الفاتورة بالكامل"><i class="fas fa-trash"></i></button>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn-icon" onclick="viewPurchaseInvoiceDetails('${inv.id}')" title="عرض تفاصيل الفاتورة">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deletePurchaseInvoice('${inv.id}')" title="حذف الفاتورة بالكامل">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');
+}
+
+function viewPurchaseInvoiceDetails(invId) {
+    const purchases = getPurchases().filter(p => (p.invoice_id || 'OLD-' + p.id) === invId);
+    if (purchases.length === 0) {
+        showToast('لم يتم العثور على بيانات الفاتورة', 'error');
+        return;
+    }
+
+    const first = purchases[0];
+    const totalQty = purchases.reduce((s, p) => s + Number(p.quantity), 0);
+    const totalCost = purchases.reduce((s, p) => s + Number(p.total_cost), 0);
+
+    const titleEl = document.getElementById('purchModalTitle');
+    if (titleEl) {
+        titleEl.innerHTML = `<i class="fas fa-file-invoice text-primary"></i> فاتورة مشتريات #${invId}`;
+    }
+
+    const bodyEl = document.getElementById('purchInvoiceDetailsBody');
+    if (!bodyEl) return;
+
+    let rowsHtml = purchases.map((p, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td><strong>${p.product_name}</strong></td>
+            <td>${p.size || '—'}</td>
+            <td>${p.color || '—'}</td>
+            <td><span class="badge success">${p.quantity}</span></td>
+            <td>₪${Number(p.unit_cost).toFixed(2)}</td>
+            <td><strong>₪${Number(p.total_cost).toFixed(2)}</strong></td>
+        </tr>
+    `).join('');
+
+    bodyEl.innerHTML = `
+        <div style="background:#f8fafc;padding:14px;border-radius:12px;margin-bottom:16px;border:1px solid #e2e8f0;display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;">
+            <div><span style="color:var(--gray);font-size:0.8rem;">رقم الفاتورة:</span> <strong style="display:block;">#${invId}</strong></div>
+            <div><span style="color:var(--gray);font-size:0.8rem;">المورد:</span> <strong style="display:block;">${first.supplier || 'مورد عام'}</strong></div>
+            <div><span style="color:var(--gray);font-size:0.8rem;">التاريخ:</span> <strong style="display:block;">${new Date(first.created_at).toLocaleDateString('ar-EG')}</strong></div>
+            <div><span style="color:var(--gray);font-size:0.8rem;">طريقة الدفع:</span> <strong style="display:block;">${first.payment_method === 'bank' ? 'تحويل بنكي / محفظة' : (first.payment_method === 'credit' ? 'آجل' : 'نقدي')}</strong></div>
+            ${first.bank_name ? `<div><span style="color:var(--gray);font-size:0.8rem;">البنك:</span> <strong style="display:block;">${first.bank_name}</strong></div>` : ''}
+            ${first.bank_ref ? `<div><span style="color:var(--gray);font-size:0.8rem;">رقم الحوالة:</span> <strong style="display:block;">${first.bank_ref}</strong></div>` : ''}
+        </div>
+
+        <div class="table-responsive" style="max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;">
+            <table>
+                <thead>
+                    <tr><th>#</th><th>المنتج</th><th>المقاس</th><th>اللون</th><th>الكمية</th><th>سعر الشراء</th><th>الإجمالي</th></tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#eef2ff;padding:12px 16px;border-radius:10px;margin-top:14px;">
+            <div><span>إجمالي القطع: </span><strong style="color:var(--primary);">${totalQty} قطعة</strong></div>
+            <div><span>التكلفة الإجمالية: </span><strong style="color:var(--primary);font-size:1.15rem;">₪${totalCost.toFixed(2)}</strong></div>
+        </div>
+    `;
+
+    const printBtn = document.getElementById('purchPrintBtn');
+    if (printBtn) {
+        printBtn.onclick = () => printPurchaseInvoice(invId);
+    }
+
+    openModal('purchInvoiceDetailsModal');
+}
+
+function printPurchaseInvoice(invId) {
+    const purchases = getPurchases().filter(p => (p.invoice_id || 'OLD-' + p.id) === invId);
+    if (purchases.length === 0) return;
+    const first = purchases[0];
+    const totalCost = purchases.reduce((s, p) => s + Number(p.total_cost), 0);
+
+    const itemsHTML = purchases.map(p => `
+        <tr>
+            <td>${p.product_name} (${p.size || '-'} ${p.color ? '• ' + p.color : ''})</td>
+            <td>${p.quantity}</td>
+            <td>₪${Number(p.unit_cost).toFixed(2)}</td>
+            <td>₪${Number(p.total_cost).toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    const w = window.open('', '_blank', 'width=500,height=700');
+    w.document.write(`
+        <!DOCTYPE html>
+        <html dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>فاتورة توريد مشتريات #${invId}</title>
+            <style>
+                body{font-family:'Cairo',sans-serif;padding:24px;max-width:480px;margin:0 auto}
+                h2{text-align:center;margin:0 0 5px}
+                .meta{font-size:13px;color:#475569;margin-bottom:15px;line-height:1.8;border-bottom:1px solid #e2e8f0;padding-bottom:10px;}
+                table{width:100%;border-collapse:collapse;font-size:13px;margin:15px 0}
+                th{background:#f1f5f9;padding:8px;text-align:right}
+                td{padding:8px;border-bottom:1px solid #eee}
+                .total{font-size:18px;font-weight:bold;text-align:left;margin-top:15px;padding-top:10px;border-top:2px solid #000}
+            </style>
+        </head>
+        <body>
+            <h2>متجر الأناقة للملابس</h2>
+            <div style="text-align:center;color:#64748b;font-size:12px;margin-bottom:10px;">سند استلام بضاعة / فاتورة مشتريات</div>
+            <div class="meta">
+                <strong>رقم الفاتورة:</strong> #${invId}<br>
+                <strong>المورد:</strong> ${first.supplier || 'مورد عام'}<br>
+                <strong>التاريخ:</strong> ${new Date(first.created_at).toLocaleString('ar-EG')}<br>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr>
+                </thead>
+                <tbody>${itemsHTML}</tbody>
+            </table>
+            <div class="total">الإجمالي الكلي: ₪${totalCost.toFixed(2)}</div>
+        </body>
+        </html>
+    `);
+    w.document.close();
+    setTimeout(() => w.print(), 500);
 }
 
 /* ============================================
@@ -3570,5 +3920,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = getCurrentUser();
     if (user) {
         startApp();
+    }
+});
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('show');
     }
 });
