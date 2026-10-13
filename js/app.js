@@ -3827,11 +3827,22 @@ function simulateNewOnlineOrder() {
     }
     const p = products[Math.floor(Math.random() * products.length)];
     const qty = Math.floor(Math.random() * 3) + 1;
+
+    const demoCustomers = [
+        { name: 'أحمد خليل', phone: '0599123456' },
+        { name: 'سارة يوسف', phone: '0599876543' },
+        { name: 'محمود عثمان', phone: '0568112233' },
+        { name: 'ليلى إبراهيم', phone: '0598445566' },
+        { name: 'طارق الزين', phone: '0569778899' },
+        { name: 'زبون تجريبي', phone: '0599001122' }
+    ];
+    const cust = demoCustomers[Math.floor(Math.random() * demoCustomers.length)];
     
     mockOnlineOrders.push({
         id: 'WEB-' + Math.floor(Math.random() * 90000 + 10000),
         date: new Date().toISOString(),
-        customer: 'زبون تجريبي',
+        customer: cust.name,
+        phone: cust.phone,
         productName: p.name,
         quantity: qty,
         total: qty * Number(p.price),
@@ -3876,6 +3887,88 @@ function rejectOnlineOrder(index) {
     renderOnlineOrders();
 }
 
+let currentWaOrder = null;
+
+function openOnlineOrderWhatsApp(index) {
+    const order = mockOnlineOrders[index];
+    if (!order) return;
+
+    currentWaOrder = order;
+
+    const infoEl = document.getElementById('waOrderInfo');
+    if (infoEl) {
+        infoEl.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span>طلب <strong>#${order.id}</strong> — ${order.customer}</span>
+                <span class="badge ${order.status === 'accepted' ? 'success' : (order.status === 'rejected' ? 'danger' : 'warning')}">
+                    ${order.status === 'accepted' ? 'مقبول' : (order.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار')}
+                </span>
+            </div>
+            <div style="font-size:0.8rem;color:var(--gray);margin-top:4px;">
+                المنتج: ${order.productName} (x${order.quantity}) | الإجمالي: <strong style="color:var(--success);">₪${Number(order.total).toFixed(2)}</strong>
+            </div>
+        `;
+    }
+
+    const phoneInput = document.getElementById('waOrderPhone');
+    if (phoneInput) {
+        phoneInput.value = order.phone || '0599123456';
+    }
+
+    setWaTemplate('confirm');
+    openModal('orderWhatsAppModal');
+}
+
+function setWaTemplate(type) {
+    if (!currentWaOrder) return;
+    const o = currentWaOrder;
+    const msgInput = document.getElementById('waOrderMessage');
+    if (!msgInput) return;
+
+    if (type === 'confirm') {
+        msgInput.value = `السلام عليكم ورحمة الله أهلاً بك ${o.customer} 🌸\nمعك خدمة العملاء من متجر الأناقة للملابس.\n\nبخصوص طلبك رقم #${o.id}:\n📦 الأصناف: ${o.productName} (الكمية: ${o.quantity})\n💰 الإجمالي: ₪${Number(o.total).toFixed(2)}\n\nنود تأكيد استلام الطلب وبدء تجهيزه لك. يرجى تأكيد العنوان المناسب للتوصيل ✨`;
+    } else if (type === 'ready') {
+        msgInput.value = `أهلاً بك ${o.customer} 🌸\nنود إعلامك بأن طلبك رقم #${o.id} من متجر الأناقة أصبح جاهزاً الآن ومغلفاً بعناية 🎁\n\n💰 المبلغ المطلوب: ₪${Number(o.total).toFixed(2)}\nيسعدنا خدمتكم دائماً!`;
+    } else if (type === 'delivery') {
+        msgInput.value = `مرحباً ${o.customer} 🚗\nطلبك رقم #${o.id} خرج الآن مع مندوب التوصيل وسيتواصل معك خلال وقت قصير.\n\nالمبلغ عند الاستلام: ₪${Number(o.total).toFixed(2)}\nشكراً لاختيارك متجر الأناقة! ✨`;
+    }
+}
+
+function formatWhatsAppPhone(phone) {
+    if (!phone) return '';
+    let clean = String(phone).replace(/[^0-9]/g, '');
+    if (clean.startsWith('00')) clean = clean.substring(2);
+    if (clean.startsWith('05')) {
+        clean = '970' + clean.substring(1);
+    }
+    return clean;
+}
+
+function sendWhatsAppMessageNow() {
+    const phoneInput = document.getElementById('waOrderPhone');
+    const msgInput = document.getElementById('waOrderMessage');
+    const rawPhone = (phoneInput ? phoneInput.value : '').trim();
+    const message = (msgInput ? msgInput.value : '').trim();
+
+    if (!rawPhone) {
+        showToast('يرجى إدخال رقم هاتف العميل', 'error');
+        return;
+    }
+
+    if (currentWaOrder) {
+        currentWaOrder.phone = rawPhone;
+        renderOnlineOrders();
+    }
+
+    const formattedPhone = formatWhatsAppPhone(rawPhone);
+    const encodedMsg = encodeURIComponent(message);
+    const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMsg}`;
+
+    window.open(waUrl, '_blank');
+    closeModal('orderWhatsAppModal');
+    showToast('جاري فتح محادثة واتساب...');
+}
+
 function renderOnlineOrders() {
     const tbody = document.getElementById('onlineOrdersTableBody');
     if(!tbody) return;
@@ -3889,23 +3982,39 @@ function renderOnlineOrders() {
         const realIndex = mockOnlineOrders.length - 1 - i;
         let statusBadge = '<span class="badge warning">قيد الانتظار</span>';
         let actions = `
-            <button class="btn-icon success" onclick="acceptOnlineOrder(${realIndex})" title="قبول الطلب"><i class="fas fa-check"></i></button>
-            <button class="btn-icon danger" onclick="rejectOnlineOrder(${realIndex})" title="رفض الطلب"><i class="fas fa-times"></i></button>
+            <div style="display:inline-flex;align-items:center;gap:4px;">
+                <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${realIndex})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                <button class="btn-icon success" onclick="acceptOnlineOrder(${realIndex})" title="قبول الطلب"><i class="fas fa-check"></i></button>
+                <button class="btn-icon danger" onclick="rejectOnlineOrder(${realIndex})" title="رفض الطلب"><i class="fas fa-times"></i></button>
+            </div>
         `;
         
         if (o.status === 'accepted') {
             statusBadge = '<span class="badge success">مقبول</span>';
-            actions = '<span style="color:var(--success);font-size:.8rem;"><i class="fas fa-check-double"></i> تم المعالجة</span>';
+            actions = `
+                <div style="display:inline-flex;align-items:center;gap:6px;">
+                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${realIndex})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                    <span style="color:var(--success);font-size:.8rem;"><i class="fas fa-check-double"></i> تم المعالجة</span>
+                </div>
+            `;
         } else if (o.status === 'rejected') {
             statusBadge = '<span class="badge danger">مرفوض</span>';
-            actions = '<span style="color:var(--danger);font-size:.8rem;"><i class="fas fa-ban"></i> ملغى</span>';
+            actions = `
+                <div style="display:inline-flex;align-items:center;gap:6px;">
+                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${realIndex})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                    <span style="color:var(--danger);font-size:.8rem;"><i class="fas fa-ban"></i> ملغى</span>
+                </div>
+            `;
         }
 
         return `
             <tr>
                 <td><strong>${o.id}</strong></td>
                 <td style="font-size:.8rem;">${new Date(o.date).toLocaleString('ar-EG', { dateStyle:'short', timeStyle:'short' })}</td>
-                <td>${o.customer}</td>
+                <td>
+                    <strong>${o.customer}</strong>
+                    ${o.phone ? `<small style="display:block;color:var(--gray);direction:ltr;text-align:right;"><i class="fas fa-phone-alt" style="font-size:0.7rem;"></i> ${o.phone}</small>` : ''}
+                </td>
                 <td>${o.productName} <span class="badge primary">x${o.quantity}</span></td>
                 <td><strong>₪${o.total.toFixed(2)}</strong></td>
                 <td>${statusBadge}</td>
@@ -3914,6 +4023,11 @@ function renderOnlineOrders() {
         `;
     }).join('');
 }
+
+window.openOnlineOrderWhatsApp = openOnlineOrderWhatsApp;
+window.setWaTemplate = setWaTemplate;
+window.formatWhatsAppPhone = formatWhatsAppPhone;
+window.sendWhatsAppMessageNow = sendWhatsAppMessageNow;
 
 /* ============================================
    26. بدء التشغيل

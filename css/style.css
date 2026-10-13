@@ -557,6 +557,20 @@ input, select, textarea {
     color: #1e293b;
 }
 
+.btn-icon.whatsapp {
+    color: #25d366;
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    font-size: .95rem;
+}
+
+.btn-icon.whatsapp:hover {
+    background: #25d366;
+    color: #fff;
+    border-color: #25d366;
+    box-shadow: 0 2px 8px rgba(37, 211, 102, 0.35);
+}
+
 /* ============================================
    الجداول
    ============================================ */

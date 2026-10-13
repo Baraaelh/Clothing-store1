@@ -1238,5 +1238,52 @@
             </div>
         </div>
     </div>
+    <!-- نافذة مراسلة العميل عبر واتساب لطلبات الموقع -->
+    <div class="modal-overlay" id="orderWhatsAppModal">
+        <div class="modal-box" style="max-width:540px;">
+            <div class="modal-header">
+                <h5><i class="fab fa-whatsapp" style="color:#25d366;font-size:1.25rem;"></i> التواصل عبر واتساب للطلب</h5>
+                <button class="modal-close" onclick="closeModal('orderWhatsAppModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.84rem;color:#166534;display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-info-circle text-success" style="font-size:1.1rem;"></i>
+                    <span>يمكنك مراجعة رقم هاتف الزبون واختيار قالب الرسالة المناسب قبل بدء المحادثة.</span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label style="display:block;font-weight:700;font-size:0.82rem;margin-bottom:4px;">معلومات الطلب والزبون:</label>
+                    <div id="waOrderInfo" style="background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:0.88rem;color:#1e293b;font-weight:700;"></div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label style="display:block;font-weight:700;font-size:0.82rem;margin-bottom:4px;">رقم هاتف العميل (واتساب):</label>
+                    <div style="position:relative;">
+                        <i class="fas fa-phone-alt" style="position:absolute;right:12px;top:13px;color:var(--gray);"></i>
+                        <input type="tel" id="waOrderPhone" placeholder="مثال: 0599123456" style="width:100%;padding:10px 38px 10px 12px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;direction:ltr;text-align:right;">
+                    </div>
+                    <small style="color:var(--gray);font-size:0.75rem;">يقبل الأرقام المحلية (059/056) أو الأرقام الدولية، وسيقوم النظام بتوجيهك فوراً لتطبيق واتساب.</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <label style="font-weight:700;font-size:0.82rem;margin:0;">نص الرسالة المجهزة:</label>
+                        <div style="display:flex;gap:5px;">
+                            <button type="button" class="btn btn-sm btn-outline" style="font-size:0.72rem;padding:2px 8px;" onclick="setWaTemplate('confirm')">تأكيد الطلب</button>
+                            <button type="button" class="btn btn-sm btn-outline" style="font-size:0.72rem;padding:2px 8px;" onclick="setWaTemplate('ready')">جاهز للاستلام</button>
+                            <button type="button" class="btn btn-sm btn-outline" style="font-size:0.72rem;padding:2px 8px;" onclick="setWaTemplate('delivery')">مع المندوب</button>
+                        </div>
+                    </div>
+                    <textarea id="waOrderMessage" rows="5" style="width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:0.84rem;line-height:1.5;resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-actions" style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('orderWhatsAppModal')">إلغاء</button>
+                <button type="button" class="btn" style="background:#25d366;color:#fff;font-weight:800;display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:10px;" onclick="sendWhatsAppMessageNow()">
+                    <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i> فتح محادثة واتساب
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
