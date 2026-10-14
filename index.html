@@ -1285,5 +1285,20 @@
             </div>
         </div>
     </div>
+    <!-- نافذة معاينة صورة الصنف بالمشتريات -->
+    <div class="modal-overlay" id="purchImagePreviewModal">
+        <div class="modal-box" style="max-width:440px;text-align:center;padding:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h6 id="purchImagePreviewTitle" style="margin:0;font-weight:700;"><i class="fas fa-image text-primary"></i> معاينة صورة الصنف</h6>
+                <button class="modal-close" onclick="closeModal('purchImagePreviewModal')">&times;</button>
+            </div>
+            <div style="max-height:400px;overflow:hidden;border-radius:10px;border:1px solid #e2e8f0;background:#0f172a;display:flex;align-items:center;justify-content:center;padding:6px;">
+                <img id="purchImagePreviewImg" src="" alt="صورة الصنف" style="max-width:100%;max-height:380px;object-fit:contain;border-radius:6px;">
+            </div>
+            <div style="margin-top:14px;display:flex;justify-content:flex-end;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('purchImagePreviewModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

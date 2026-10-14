@@ -2458,9 +2458,38 @@ function renderPurchProducts() {
                 <td><span class="badge ${newStock > 0 ? 'success' : 'danger'}">${newStock}</span></td>
                 <td><strong>${newStock > 0 ? '₪' + newAvg.toFixed(2) : '—'}</strong></td>
                 <td>
-                    <button class="btn-icon danger" onclick="removeVariantFromPurchProduct('${p.uid}', ${i})" ${purchPosted ? 'disabled' : ''} title="حذف التركيبة">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div style="display:inline-flex;align-items:center;gap:6px;">
+                        <input type="file" accept="image/*" id="purch-img-input-${p.uid}-${i}" style="display:none;"
+                               onchange="handlePurchVariantImageUpload('${p.uid}', ${i}, event)" ${purchPosted ? 'disabled' : ''}>
+                        
+                        ${v.image ? `
+                            <div class="purch-variant-img-box" style="position:relative;display:inline-block;">
+                                <img src="${v.image}" alt="صورة الصنف" class="purch-variant-thumb"
+                                     onclick="previewPurchVariantImage('${v.image}', '${p.name} - ${v.color || ''} ${v.size || ''}')"
+                                     title="اضغط لمعاينة الصورة">
+                                <button type="button" class="purch-thumb-change-btn"
+                                        onclick="document.getElementById('purch-img-input-${p.uid}-${i}').click()"
+                                        ${purchPosted ? 'disabled' : ''} title="تغيير الصورة">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                                <button type="button" class="purch-thumb-del-btn"
+                                        onclick="removePurchVariantImage('${p.uid}', ${i})"
+                                        ${purchPosted ? 'disabled' : ''} title="حذف الصورة">
+                                    &times;
+                                </button>
+                            </div>
+                        ` : `
+                            <button type="button" class="btn-icon" style="color:var(--primary);border-color:#c7d2fe;background:#eef2ff;"
+                                    onclick="document.getElementById('purch-img-input-${p.uid}-${i}').click()"
+                                    ${purchPosted ? 'disabled' : ''} title="رفع صورة لهذا الصنف">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        `}
+
+                        <button type="button" class="btn-icon danger" onclick="removeVariantFromPurchProduct('${p.uid}', ${i})" ${purchPosted ? 'disabled' : ''} title="حذف التركيبة">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>`;
             return rowHtml;
@@ -2860,7 +2889,7 @@ function postPurchInvoice() {
                     color: v.color || '',
                     base_cost: cost,
                     price: Number(item.retail) || (cost * 1.5),
-                    image: null
+                    image: v.image || item.image || null
                 };
                 products.push(prodRecord);
             } else {
@@ -2868,6 +2897,9 @@ function postPurchInvoice() {
                     prodRecord.price = Number(item.retail);
                 }
                 prodRecord.base_cost = cost;
+                if (v.image) {
+                    prodRecord.image = v.image;
+                }
             }
 
             maxPurchId++;
@@ -4433,3 +4465,51 @@ window.dismissNotification = dismissNotification;
 window.markAllNotificationsAsRead = markAllNotificationsAsRead;
 window.refreshNotifications = refreshNotifications;
 window.playNotificationChime = playNotificationChime;
+
+
+/* ============================================
+   إدارة صور أصناف الفاتورة في المشتريات
+   ============================================ */
+function handlePurchVariantImageUpload(pUid, varIndex, event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('حجم الصورة كبير جداً، يرجى اختيار صورة أقل من 5 ميجابايت', 'error');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const p = purchActiveItems.find(x => x.uid === pUid);
+        if (!p || !p.variants[varIndex]) return;
+
+        p.variants[varIndex].image = e.target.result;
+        renderPurchProducts();
+        savePurchDraft(true);
+        showToast('تم تحميل صورة الصنف بنجاح', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePurchVariantImage(pUid, varIndex) {
+    const p = purchActiveItems.find(x => x.uid === pUid);
+    if (!p || !p.variants[varIndex]) return;
+
+    p.variants[varIndex].image = null;
+    renderPurchProducts();
+    savePurchDraft(true);
+    showToast('تمت إزالة صورة الصنف', 'info');
+}
+
+function previewPurchVariantImage(imgSrc, title = 'معاينة صورة الصنف') {
+    const modalImg = document.getElementById('purchImagePreviewImg');
+    const modalTitle = document.getElementById('purchImagePreviewTitle');
+    if (modalImg) modalImg.src = imgSrc;
+    if (modalTitle) modalTitle.innerHTML = `<i class="fas fa-image text-primary"></i> ${title}`;
+    openModal('purchImagePreviewModal');
+}
+
+window.handlePurchVariantImageUpload = handlePurchVariantImageUpload;
+window.removePurchVariantImage = removePurchVariantImage;
+window.previewPurchVariantImage = previewPurchVariantImage;

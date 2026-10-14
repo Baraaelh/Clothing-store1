@@ -2362,3 +2362,77 @@ table .empty {
         max-height: 82vh;
     }
 }
+
+
+/* رفع ومعاينة صور الأصناف في المشتريات */
+.purch-variant-img-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.purch-variant-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1.5px solid #cbd5e1;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: transform 0.15s, box-shadow 0.15s;
+    background: #fff;
+    display: block;
+}
+
+.purch-variant-thumb:hover {
+    transform: scale(1.12);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+    border-color: var(--primary);
+}
+
+.purch-thumb-change-btn {
+    position: absolute;
+    bottom: -4px;
+    left: -4px;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    border: 1.5px solid #fff;
+    font-size: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s;
+}
+
+.purch-thumb-change-btn:hover {
+    transform: scale(1.15);
+}
+
+.purch-thumb-del-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: #fff;
+    border: 1.5px solid #fff;
+    font-size: 11px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s;
+}
+
+.purch-thumb-del-btn:hover {
+    transform: scale(1.15);
+}
