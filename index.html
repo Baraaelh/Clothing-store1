@@ -42,9 +42,59 @@
             <h2>👕 متجر الأناقة</h2>
         </div>
         <div class="mobile-header-actions" style="display:flex;align-items:center;gap:8px;">
-            <button class="notif-bell-btn mobile" id="notifBellBtnMobile" onclick="toggleNotifDropdown(event)" title="التنبيهات">
+            <button type="button" class="notif-bell-btn mobile" id="notifBellBtnMobile" onclick="toggleNotifDropdown(event)" title="التنبيهات">
                 <i class="fas fa-bell"></i>
                 <span class="notif-badge" id="notifBadgeMobile">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- غطاء خلفي لإغلاق قائمة التنبيهات على الهاتف -->
+    <div class="notif-backdrop" id="notifBackdrop" onclick="closeNotifDropdown()"></div>
+
+    <!-- القائمة المنسدلة للتنبيهات (مشتركة للشاشات الكبيرة والهاتف) -->
+    <div class="notif-dropdown" id="notifDropdown">
+        <div class="notif-header">
+            <div class="notif-header-title">
+                <i class="fas fa-bell text-primary"></i>
+                <strong>التنبيهات والإشعارات</strong>
+                <span class="notif-count-pill" id="notifCountPill">0</span>
+            </div>
+            <div class="notif-header-actions">
+                <button type="button" class="notif-action-btn" onclick="refreshNotifications()" title="تحديث">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button type="button" class="notif-action-btn" onclick="markAllNotificationsAsRead()" title="تحديد الكل كمقروء">
+                    <i class="fas fa-check-double"></i>
+                </button>
+                <button type="button" class="notif-action-btn" onclick="closeNotifDropdown()" title="إغلاق">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="notif-tabs">
+            <button type="button" class="notif-tab active" data-tab="all" onclick="filterNotifTab('all')">
+                الكل <span class="notif-tab-badge" id="notifTabAll">0</span>
+            </button>
+            <button type="button" class="notif-tab" data-tab="stock" onclick="filterNotifTab('stock')">
+                المخزون <span class="notif-tab-badge" id="notifTabStock">0</span>
+            </button>
+            <button type="button" class="notif-tab" data-tab="debts" onclick="filterNotifTab('debts')">
+                الديون <span class="notif-tab-badge" id="notifTabDebts">0</span>
+            </button>
+            <button type="button" class="notif-tab" data-tab="orders" onclick="filterNotifTab('orders')">
+                الطلبات <span class="notif-tab-badge" id="notifTabOrders">0</span>
+            </button>
+        </div>
+
+        <div class="notif-list" id="notifList">
+            <!-- يتم ملؤها ديناميكياً بواسطة JavaScript -->
+        </div>
+
+        <div class="notif-footer">
+            <button type="button" class="notif-view-all-btn" onclick="switchScreen('dashboard'); closeNotifDropdown();">
+                <i class="fas fa-chart-pie"></i> لوحة التحكم والتنبيهات العامة
             </button>
         </div>
     </div>
@@ -82,59 +132,12 @@
                     <span>الكاشير السريع</span>
                 </button>
 
-                <!-- زر جرس التنبيهات مع القائمة المنسدلة -->
+                <!-- زر جرس التنبيهات في شريط سطح المكتب -->
                 <div class="notif-dropdown-wrapper" id="notifWrapper">
-                    <button class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifDropdown(event)" title="التنبيهات والإشعارات">
+                    <button type="button" class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifDropdown(event)" title="التنبيهات والإشعارات">
                         <i class="fas fa-bell"></i>
                         <span class="notif-badge" id="notifBadge">0</span>
                     </button>
-
-                    <!-- القائمة المنسدلة للتنبيهات -->
-                    <div class="notif-dropdown" id="notifDropdown">
-                        <div class="notif-header">
-                            <div class="notif-header-title">
-                                <i class="fas fa-bell text-primary"></i>
-                                <strong>التنبيهات والإشعارات</strong>
-                                <span class="notif-count-pill" id="notifCountPill">0</span>
-                            </div>
-                            <div class="notif-header-actions">
-                                <button class="notif-action-btn" onclick="refreshNotifications()" title="تحديث">
-                                    <i class="fas fa-sync-alt"></i>
-                                </button>
-                                <button class="notif-action-btn" onclick="markAllNotificationsAsRead()" title="تحديد الكل كمقروء">
-                                    <i class="fas fa-check-double"></i>
-                                </button>
-                                <button class="notif-action-btn" onclick="closeNotifDropdown()" title="إغلاق">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="notif-tabs">
-                            <button class="notif-tab active" data-tab="all" onclick="filterNotifTab('all')">
-                                الكل <span class="notif-tab-badge" id="notifTabAll">0</span>
-                            </button>
-                            <button class="notif-tab" data-tab="stock" onclick="filterNotifTab('stock')">
-                                المخزون <span class="notif-tab-badge" id="notifTabStock">0</span>
-                            </button>
-                            <button class="notif-tab" data-tab="debts" onclick="filterNotifTab('debts')">
-                                الديون <span class="notif-tab-badge" id="notifTabDebts">0</span>
-                            </button>
-                            <button class="notif-tab" data-tab="orders" onclick="filterNotifTab('orders')">
-                                الطلبات <span class="notif-tab-badge" id="notifTabOrders">0</span>
-                            </button>
-                        </div>
-
-                        <div class="notif-list" id="notifList">
-                            <!-- يتم ملؤها ديناميكياً بواسطة JavaScript -->
-                        </div>
-
-                        <div class="notif-footer">
-                            <button class="notif-view-all-btn" onclick="switchScreen('dashboard'); closeNotifDropdown();">
-                                <i class="fas fa-chart-pie"></i> لوحة التحكم والتنبيهات العامة
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- شارة المستخدم في التوب بار -->
@@ -199,16 +202,35 @@
                     <main class="purch-main">
                         <!-- الخطوة 1: بيانات الفاتورة -->
                         <div class="card" style="margin-bottom:0;">
-                            <div class="card-header">
-                                <h3><span class="purch-step">1</span> بيانات الفاتورة</h3>
-                                <span id="purchSaveStatus" class="purch-status-badge">مسودة — غير معتمدة</span>
+                            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <h3><span class="purch-step">1</span> <span id="purchStep1Title">بيانات الفاتورة</span></h3>
+                                    <span id="purchSaveStatus" class="purch-status-badge">مسودة — غير معتمدة</span>
+                                </div>
+                                <div class="purch-mode-pill-box">
+                                    <button type="button" class="purch-mode-pill active" id="purchModePillNormal" onclick="setPurchOperationMode('normal')">
+                                        <i class="fas fa-truck-loading"></i> فاتورة مشتريات من مورد
+                                    </button>
+                                    <button type="button" class="purch-mode-pill" id="purchModePillOpening" onclick="setPurchOperationMode('opening')">
+                                        <i class="fas fa-boxes"></i> بضاعة أول المدة (رصيد افتتاحي)
+                                    </button>
+                                </div>
                             </div>
                             <div style="padding:16px;">
+                                <!-- تنبيه بضاعة أول المدة -->
+                                <div id="purchOpeningStockAlert" class="purch-opening-banner" style="display:none;">
+                                    <i class="fas fa-boxes" style="font-size:1.6rem;color:#0284c7;flex-shrink:0;"></i>
+                                    <div>
+                                        <strong style="display:block;font-size:0.92rem;margin-bottom:2px;">وضع إدخال بضاعة أول المدة (الرصيد الافتتاحي للمحل)</strong>
+                                        <span style="font-size:0.8rem;line-height:1.5;">أدخل البضاعة المتوفرة حالياً لديك في المحل لتجهيز المخزون ونظام الكاشير. لن يتم تسجيل أي ديون للموردين، وتعتبر هذه الأصناف كرأس مال افتتاحي لمخزونك.</span>
+                                    </div>
+                                </div>
+
                                 <div class="form-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;">
                                     <div class="form-group" style="grid-column: 1 / -1;">
                                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                                            <label style="margin:0;font-weight:700;">المورد / التاجر *</label>
-                                            <span style="font-size:0.75rem;color:var(--gray-500);"><i class="fas fa-info-circle"></i> يمكنك الاختيار من القائمة أو كتابة اسم مورد جديد مباشرة</span>
+                                            <label id="purchSupplierLabel" style="margin:0;font-weight:700;">المورد / التاجر *</label>
+                                            <span id="purchSupplierHint" style="font-size:0.75rem;color:var(--gray-500);"><i class="fas fa-info-circle"></i> يمكنك الاختيار من القائمة أو كتابة اسم مورد جديد مباشرة</span>
                                         </div>
                                         <div style="display:flex;gap:8px;align-items:center;">
                                             <div style="position:relative;flex:1;">
@@ -218,77 +240,86 @@
                                                        oninput="onPurchSupplierInput()" 
                                                        onchange="onPurchSupplierInput()"
                                                        style="width:100%;padding:10px 14px 10px 36px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:0.92rem;">
-                                                <i class="fas fa-truck-loading" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;pointer-events:none;"></i>
+                                                <i id="purchSupplierIcon" class="fas fa-truck-loading" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;pointer-events:none;"></i>
                                                 <datalist id="purchSupplierList"></datalist>
                                             </div>
-                                            <button type="button" class="btn btn-outline" onclick="openQuickAddSupplierModal()" title="إضافة مورد جديد مع رقم هاتف" style="white-space:nowrap;padding:9px 14px;border-radius:10px;height:46px;display:flex;align-items:center;gap:6px;">
+                                            <button type="button" class="btn btn-outline" id="purchQuickSupplierBtn" onclick="openQuickAddSupplierModal()" title="إضافة مورد جديد مع رقم هاتف" style="white-space:nowrap;padding:9px 14px;border-radius:10px;height:46px;display:flex;align-items:center;gap:6px;">
                                                 <i class="fas fa-user-plus"></i> مورد جديد
                                             </button>
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label>رقم فاتورة المورد *</label>
+                                        <label id="purchInvoiceNoLabel">رقم فاتورة المورد *</label>
                                         <input type="text" id="purchInvoiceNo" placeholder="SUP-1258">
                                     </div>
                                     <div class="form-group">
-                                        <label>تاريخ الفاتورة *</label>
+                                        <label id="purchDateLabel">تاريخ الفاتورة *</label>
                                         <input type="date" id="purchDate">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>طريقة الدفع</label>
-                                        <select id="purchMethod" onchange="onPurchMethodChange()">
-                                            <option value="cash">نقدي</option>
-                                            <option value="bank">بنك / محفظة</option>
-                                            <option value="partial">دفع جزئي</option>
-                                            <option value="credit">آجل بالكامل</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>المبلغ المدفوع</label>
-                                        <input type="number" id="purchPaid" min="0" step="0.01" value="0">
                                     </div>
                                     <div class="form-group" style="grid-column: 1 / -1;">
                                         <label>ملاحظات</label>
                                         <input type="text" id="purchNote" placeholder="ملاحظات اختيارية">
                                     </div>
-                                    <!-- تفاصيل الدفع البنكي والمحفظة للمورد -->
-                                    <div id="purchBankDetailsBox" style="display:none;grid-column: 1 / -1;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-top:6px;">
-                                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                                            <h6 style="color:#166534;font-weight:800;font-size:0.85rem;margin:0;display:flex;align-items:center;gap:6px;">
-                                                <i class="fas fa-university"></i> بيانات التحويل البنكي / المحفظة للدفع للمورد
-                                            </h6>
-                                            <span class="badge success" style="font-size:0.72rem;padding:3px 8px;">دفع بنكي / محفظة</span>
+
+                                    <!-- حقول الدفع وطريقة السداد للموردين - تختفي في وضع بضاعة أول المدة -->
+                                    <div id="purchPaymentFieldsGroup" style="grid-column: 1 / -1; display: contents;">
+                                        <div class="form-group">
+                                            <label>طريقة الدفع</label>
+                                            <select id="purchMethod" onchange="onPurchMethodChange()">
+                                                <option value="cash">نقدي</option>
+                                                <option value="bank">بنك / محفظة</option>
+                                                <option value="partial">دفع جزئي</option>
+                                                <option value="credit">آجل بالكامل</option>
+                                            </select>
                                         </div>
-                                        <div class="form-grid" style="grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));gap:10px;">
-                                            <div class="form-group">
-                                                <label style="font-size:0.78rem;">اسم البنك أو المحفظة</label>
-                                                <input type="text" id="purchBankName" placeholder="مثال: بنك فلسطين / جوال باي / PalPay" style="height:42px!important;" oninput="savePurchDraft(true)">
+                                        <div class="form-group">
+                                            <label>المبلغ المدفوع</label>
+                                            <input type="number" id="purchPaid" min="0" step="0.01" value="0">
+                                        </div>
+                                        <!-- تفاصيل الدفع البنكي والمحفظة للمورد -->
+                                        <div id="purchBankDetailsBox" style="display:none;grid-column: 1 / -1;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-top:6px;">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                                <h6 style="color:#166534;font-weight:800;font-size:0.85rem;margin:0;display:flex;align-items:center;gap:6px;">
+                                                    <i class="fas fa-university"></i> بيانات التحويل البنكي / المحفظة للدفع للمورد
+                                                </h6>
+                                                <span class="badge success" style="font-size:0.72rem;padding:3px 8px;">دفع بنكي / محفظة</span>
                                             </div>
-                                            <div class="form-group">
-                                                <label style="font-size:0.78rem;">رقم الحساب أو الآيبان أو الهاتف المحول له</label>
-                                                <input type="text" id="purchBankAccount" placeholder="رقم حساب المورد أو الهاتف" style="height:42px!important;" oninput="savePurchDraft(true)">
-                                            </div>
-                                            <div class="form-group">
-                                                <label style="font-size:0.78rem;">رقم الحوالة / إشعار العملية (Ref No)</label>
-                                                <input type="text" id="purchBankRef" placeholder="رقم إشعار التحويل البنكي" style="height:42px!important;" oninput="savePurchDraft(true)">
+                                            <div class="form-grid" style="grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));gap:10px;">
+                                                <div class="form-group">
+                                                    <label style="font-size:0.78rem;">اسم البنك أو المحفظة</label>
+                                                    <input type="text" id="purchBankName" placeholder="مثال: بنك فلسطين / جوال باي / PalPay" style="height:42px!important;" oninput="savePurchDraft(true)">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label style="font-size:0.78rem;">رقم الحساب أو الآيبان أو الهاتف المحول له</label>
+                                                    <input type="text" id="purchBankAccount" placeholder="رقم حساب المورد أو الهاتف" style="height:42px!important;" oninput="savePurchDraft(true)">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label style="font-size:0.78rem;">رقم الحوالة / إشعار العملية (Ref No)</label>
+                                                    <input type="text" id="purchBankRef" placeholder="رقم إشعار التحويل البنكي" style="height:42px!important;" oninput="savePurchDraft(true)">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="purch-hint">
                                     <i class="fas fa-shield-alt text-primary"></i>
-                                    <span>المسودة تحفظ تلقائياً على هذا الجهاز. لا يتغير المخزون ولا حساب المورد قبل الاعتماد النهائي.</span>
+                                    <span id="purchDraftNoticeText">المسودة تحفظ تلقائياً على هذا الجهاز. لا يتغير المخزون ولا حساب المورد قبل الاعتماد النهائي.</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- الخطوة 2: أصناف الفاتورة -->
                         <div class="card" style="margin-bottom:0;">
-                            <div class="card-header">
-                                <h3><span class="purch-step">2</span> أصناف الفاتورة</h3>
-                                <button class="btn btn-primary" onclick="openPurchNewProductModal()">
-                                    <i class="fas fa-plus"></i> إدخال منتج جديد ضمن الفاتورة
-                                </button>
+                            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+                                <h3><span class="purch-step">2</span> <span id="purchStep2Title">أصناف الفاتورة</span></h3>
+                                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                    <button type="button" class="btn btn-outline" onclick="openQuickOpeningStockModal()" style="border-color:#6366f1;color:#4f46e5;background:#eef2ff;font-weight:700;">
+                                        <i class="fas fa-bolt"></i> إدخال سريع لعدة أصناف / استيراد CSV
+                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="openPurchNewProductModal()">
+                                        <i class="fas fa-plus"></i> <span id="purchAddProductBtnText">إدخال منتج جديد</span>
+                                    </button>
+                                </div>
                             </div>
                             <div style="padding:16px;">
                                 <div style="display:flex;gap:8px;">
@@ -314,7 +345,7 @@
                     <aside class="purch-side">
                         <div class="card" style="margin-bottom:0;">
                             <div class="card-header">
-                                <h3><i class="fas fa-receipt text-primary"></i> ملخص الفاتورة</h3>
+                                <h3><i class="fas fa-receipt text-primary"></i> <span id="purchSummaryCardTitle">ملخص الفاتورة</span></h3>
                             </div>
                             <div style="padding:16px;">
                                 <div class="purch-summary-line">
@@ -326,18 +357,18 @@
                                     <b id="purchQtyTotalView">0</b>
                                 </div>
                                 <div class="purch-summary-line">
-                                    <span>إجمالي الفاتورة</span>
+                                    <span id="purchTotalAmountLabel">إجمالي الفاتورة</span>
                                     <b id="purchTotalView">₪0.00</b>
                                 </div>
-                                <div class="purch-summary-line">
+                                <div class="purch-summary-line" id="purchPaidLineBox">
                                     <span>المبلغ المدفوع</span>
                                     <b id="purchPaidView" style="color:var(--success);">₪0.00</b>
                                 </div>
 
-                                <div class="purch-grand-box">
-                                    <small>المبلغ المتبقي للمورد</small>
+                                <div class="purch-grand-box" id="purchGrandSideBox">
+                                    <small id="purchGrandBoxLabel">المبلغ المتبقي للمورد</small>
                                     <div class="big" id="purchRemainingView">₪0.00</div>
-                                    <small>ينشأ قيد حساب المورد عند الاعتماد.</small>
+                                    <small id="purchGrandBoxSub">ينشأ قيد حساب المورد عند الاعتماد.</small>
                                 </div>
 
                                 <div class="purch-cost-formula-box">
@@ -346,13 +377,13 @@
                                 </div>
 
                                 <div class="purch-actions-stack">
-                                    <button class="btn btn-outline" onclick="savePurchDraft(false)">
+                                    <button type="button" class="btn btn-outline" onclick="savePurchDraft(false)">
                                         <i class="fas fa-save"></i> حفظ المسودة الآن
                                     </button>
-                                    <button class="btn btn-primary" onclick="requestConfirmPurchInvoice()">
-                                        <i class="fas fa-check-circle"></i> اعتماد الفاتورة
+                                    <button type="button" class="btn btn-primary" id="purchConfirmActionBtn" onclick="requestConfirmPurchInvoice()">
+                                        <i class="fas fa-check-circle"></i> <span id="purchConfirmBtnText">اعتماد الفاتورة</span>
                                     </button>
-                                    <button class="btn btn-danger" onclick="discardPurchDraft()">
+                                    <button type="button" class="btn btn-danger" onclick="discardPurchDraft()">
                                         <i class="fas fa-trash-alt"></i> حذف المسودة المحلية
                                     </button>
                                 </div>
@@ -377,11 +408,16 @@
             <!-- 2. تبويب جرد المخزون والمنتجات -->
             <div id="purchSubtab-stock" style="display:none;">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header" style="flex-wrap:wrap;gap:10px;">
                         <h3><i class="fas fa-boxes text-primary"></i> قائمة المنتجات والكميات الحالية</h3>
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="inventorySearch" placeholder="🔍 بحث بالاسم أو الكود..." oninput="loadInventoryTable()">
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <button type="button" class="btn btn-primary" onclick="startOpeningStockMode()" style="background:linear-gradient(135deg,#4f46e5,#4338ca);font-weight:700;">
+                                <i class="fas fa-boxes"></i> إدخال بضاعة أول المدة
+                            </button>
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="inventorySearch" placeholder="🔍 بحث بالاسم أو الكود..." oninput="loadInventoryTable()">
+                            </div>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -548,34 +584,103 @@
                         </div>
                     </div>
 
-                    <input type="text" id="customerName" placeholder="اسم العميل (اختياري)" style="width:100%;padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;margin-bottom:10px;">
+                    <!-- ============================================
+                         قسم العميل ونظام الدفع المنفصل والتقسيط
+                         ============================================ -->
+                    <!-- 1. بيانات العميل: اختيار من القائمة أو إضافة زبون جديد من نفس الشاشة -->
+                    <div class="pos-customer-box" style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;padding:12px;margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <label style="font-size:0.83rem;font-weight:800;color:#1e293b;margin:0;display:flex;align-items:center;gap:6px;">
+                                <i class="fas fa-user-tag text-primary"></i> بيانات العميل:
+                            </label>
+                            <div style="display:flex;gap:4px;">
+                                <button type="button" class="btn btn-outline btn-sm" id="btnToggleNewCust" onclick="togglePosNewCustomerForm()" style="padding:2px 8px;font-size:0.75rem;border-color:#4f46e5;color:#4f46e5;background:#fff;">
+                                    <i class="fas fa-user-plus"></i> زبون جديد
+                                </button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="setPosWalkinCustomer()" style="padding:2px 8px;font-size:0.75rem;background:#fff;">
+                                    نقدي عابر
+                                </button>
+                            </div>
+                        </div>
 
-                    <!-- طرق الدفع -->
-                    <div style="margin-bottom:10px;">
-                        <label style="display:block;font-size:.82rem;font-weight:700;margin-bottom:6px;">طريقة الدفع:</label>
+                        <!-- حقل البحث والاختيار الذكي للعملاء المسجلين -->
+                        <div style="position:relative;">
+                            <input type="text" id="customerName" list="posCustomerDatalist" placeholder="اختر عميلاً مسجلاً أو اتركه نقدي..."
+                                   style="width:100%;padding:9px 32px 9px 10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:0.84rem;background:#fff;"
+                                   oninput="onPosCustomerInputChange()">
+                            <i class="fas fa-search" style="position:absolute;right:10px;top:11px;color:#94a3b8;font-size:0.8rem;"></i>
+                            <datalist id="posCustomerDatalist"></datalist>
+                        </div>
+                        <input type="hidden" id="posCustomerPhone" value="">
+
+                        <!-- كرت بيانات العميل المختار ورصيد دينه السابق -->
+                        <div id="posCustomerDetailCard" style="display:none;margin-top:8px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <strong id="posCustCardName" style="color:#1e293b;font-size:0.84rem;"></strong>
+                                <span id="posCustCardDebtBadge" class="badge"></span>
+                            </div>
+                            <div style="color:#64748b;font-size:0.75rem;margin-top:2px;" id="posCustCardPhone"></div>
+                        </div>
+
+                        <!-- فورم سريع لإنشاء زبون جديد على نفس الشاشة -->
+                        <div id="posNewCustomerFields" style="display:none;margin-top:8px;background:#eff6ff;border:1.5px dashed #93c5fd;border-radius:8px;padding:10px;">
+                            <div style="font-size:0.78rem;font-weight:800;color:#1e40af;margin-bottom:6px;">
+                                <i class="fas fa-user-plus"></i> تسجيل زبون جديد فوراً:
+                            </div>
+                            <input type="text" id="newCustName" placeholder="اسم الزبون الكامل *" style="width:100%;padding:7px;border:1px solid #bfdbfe;border-radius:6px;font-family:inherit;font-size:0.82rem;margin-bottom:6px;background:#fff;">
+                            <input type="tel" id="newCustPhone" placeholder="رقم الهاتف (واتساب) *" style="width:100%;padding:7px;border:1px solid #bfdbfe;border-radius:6px;font-family:inherit;font-size:0.82rem;margin-bottom:6px;background:#fff;direction:ltr;text-align:right;">
+                            <input type="text" id="newCustNote" placeholder="ملاحظات / عنوان (اختياري)" style="width:100%;padding:7px;border:1px solid #bfdbfe;border-radius:6px;font-family:inherit;font-size:0.82rem;margin-bottom:6px;background:#fff;">
+                            <div style="display:flex;gap:6px;">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="saveNewPosCustomer()" style="flex:1;padding:5px;font-size:0.78rem;font-weight:700;">
+                                    <i class="fas fa-check"></i> حفظ واختيار الزبون
+                                </button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="togglePosNewCustomerForm(false)" style="padding:5px 8px;font-size:0.78rem;">
+                                    إلغاء
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. وسيلة القبض الفعلي (نقد / تحويل / مقسم) منفصلة تماماً عن حالة الدين -->
+                    <div style="margin-bottom:12px;">
+                        <label style="display:block;font-size:.82rem;font-weight:700;margin-bottom:6px;color:#1e293b;">
+                            <i class="fas fa-coins text-warning"></i> وسيلة القبض للمبلغ المدفوع:
+                        </label>
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-                            <button type="button" class="payment-btn active" data-method="cash" onclick="selectPaymentMethod('cash')">
-                                <i class="fas fa-money-bill-wave"></i> كاش
+                            <button type="button" class="payment-btn active" id="tenderBtn-cash" onclick="selectPosTender('cash')">
+                                <i class="fas fa-money-bill-wave"></i> نقدي
                             </button>
-                            <button type="button" class="payment-btn" data-method="app" onclick="selectPaymentMethod('app')">
-                                <i class="fas fa-mobile-alt"></i> تطبيق
+                            <button type="button" class="payment-btn" id="tenderBtn-digital" onclick="selectPosTender('digital')">
+                                <i class="fas fa-mobile-alt"></i> تحويل / بنك
                             </button>
-                            <button type="button" class="payment-btn" data-method="debt" onclick="selectPaymentMethod('debt')">
-                                <i class="fas fa-hand-holding-usd"></i> دين
+                            <button type="button" class="payment-btn" id="tenderBtn-split" onclick="selectPosTender('split')">
+                                <i class="fas fa-layer-group"></i> مقسم (نقد+تحويل)
                             </button>
                         </div>
                     </div>
 
-                    <!-- حقول التطبيق -->
-                    <div id="appPaymentFields" style="display:none;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-                        <h6 style="color:#92400e;font-weight:800;font-size:.84rem;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-                            <i class="fas fa-mobile-alt text-warning"></i> بيانات الدفع الإلكتروني / البنكي
-                        </h6>
+                    <!-- لوحة الدفع النقدي -->
+                    <div id="posTenderPanelCash" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.78rem;font-weight:700;color:#166534;margin:0;">المبلغ المقبوض نقداً (كاش) ₪:</label>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="setCashFullPaid()" style="padding:1px 6px;font-size:0.7rem;background:#fff;border-color:#86efac;color:#15803d;">كامل المبلغ</button>
+                        </div>
+                        <input type="number" step="0.5" min="0" id="posCashPaidAmount" placeholder="0.00" oninput="updatePosPaymentBreakdown()"
+                               style="width:100%;padding:8px 10px;border:1.5px solid #86efac;border-radius:8px;font-size:1.15rem;font-weight:800;color:#15803d;font-family:inherit;background:#fff;">
+                    </div>
 
-                        <!-- اختيار البنك أو المحفظة -->
-                        <div style="margin-bottom:10px;">
-                            <label style="display:block;font-size:0.78rem;font-weight:700;color:#92400e;margin-bottom:4px;">اختر المحفظة أو البنك المحول إليه:</label>
-                            <select id="appName" style="width:100%;padding:10px 12px;border:2px solid #fcd34d;border-radius:10px;font-family:inherit;background:#fff;font-weight:700;" onchange="updateStoreAccountDisplay()">
+                    <!-- لوحة التحويل الإلكتروني والمحافظ البنكية -->
+                    <div id="posTenderPanelDigital" style="display:none;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:12px;margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.78rem;font-weight:700;color:#92400e;margin:0;">المبلغ المحول إلكترونياً ₪:</label>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="setDigitalFullPaid()" style="padding:1px 6px;font-size:0.7rem;background:#fff;border-color:#f59e0b;color:#b45309;">كامل المبلغ</button>
+                        </div>
+                        <input type="number" step="0.5" min="0" id="posDigitalPaidAmount" placeholder="0.00" oninput="updatePosPaymentBreakdown()"
+                               style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-size:1.15rem;font-weight:800;color:#b45309;font-family:inherit;background:#fff;margin-bottom:8px;">
+
+                        <div style="margin-bottom:8px;">
+                            <label style="display:block;font-size:0.75rem;font-weight:700;color:#92400e;margin-bottom:3px;">المحفظة أو البنك المحول إليه:</label>
+                            <select id="appName" style="width:100%;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font-family:inherit;font-size:0.82rem;background:#fff;font-weight:700;" onchange="updateStoreAccountDisplay()">
                                 <option value="PalPay">محفظة PalPay</option>
                                 <option value="Jawwal Pay">جوال باي (Jawwal Pay)</option>
                                 <option value="بنك فلسطين">بنك فلسطين</option>
@@ -587,65 +692,87 @@
                             </select>
                         </div>
 
-                        <!-- كرت تفاصيل رقم الحساب والآيبان للمتجر -->
-                        <div id="storeAccountInfoCard" style="background:#fff;border:2px solid #fcd34d;border-radius:10px;padding:12px;margin-bottom:12px;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                                <span style="font-weight:800;color:#92400e;font-size:0.8rem;"><i class="fas fa-university"></i> حوّل إلى حساب المتجر:</span>
-                                <span class="badge warning" id="storeAccTypeBadge" style="font-size:0.7rem;padding:2px 8px;">محفظة إلكترونية</span>
+                        <!-- كرت الحساب البنكي والآيبان -->
+                        <div id="storeAccountInfoCard" style="background:#fff;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                                <span style="font-weight:700;color:#92400e;font-size:0.75rem;">حوّل لحساب المتجر:</span>
+                                <span class="badge warning" id="storeAccTypeBadge" style="font-size:0.65rem;padding:1px 6px;">محفظة</span>
                             </div>
-                            <div style="font-size:0.8rem;color:#475569;margin-bottom:6px;">
-                                <span>اسم المستفيد: </span><strong id="storeAccTitle" style="color:var(--dark);">متجر الأناقة للملابس</strong>
-                            </div>
-                            <div style="display:flex;align-items:center;justify-content:space-between;background:#fef3c7;padding:8px 10px;border-radius:8px;gap:8px;">
-                                <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                    <strong style="font-size:0.75rem;color:#92400e;" id="storeAccLabel">رقم المحفظة / الهاتف:</strong>
-                                    <span id="storeAccNo" style="font-family:monospace;font-size:0.95rem;font-weight:900;color:#1e293b;letter-spacing:0.5px;">0599-887766</span>
-                                </div>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="copyStoreAccNo()" style="padding:4px 10px;font-size:0.75rem;height:auto!important;background:#fff;border-color:#f59e0b;color:#b45309;">
-                                    <i class="fas fa-copy"></i> نسخ
-                                </button>
-                            </div>
-                            <div id="storeAccIbanRow" style="display:none;background:#f8fafc;padding:8px 10px;border-radius:8px;border:1px dashed #cbd5e1;margin-top:6px;">
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                                    <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                        <span style="font-size:0.72rem;color:var(--gray);">الآيبان IBAN:</span>
-                                        <span id="storeAccIban" style="font-family:monospace;font-size:0.82rem;font-weight:bold;color:#1e293b;">PS04 PALS...</span>
-                                    </div>
-                                    <button type="button" class="btn btn-outline btn-sm" onclick="copyStoreIban()" style="padding:4px 10px;font-size:0.75rem;height:auto!important;background:#fff;border-color:#94a3b8;color:#475569;">
-                                        <i class="fas fa-copy"></i> نسخ
-                                    </button>
-                                </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;background:#fef3c7;padding:5px 8px;border-radius:6px;gap:6px;">
+                                <span id="storeAccNo" style="font-family:monospace;font-size:0.88rem;font-weight:900;color:#1e293b;">0599-887766</span>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="copyStoreAccNo()" style="padding:2px 6px;font-size:0.7rem;background:#fff;border-color:#f59e0b;color:#b45309;">نسخ</button>
                             </div>
                         </div>
 
-                        <!-- بيانات المرسل ورقم الحوالة -->
-                        <div style="display:grid;gap:6px;">
-                            <input type="text" id="senderName" placeholder="اسم المرسل (مطلوب)" style="width:100%;padding:9px 12px;border:2px solid #fcd34d;border-radius:8px;font-family:inherit;background:#fff;">
-                            <input type="text" id="senderPhone" placeholder="رقم هاتف المرسل (مطلوب)" style="width:100%;padding:9px 12px;border:2px solid #fcd34d;border-radius:8px;font-family:inherit;background:#fff;">
-                            <input type="text" id="transferRef" placeholder="رقم الحوالة / كود العملية (اختياري)" style="width:100%;padding:9px 12px;border:2px solid #fcd34d;border-radius:8px;font-family:inherit;background:#fff;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+                            <input type="text" id="senderName" placeholder="اسم صاحب الحوالة" style="width:100%;padding:7px;border:1px solid #fcd34d;border-radius:6px;font-family:inherit;font-size:0.8rem;background:#fff;">
+                            <input type="text" id="senderPhone" placeholder="رقم هاتف المحول" style="width:100%;padding:7px;border:1px solid #fcd34d;border-radius:6px;font-family:inherit;font-size:0.8rem;background:#fff;direction:ltr;text-align:right;">
                         </div>
+                        <input type="text" id="transferRef" placeholder="رقم العملية / كود الحوالة (اختياري)" style="width:100%;padding:7px;border:1px solid #fcd34d;border-radius:6px;font-family:inherit;font-size:0.8rem;background:#fff;margin-bottom:6px;">
 
-                        <label style="display:block;font-size:.78rem;font-weight:700;color:#92400e;margin-top:8px;margin-bottom:5px;">
-                            <i class="fas fa-camera"></i> صورة الإشعار (اختياري):
-                        </label>
-                        <input type="file" id="paymentScreenshot" accept="image/*" style="width:100%;padding:7px;border:2px dashed #fcd34d;border-radius:8px;font-family:inherit;font-size:.78rem!important;background:#fff;cursor:pointer;">
-                        <div id="screenshotPreview" style="display:none;margin-top:8px;">
-                            <img id="previewImg" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:2px solid #fcd34d;">
-                            <button type="button" onclick="removeScreenshot()" style="width:100%;margin-top:5px;padding:5px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-family:inherit;font-weight:700;font-size:.75rem;cursor:pointer;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <label class="btn btn-outline btn-sm" style="flex:1;cursor:pointer;padding:5px 8px;font-size:0.74rem;background:#fff;border-color:#f59e0b;color:#b45309;margin:0;text-align:center;">
+                                <i class="fas fa-camera"></i> إرفاق صورة الإشعار
+                                <input type="file" id="paymentScreenshot" accept="image/*" style="display:none;">
+                            </label>
+                        </div>
+                        <div id="screenshotPreview" style="display:none;margin-top:6px;">
+                            <img id="previewImg" style="width:100%;max-height:120px;object-fit:contain;border-radius:6px;border:1.5px solid #fcd34d;">
+                            <button type="button" onclick="removeScreenshot()" style="width:100%;margin-top:3px;padding:3px;background:#dc2626;color:#fff;border:none;border-radius:4px;font-family:inherit;font-size:0.7rem;cursor:pointer;">
                                 <i class="fas fa-trash"></i> حذف الصورة
                             </button>
                         </div>
                     </div>
 
-                    <!-- حقول الدين -->
-                    <div id="debtFields" style="display:none;background:#fee2e2;border:1px solid #fca5a5;border-radius:12px;padding:12px;margin-bottom:10px;">
-                        <h6 style="color:#991b1b;font-weight:800;font-size:.8rem;margin-bottom:8px;">
-                            <i class="fas fa-hand-holding-usd"></i> بيانات الدين
-                        </h6>
-                        <input type="text" id="debtCustomerName" placeholder="اسم العميل (مطلوب)" style="width:100%;padding:9px 12px;border:2px solid #fca5a5;border-radius:8px;font-family:inherit;margin-bottom:6px;background:#fff;">
-                        <input type="text" id="debtCustomerPhone" placeholder="رقم الهاتف (مطلوب)" style="width:100%;padding:9px 12px;border:2px solid #fca5a5;border-radius:8px;font-family:inherit;margin-bottom:6px;background:#fff;">
-                        <input type="number" step="0.01" id="debtPaidAmount" placeholder="الدفعة الأولى / المدفوع (اختياري)" style="width:100%;padding:9px 12px;border:2px solid #fca5a5;border-radius:8px;font-family:inherit;margin-bottom:6px;background:#fff;">
-                        <input type="text" id="debtNote" placeholder="ملاحظة (اختياري)" style="width:100%;padding:9px 12px;border:2px solid #fca5a5;border-radius:8px;font-family:inherit;background:#fff;">
+                    <!-- لوحة الدفع المقسم (نقد + تحويل) -->
+                    <div id="posTenderPanelSplit" style="display:none;background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:12px;padding:12px;margin-bottom:10px;">
+                        <div style="font-size:0.8rem;font-weight:800;color:#5b21b6;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+                            <span><i class="fas fa-layer-group"></i> تقسيط الدفعة (تجزئة بين نقد وتحويل):</span>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="splitPosAmounts5050()" style="padding:2px 8px;font-size:0.72rem;background:#fff;border-color:#8b5cf6;color:#6d28d9;">
+                                مناصفة 50% / 50%
+                            </button>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                            <div>
+                                <label style="font-size:0.74rem;font-weight:700;color:#166534;display:block;margin-bottom:3px;">
+                                    <i class="fas fa-money-bill-wave"></i> الجزء النقدي (كاش) ₪:
+                                </label>
+                                <input type="number" step="0.5" min="0" id="posSplitCashInput" placeholder="0.00" oninput="updatePosPaymentBreakdown()"
+                                       style="width:100%;padding:8px;border:1.5px solid #86efac;border-radius:8px;font-size:1rem;font-weight:800;color:#15803d;font-family:inherit;background:#fff;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.74rem;font-weight:700;color:#7c2d12;display:block;margin-bottom:3px;">
+                                    <i class="fas fa-mobile-alt"></i> جزء التحويل (محفظة) ₪:
+                                </label>
+                                <input type="number" step="0.5" min="0" id="posSplitDigitalInput" placeholder="0.00" oninput="updatePosPaymentBreakdown()"
+                                       style="width:100%;padding:8px;border:1.5px solid #fcd34d;border-radius:8px;font-size:1rem;font-weight:800;color:#b45309;font-family:inherit;background:#fff;">
+                            </div>
+                        </div>
+
+                        <!-- تفاصيل التحويل للجزء الرقمي في الدفع المقسم -->
+                        <div style="margin-bottom:6px;">
+                            <label style="display:block;font-size:0.74rem;font-weight:700;color:#5b21b6;margin-bottom:3px;">المحفظة / البنك المحول إليه:</label>
+                            <select id="splitAppName" style="width:100%;padding:7px;border:1px solid #c4b5fd;border-radius:6px;font-family:inherit;font-size:0.8rem;background:#fff;font-weight:700;">
+                                <option value="PalPay">محفظة PalPay</option>
+                                <option value="Jawwal Pay">جوال باي (Jawwal Pay)</option>
+                                <option value="بنك فلسطين">بنك فلسطين</option>
+                                <option value="البنك الإسلامي الفلسطيني">البنك الإسلامي الفلسطيني</option>
+                                <option value="البنك العربي">البنك العربي</option>
+                                <option value="أخرى">حساب آخر...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 3. كرت التسوية اللحظية وحالة الدين التلقائية -->
+                    <div id="posSettlementSummaryCard" style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px;">
+                            <span style="color:#475569;">إجمالي المقبوض الآن:</span>
+                            <strong id="posSumTotalPaid" style="color:#0f172a;font-size:0.95rem;">₪0.00</strong>
+                        </div>
+                        <div id="posDebtStatusBadgeBox" style="margin-top:6px;padding:8px 10px;border-radius:8px;font-size:0.82rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;">
+                            <!-- ديناميكي -->
+                        </div>
                     </div>
 
                     <button class="btn btn-success btn-block" onclick="checkout()" style="padding:13px;font-size:.95rem;">
@@ -698,6 +825,167 @@
                             <tr><td colspan="7" class="empty">لا توجد طلبات جديدة حالياً</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ شاشة المرتجعات والتبديل ============ -->
+        <div id="screen-returns" class="screen">
+            <h1 class="section-title"><i class="fas fa-exchange-alt text-primary"></i> المرتجعات والتبديل</h1>
+            <p class="section-subtitle">إرجاع كامل أو جزئي، تبديل المقاس واللون، وتخفيض الدين أو إرجاع المبالغ المستحقة</p>
+
+            <!-- التبويبات العلوية -->
+            <div class="screen-subtabs-nav">
+                <button type="button" class="screen-subtab-btn active" id="tabBtn-returns-new" onclick="switchReturnsSubtab('new')">
+                    <i class="fas fa-undo-alt"></i> عملية إرجاع / تبديل جديدة
+                </button>
+                <button type="button" class="screen-subtab-btn" id="tabBtn-returns-history" onclick="switchReturnsSubtab('history')">
+                    <i class="fas fa-list-alt"></i> سجل المرتجعات والتبديل
+                </button>
+                <button type="button" class="screen-subtab-btn" id="tabBtn-returns-stats" onclick="switchReturnsSubtab('stats')">
+                    <i class="fas fa-chart-pie"></i> إحصائيات المرتجعات
+                </button>
+            </div>
+
+            <!-- تبويب 1: عملية إرجاع / تبديل جديدة -->
+            <div id="returnsSubtab-new">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-search"></i> 1. البحث عن الفاتورة الأصلية</h3>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+                        <div style="flex:1;min-width:260px;position:relative;">
+                            <i class="fas fa-receipt" style="position:absolute;right:14px;top:13px;color:var(--gray);"></i>
+                            <input type="text" id="returnSearchInvoiceInput" placeholder="ادخل رقم الفاتورة (مثال: 1001 أو #1001) أو اسم/هاتف العميل..."
+                                   style="width:100%;padding:10px 40px 10px 12px;border:2px solid #e2e8f0;border-radius:10px;font-family:inherit;"
+                                   onkeydown="if(event.key==='Enter') searchInvoiceForReturn()">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="searchInvoiceForReturn()" style="display:inline-flex;align-items:center;gap:6px;">
+                            <i class="fas fa-search"></i> جلب الفاتورة
+                        </button>
+                    </div>
+
+                    <div style="font-size:0.8rem;color:var(--gray);margin-top:4px;">
+                        <strong>فواتير مكتملة حديثاً:</strong>
+                        <span id="quickRecentInvoicesChips" style="display:inline-flex;gap:6px;flex-wrap:wrap;margin-right:6px;"></span>
+                    </div>
+                </div>
+
+                <!-- مساحة الفاتورة المختارة -->
+                <div id="returnSelectedInvoiceContainer" style="display:none;">
+                    <!-- كرت بيانات الفاتورة -->
+                    <div class="card" id="returnInvoiceHeaderCard" style="background:#f8fafc;border:1.5px solid #cbd5e1;">
+                        <!-- يتم ملؤه ديناميكياً -->
+                    </div>
+
+                    <!-- كرت أصناف الفاتورة وخيارات الإرجاع أو التبديل -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-tshirt text-primary"></i> 2. أصناف الفاتورة وخيارات الإرجاع أو التبديل</h3>
+                            <small style="color:var(--gray);">حدد لكل صنف: إرجاع أو تبديل مقاس/لون أو إبقاء كما هو</small>
+                        </div>
+                        <div id="returnItemsListContainer">
+                            <!-- صفوف الأصناف الديناميكية -->
+                        </div>
+                    </div>
+
+                    <!-- كرت التسوية المالية والاعتماد -->
+                    <div class="card" id="returnSettlementCard">
+                        <div class="card-header">
+                            <h3><i class="fas fa-coins text-warning"></i> 3. ملخص التسوية المالية وحسابات الزبون</h3>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-bottom:16px;">
+                            <div style="background:#fef2f2;border:1px solid #fecaca;padding:12px;border-radius:10px;">
+                                <span style="font-size:0.78rem;color:#991b1b;display:block;">قيمة الأصناف المرتجعة:</span>
+                                <strong id="retSumTotalReturned" style="font-size:1.25rem;color:#dc2626;">₪0.00</strong>
+                            </div>
+                            <div style="background:#eef2ff;border:1px solid #c7d2fe;padding:12px;border-radius:10px;">
+                                <span style="font-size:0.78rem;color:#3730a3;display:block;">قيمة الأصناف البديلة (التبديل):</span>
+                                <strong id="retSumTotalReplacement" style="font-size:1.25rem;color:#4f46e5;">₪0.00</strong>
+                            </div>
+                            <div id="retNetDiffBox" style="background:#f0fdf4;border:1.5px solid #bbf7d0;padding:12px;border-radius:10px;">
+                                <span style="font-size:0.78rem;color:#166534;display:block;" id="retNetDiffLabel">الصافي المالي:</span>
+                                <strong id="retSumNetDiff" style="font-size:1.3rem;color:#15803d;">₪0.00</strong>
+                            </div>
+                        </div>
+
+                        <!-- خيارات الإجراء المالي -->
+                        <div id="retFinancialActionSection" style="margin-top:14px;">
+                            <label style="font-weight:700;font-size:0.85rem;margin-bottom:8px;display:block;">طريقة تسوية المبلغ:</label>
+                            <div class="financial-action-grid" id="retFinancialActionCards">
+                                <!-- بطاقات الإجراء المالي ديناميكياً -->
+                            </div>
+                        </div>
+
+                        <div class="form-grid" style="margin-top:14px;">
+                            <div class="form-group" style="grid-column:1/-1;">
+                                <label>سبب الإرجاع / التبديل *</label>
+                                <input type="text" id="returnReasonInput" placeholder="مثال: تبديل مقاس M إلى L بناءً على رغبة الزبون / مقاس غير مناسب">
+                            </div>
+                            <div class="form-group" style="grid-column:1/-1;">
+                                <label>ملاحظات إضافية</label>
+                                <input type="text" id="returnNoteInput" placeholder="ملاحظات اختيارية عن حالة البضاعة">
+                            </div>
+                        </div>
+
+                        <div class="modal-actions" style="margin-top:18px;display:flex;justify-content:flex-end;gap:10px;">
+                            <button type="button" class="btn btn-outline" onclick="cancelCurrentReturn()">إلغاء</button>
+                            <button type="button" class="btn btn-primary" id="submitReturnBtn" onclick="submitReturnOperation()" style="background:linear-gradient(135deg,#4f46e5,#4338ca);font-weight:700;padding:10px 22px;">
+                                <i class="fas fa-check-double"></i> اعتماد عملية الإرجاع / التبديل
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تبويب 2: سجل المرتجعات والتبديل -->
+            <div id="returnsSubtab-history" style="display:none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-history"></i> سجل عمليات الإرجاع والتبديل</h3>
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="returnsHistorySearch" placeholder="بحث برقم السند أو الفاتورة أو العميل..." oninput="loadReturnsTable()">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>رقم السند</th>
+                                    <th>التاريخ والوقت</th>
+                                    <th>الفاتورة الأصلية</th>
+                                    <th>العميل</th>
+                                    <th>النوع</th>
+                                    <th>الأصناف والتفاصيل</th>
+                                    <th>التسوية المالية</th>
+                                    <th>الموظف</th>
+                                    <th>إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="returnsTableBody">
+                                <!-- ديناميكي -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تبويب 3: إحصائيات المرتجعات -->
+            <div id="returnsSubtab-stats" style="display:none;">
+                <div class="stats-grid" id="returnsStatsGrid"></div>
+                <div class="card" style="margin-top:16px;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-shield-alt text-primary"></i> سياسة وإرشادات التبديل والإرجاع للمتجر</h3>
+                    </div>
+                    <div style="line-height:1.9;font-size:0.88rem;color:#334155;">
+                        <ul style="padding-right:20px;">
+                            <li><strong>تبديل المقاس واللون:</strong> متاح مجاناً إذا كان الصنف البديل بنفس السعر، مع تحديث فوري للمخزون.</li>
+                            <li><strong>فروق الأسعار:</strong> إذا كان الصنف البديل أعلى سعراً يتم تحصيل الفرق من الزبون، وإذا كان أقل يُرد الفرق له أو يُخصم من حسابه.</li>
+                            <li><strong>الزبائن أصحاب الديون:</strong> يتيح النظام تخفيض دين الزبون آلياً دون الحاجة لإخراج نقد من الدرج، مما يحافظ على سيولة المتجر.</li>
+                            <li><strong>حركة الصندوق:</strong> أي مبالغ نقدية تُرجع للعميل تُوثق فوراً في كشف حساب الصندوق لضمان مطابقة الوردية بدقة.</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -800,31 +1088,68 @@
 
             <div class="stats-grid" id="merchantStatsGrid"></div>
 
-            <div class="card">
-                <div class="card-header"><h3><i class="fas fa-plus-circle"></i> تسجيل فاتورة توريد</h3></div>
-                <div class="form-grid">
-                    <div class="form-group"><label>اسم التاجر *</label><input type="text" id="m-name" placeholder="مصنع الأمل"></div>
-                    <div class="form-group"><label>رقم الفاتورة</label><input type="text" id="m-ref" placeholder="#INV-101"></div>
-                    <div class="form-group"><label>القيمة (₪) *</label><input type="number" step="0.01" id="m-amount" placeholder="350"></div>
-                    <div class="form-group"><label>ملاحظات</label><input type="text" id="m-note" placeholder="ملاحظات"></div>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn btn-warning" onclick="saveMerchantInvoice()">
-                        <i class="fas fa-file-invoice"></i> حفظ الفاتورة
+            <!-- بطاقة التوجيه المحاسبي: المشتريات هي المصدر الحصري لدين المورد -->
+            <div class="card" style="background:#f0f9ff;border:1.5px solid #bae6fd;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;align-items:flex-start;gap:12px;max-width:720px;">
+                        <i class="fas fa-shield-alt text-primary" style="font-size:2rem;margin-top:2px;"></i>
+                        <div style="font-size:0.86rem;color:#0369a1;line-height:1.7;">
+                            <strong style="font-size:0.95rem;color:#0c4a6e;display:block;margin-bottom:3px;">
+                                <i class="fas fa-check-circle"></i> فواتير المشتريات هي المصدر الحصري لإنشاء ديون الموردين
+                            </strong>
+                            لمنع تكرار الفواتير ولضمان جرد المخزون وحساب تكلفة البضاعة بدقة، يتم تسجيل فواتير التوريد حصرياً عبر <strong>إدارة المشتريات</strong>.
+                            تُستخدم هذه الشاشة لعرض كشوفات حساب التجار ومتابعة الأرصدة وتسجيل دفعات السداد فقط.
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="switchScreen('inventory')" style="background:linear-gradient(135deg,#0284c7,#0369a1);font-weight:700;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;">
+                        <i class="fas fa-plus"></i> إنشاء فاتورة توريد من المشتريات
                     </button>
                 </div>
             </div>
 
+            <!-- بطاقة تسجيل دفعة سداد لمورد (سند صرف) -->
             <div class="card">
-                <div class="card-header"><h3><i class="fas fa-money-bill-wave"></i> تسجيل دفعة</h3></div>
-                <div class="form-grid">
-                    <div class="form-group"><label>اسم التاجر *</label><input type="text" id="pay-name" placeholder="مصنع الأمل"></div>
-                    <div class="form-group"><label>المبلغ (₪) *</label><input type="number" step="0.01" id="pay-amount" placeholder="150"></div>
-                    <div class="form-group"><label>ملاحظات</label><input type="text" id="pay-note" placeholder="دفعة"></div>
+                <div class="card-header">
+                    <h3><i class="fas fa-money-bill-wave text-success"></i> تسجيل دفعة سداد لمورد (سند صرف)</h3>
+                    <small style="color:var(--gray);">خصم مباشر من رصيد دين المورد مع توثيق الحركة بالصندوق</small>
                 </div>
-                <div class="modal-actions">
-                    <button class="btn btn-success" onclick="saveMerchantPayment()">
-                        <i class="fas fa-check"></i> تسجيل الدفعة
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>اختر المورد / الشركة *</label>
+                        <select id="pay-name" onchange="updatePayMerchantBalance()" style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;font-weight:700;background:#fff;">
+                            <option value="">-- اختر المورد --</option>
+                        </select>
+                        <div id="payMerchantBalanceHint" style="font-size:0.78rem;color:#64748b;margin-top:4px;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ المدفوع (₪) *</label>
+                        <div style="position:relative;">
+                            <input type="number" step="0.01" min="0.1" id="pay-amount" placeholder="0.00" style="width:100%;padding:9px 12px;border:2px solid var(--success);border-radius:8px;font-size:1.1rem;font-weight:700;font-family:inherit;background:#fff;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="payFullMerchantBalance()" style="position:absolute;left:6px;top:7px;padding:2px 8px;font-size:0.72rem;background:#f0fdf4;border-color:#86efac;color:#166534;">
+                                كامل الرصيد
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>طريقة الدفع للمورد *</label>
+                        <select id="pay-method" style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;background:#fff;">
+                            <option value="cash">💵 نقدي من الصندوق (كاش درج)</option>
+                            <option value="bank">🏛️ تحويل بنكي / محفظة</option>
+                            <option value="check">📜 شيك بنكي</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>رقم السند / الشيك / الإيصال</label>
+                        <input type="text" id="pay-ref" placeholder="مثال: سند صرف #501 أو شيك #9901" style="background:#fff;">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>البيان / ملاحظات الدفعة</label>
+                        <input type="text" id="pay-note" placeholder="مثال: دفعة تحت الحساب لفاتورة توريد البضاعة الشتوية" style="background:#fff;">
+                    </div>
+                </div>
+                <div class="modal-actions" style="margin-top:12px;">
+                    <button class="btn btn-success" onclick="saveMerchantPayment()" style="font-weight:700;padding:10px 22px;">
+                        <i class="fas fa-check-double"></i> اعتماد وتسجيل دفعة السداد
                     </button>
                 </div>
             </div>
@@ -902,6 +1227,250 @@
                         </thead>
                         <tbody id="expensesTableBody"></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ شاشة الصندوق والحركات المالية ============ -->
+        <div id="screen-cashbox" class="screen">
+            <h1 class="section-title"><i class="fas fa-cash-register text-success"></i> الصندوق والحركات المالية</h1>
+            <p class="section-subtitle">إدارة ومتابعة النقد اليومي، المقبوضات النقدية والمحافظ، المصروفات، ومطابقة الدرج</p>
+
+            <!-- التبويبات العلوية -->
+            <div class="screen-subtabs-nav">
+                <button type="button" class="screen-subtab-btn active" id="tabBtn-cashbox-daily" onclick="switchCashboxSubtab('daily')">
+                    <i class="fas fa-wallet"></i> حركة الصندوق اليومية والوردية
+                </button>
+                <button type="button" class="screen-subtab-btn" id="tabBtn-cashbox-reconcile" onclick="switchCashboxSubtab('reconcile')">
+                    <i class="fas fa-balance-scale"></i> الجرد الفعلي ومطابقة الدرج
+                </button>
+                <button type="button" class="screen-subtab-btn" id="tabBtn-cashbox-journal" onclick="switchCashboxSubtab('journal')">
+                    <i class="fas fa-file-invoice-dollar"></i> سجل الحركات والتدفقات
+                </button>
+                <button type="button" class="screen-subtab-btn" id="tabBtn-cashbox-digital" onclick="switchCashboxSubtab('digital')">
+                    <i class="fas fa-mobile-alt"></i> المحافظ والتحويلات البنكية
+                </button>
+            </div>
+
+            <!-- تبويب 1: حركة الصندوق اليومية -->
+            <div id="cashboxSubtab-daily">
+                <!-- شريط فلتر التاريخ والتحكم السريع -->
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-weight:700;font-size:0.86rem;color:#334155;"><i class="far fa-calendar-alt text-primary"></i> عرض حركة تاريخ:</span>
+                        <input type="date" id="cashboxDateFilter" onchange="loadCashboxData()" style="padding:6px 12px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:0.85rem;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setCashboxToday()">اليوم</button>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="openCashboxOpeningModal()" style="border-color:#64748b;color:#475569;">
+                            <i class="fas fa-cog"></i> تعديل الرصيد الافتتاحي
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" onclick="openCashboxEntryModal('in')">
+                            <i class="fas fa-arrow-down"></i> إيداع نقدي (فكة / تغذية)
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="openCashboxEntryModal('out')">
+                            <i class="fas fa-arrow-up"></i> سحب نقدي (أمانات / إيداع بنكي)
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="printCashboxDailyReport()">
+                            <i class="fas fa-print"></i> طباعة كشف اليومية
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5 بطاقات المؤشرات الأساسية المطلوبة -->
+                <div class="cashbox-kpi-grid">
+                    <div class="cashbox-kpi-card opening">
+                        <div class="stat-label">الرصيد الافتتاحي للصندوق</div>
+                        <div class="stat-value" id="cbOpeningCashView" style="color:#475569;">₪0.00</div>
+                        <div class="stat-sub"><i class="fas fa-lock"></i> العهدة / الفكة بداية اليوم</div>
+                    </div>
+                    <div class="cashbox-kpi-card cash-in">
+                        <div class="stat-label">المقبوض النقدي (كاش)</div>
+                        <div class="stat-value text-success" id="cbCashInView">₪0.00</div>
+                        <div class="stat-sub" id="cbCashInSub"><i class="fas fa-plus-circle"></i> مبيعات + دفعات ديون + تغذية</div>
+                    </div>
+                    <div class="cashbox-kpi-card digital">
+                        <div class="stat-label">المستلم عبر المحافظ والبنوك</div>
+                        <div class="stat-value text-info" id="cbDigitalInView">₪0.00</div>
+                        <div class="stat-sub"><i class="fas fa-university"></i> PalPay / Jawwal Pay / بنك</div>
+                    </div>
+                    <div class="cashbox-kpi-card cash-out">
+                        <div class="stat-label">المصروفات والمدفوعات</div>
+                        <div class="stat-value text-danger" id="cbCashOutView">₪0.00</div>
+                        <div class="stat-sub" id="cbCashOutSub"><i class="fas fa-minus-circle"></i> موردين + مصاريف + مرتجعات</div>
+                    </div>
+                    <div class="cashbox-kpi-card expected">
+                        <div class="stat-label">الرصيد المتوقع للصندوق</div>
+                        <div class="stat-value" id="cbExpectedCashView">₪0.00</div>
+                        <div class="stat-sub"><i class="fas fa-cash-register"></i> النقد المفترض وجوده بالدرج الآن</div>
+                    </div>
+                </div>
+
+                <!-- تفصيل الداخل والخارج -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 style="color:#15803d;"><i class="fas fa-arrow-circle-down"></i> تفصيل المقبوضات النقدية (داخل للدرج)</h3>
+                        </div>
+                        <div id="cbCashInBreakdown">
+                            <!-- تفصيل -->
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 style="color:#b91c1c;"><i class="fas fa-arrow-circle-up"></i> تفصيل المدفوعات والمصروفات (خارج من الدرج)</h3>
+                        </div>
+                        <div id="cbCashOutBreakdown">
+                            <!-- تفصيل -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تبويب 2: الجرد الفعلي ومطابقة الدرج -->
+            <div id="cashboxSubtab-reconcile" style="display:none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-balance-scale text-primary"></i> حاسبة جرد ومطابقة الدرج الفعلي</h3>
+                        <small style="color:var(--gray);">قم بعد النقد في الدرج وأدخل المبلغ لمقارنته بالرصيد المتوقع</small>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-top:10px;">
+                        <div>
+                            <div class="form-group mb-3">
+                                <label style="font-weight:700;font-size:0.9rem;">الرصيد المتوقع بالدرج آلياً:</label>
+                                <div id="cbReconcileExpectedView" style="font-size:1.6rem;font-weight:900;color:var(--primary);background:#f1f5f9;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;">₪0.00</div>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label style="font-weight:700;font-size:0.9rem;">المبلغ الفعلي المعدود باليد (₪) *:</label>
+                                <input type="number" step="0.5" id="cbActualCountInput" placeholder="أدخل النقد الموجود في الدرج..."
+                                       oninput="calculateCashDiscrepancy()"
+                                       style="font-size:1.4rem;font-weight:800;padding:12px;border:2.5px solid var(--primary);border-radius:10px;width:100%;font-family:inherit;">
+                            </div>
+                            <div class="form-group mb-3">
+                                <label>ملاحظة الجرد / الوردية:</label>
+                                <input type="text" id="cbClosingNoteInput" placeholder="مثال: إغلاق وردية المساء - الكاشير علي">
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="submitCashClosing()" style="width:100%;padding:12px;font-weight:800;font-size:0.95rem;display:flex;align-items:center;justify-content:center;gap:8px;">
+                                <i class="fas fa-lock"></i> اعتماد الجرد وإغلاق وردية الصندوق
+                            </button>
+                        </div>
+
+                        <div>
+                            <label style="font-weight:700;font-size:0.85rem;display:block;margin-bottom:6px;">نتيجة المطابقة المباشرة:</label>
+                            <div id="cbReconcileResultBox" class="cash-reconcile-result matched">
+                                <i class="fas fa-check-circle" style="font-size:1.8rem;"></i>
+                                <div>
+                                    <div style="font-size:1rem;" id="cbReconcileStatusTitle">الصندوق متطابق</div>
+                                    <div style="font-size:0.82rem;font-weight:normal;" id="cbReconcileStatusDesc">لا يوجد عجز أو فائض في الدرج.</div>
+                                </div>
+                            </div>
+
+                            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-top:12px;">
+                                <h6 style="margin:0 0 8px;font-weight:700;font-size:0.82rem;"><i class="fas fa-calculator text-primary"></i> حاسبة فئات العملات النقدية السريعة (اختياري):</h6>
+                                <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;font-size:0.78rem;">
+                                    <div>200 ₪: <input type="number" min="0" class="cb-denom" data-val="200" style="width:100%;padding:4px;border:1px solid #cbd5e1;border-radius:4px;text-align:center;" oninput="calcDenominations()"></div>
+                                    <div>100 ₪: <input type="number" min="0" class="cb-denom" data-val="100" style="width:100%;padding:4px;border:1px solid #cbd5e1;border-radius:4px;text-align:center;" oninput="calcDenominations()"></div>
+                                    <div>50 ₪: <input type="number" min="0" class="cb-denom" data-val="50" style="width:100%;padding:4px;border:1px solid #cbd5e1;border-radius:4px;text-align:center;" oninput="calcDenominations()"></div>
+                                    <div>20 ₪: <input type="number" min="0" class="cb-denom" data-val="20" style="width:100%;padding:4px;border:1px solid #cbd5e1;border-radius:4px;text-align:center;" oninput="calcDenominations()"></div>
+                                    <div>10 ₪: <input type="number" min="0" class="cb-denom" data-val="10" style="width:100%;padding:4px;border:1px solid #cbd5e1;border-radius:4px;text-align:center;" oninput="calcDenominations()"></div>
+                                    <div>فكة/قطع: <input type="number" min="0" step="0.5" id="cb-denom-coins" style="width:100%;padding:4px;border:1px solid #cbd5e1;border-radius:4px;text-align:center;" oninput="calcDenominations()"></div>
+                                </div>
+                                <div style="font-size:0.75rem;color:var(--gray);margin-top:6px;display:flex;justify-content:space-between;">
+                                    <span>مجموع الفئات: <strong id="cbDenomTotal" style="color:var(--primary);">₪0.00</strong></span>
+                                    <button type="button" class="btn btn-outline btn-sm" style="padding:1px 6px;font-size:0.7rem;" onclick="applyDenomToActual()">نسخ للفعلي</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- سجل الإغلاقات والجرد السابقة -->
+                <div class="card" style="margin-top:16px;">
+                    <div class="card-header">
+                        <h3><i class="fas fa-archive"></i> سجل إغلاقات الصندوق والورديات السابقة</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>تاريخ ووقت الإغلاق</th>
+                                    <th>الرصيد المتوقع</th>
+                                    <th>الرصيد الفعلي</th>
+                                    <th>الفارق (عجز/فائض)</th>
+                                    <th>المسؤول</th>
+                                    <th>ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cbClosingsTableBody">
+                                <!-- ديناميكي -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تبويب 3: سجل الحركات والتدفقات -->
+            <div id="cashboxSubtab-journal" style="display:none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-stream"></i> سجل التدفقات والحركات المالية اللحظية</h3>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <select id="cbJournalFilter" onchange="renderCashJournal()" style="padding:6px 12px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:0.84rem;">
+                                <option value="all">جميع الحركات</option>
+                                <option value="in">مقبوضات نقدية فقط (+)</option>
+                                <option value="out">مدفوعات ومصروفات فقط (-)</option>
+                                <option value="digital">محافظ وبنوك فقط</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الوقت</th>
+                                    <th>نوع الحركة</th>
+                                    <th>البيان / الوصف</th>
+                                    <th>المرجع</th>
+                                    <th>داخل (+)</th>
+                                    <th>خارج (-)</th>
+                                    <th>طريقة القبض/الدفع</th>
+                                    <th>الموظف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cbJournalTableBody">
+                                <!-- ديناميكي -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تبويب 4: المحافظ والتحويلات البنكية -->
+            <div id="cashboxSubtab-digital" style="display:none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-mobile-alt text-primary"></i> كشف مقبوضات المحافظ والبنوك الإلكترونية</h3>
+                        <small style="color:var(--gray);">لمطابقة إشعارات PalPay و Jawwal Pay والتحويلات البنكية</small>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>رقم الفاتورة</th>
+                                    <th>التاريخ</th>
+                                    <th>التطبيق / البنك</th>
+                                    <th>اسم صاحب الحوالة</th>
+                                    <th>رقم الهاتف / المرجع</th>
+                                    <th>المبلغ المستلم</th>
+                                    <th>إشعار الحوالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cbDigitalTableBody">
+                                <!-- ديناميكي -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1128,6 +1697,79 @@
     </div>
 </div>
 
+<!-- ============ Modal: إدخال سريع لبضاعة أول المدة واستيراد ملفات ============ -->
+<div class="modal-overlay" id="quickOpeningStockModal">
+    <div class="modal-box" style="max-width:980px;width:95vw;">
+        <div class="modal-header">
+            <div>
+                <h5 style="margin:0;font-weight:800;display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-boxes text-primary"></i> إدخال بضاعة أول المدة السريعة (الرصيد الافتتاحي)
+                </h5>
+                <small style="color:var(--gray);font-size:0.78rem;">أدخل البضاعة المتوفرة لديك حالياً في المحل لتجهيز المخزون ونظام الكاشير فوراً</small>
+            </div>
+            <button class="modal-close" onclick="closeModal('quickOpeningStockModal')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:16px;">
+            <!-- أدوات الاستيراد والتحميل -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <div style="font-size:0.84rem;color:#334155;">
+                    <i class="fas fa-file-csv text-success" style="font-size:1.1rem;margin-left:4px;"></i>
+                    <strong>استيراد جاهز من Excel أو CSV:</strong> يمكنك تحميل نموذج فارغ وملئه ثم استيراده هنا بنقرة واحدة.
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="downloadOpeningStockTemplate()" title="تحميل ملف إكسل CSV فارغ مع أمثلة">
+                        <i class="fas fa-download"></i> تحميل النموذج الفارغ (Excel / CSV)
+                    </button>
+                    <label class="btn btn-outline btn-sm" style="margin:0;cursor:pointer;border-color:#10b981;color:#10b981;background:#f0fdf4;" title="رفع واستيراد ملف CSV">
+                        <i class="fas fa-upload"></i> استيراد ملف CSV
+                        <input type="file" id="openingStockCsvInput" accept=".csv,text/csv" style="display:none;" onchange="handleOpeningStockCsvUpload(event)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- جدول الإدخال السريع -->
+            <div class="table-responsive" style="max-height:360px;overflow-y:auto;border:1px solid #cbd5e1;border-radius:10px;">
+                <table class="quick-stock-table" style="width:100%;border-collapse:collapse;margin:0;font-size:0.83rem;">
+                    <thead style="position:sticky;top:0;background:#f1f5f9;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                        <tr>
+                            <th style="padding:8px 6px;text-align:center;width:35px;">#</th>
+                            <th style="padding:8px 8px;text-align:right;min-width:170px;">اسم المنتج *</th>
+                            <th style="padding:8px 8px;text-align:right;min-width:130px;">التصنيف *</th>
+                            <th style="padding:8px 8px;text-align:center;min-width:85px;">المقاس</th>
+                            <th style="padding:8px 8px;text-align:center;min-width:85px;">اللون</th>
+                            <th style="padding:8px 8px;text-align:center;min-width:75px;">الكمية *</th>
+                            <th style="padding:8px 8px;text-align:center;min-width:95px;">سعر التكلفة ₪ *</th>
+                            <th style="padding:8px 8px;text-align:center;min-width:95px;">سعر البيع ₪ *</th>
+                            <th style="padding:8px 6px;text-align:center;width:40px;">إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quickOpeningStockTableBody">
+                        <!-- صفوف الإدخال الديناميكية -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:10px;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="addQuickOpeningStockRow()" style="border-color:#4f46e5;color:#4f46e5;font-weight:700;">
+                    <i class="fas fa-plus"></i> إضافة سطر جديد
+                </button>
+                <div id="quickStockSummary" style="font-size:0.85rem;color:#475569;font-weight:700;">
+                    عدد الأسطر: <span id="quickStockRowCount" style="color:var(--primary);">0</span> | 
+                    إجمالي القطع: <span id="quickStockTotalQty" style="color:var(--success);">0</span> | 
+                    إجمالي رأس المال: <span id="quickStockTotalCost" style="color:#0f172a;">₪0.00</span>
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:14px;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('quickOpeningStockModal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="submitQuickOpeningStockToInvoice()" style="background:linear-gradient(135deg,#4f46e5,#4338ca);font-weight:700;">
+                    <i class="fas fa-check-double"></i> ترحيل إلى فاتورة بضاعة أول المدة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ============ Modal: تأكيد اعتماد الفاتورة ============ -->
 <div class="modal-overlay" id="purchConfirmModal">
     <div class="modal-box" style="max-width:500px;">
@@ -1297,6 +1939,106 @@
             </div>
             <div style="margin-top:14px;display:flex;justify-content:flex-end;">
                 <button type="button" class="btn btn-outline" onclick="closeModal('purchImagePreviewModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    <!-- نافذة تفاصيل وسند الإرجاع والتبديل -->
+    <div class="modal-overlay" id="returnDetailsModal">
+        <div class="modal-box" style="max-width:680px;">
+            <div class="modal-header">
+                <h5 id="returnModalHeaderTitle"><i class="fas fa-file-invoice text-primary"></i> سند إرجاع / تبديل</h5>
+                <button class="modal-close" onclick="closeModal('returnDetailsModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="returnModalBody">
+                <!-- تفاصيل ديناميكية -->
+            </div>
+            <div class="modal-actions" style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('returnDetailsModal')">إغلاق</button>
+                <button type="button" class="btn btn-primary" id="returnPrintBtn">
+                    <i class="fas fa-print"></i> طباعة السند
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة حركة نقدية يدوية بالصندوق (إيداع / سحب) -->
+    <div class="modal-overlay" id="cashboxEntryModal">
+        <div class="modal-box" style="max-width:480px;">
+            <div class="modal-header">
+                <h5 id="cbEntryModalTitle"><i class="fas fa-money-bill-wave text-success"></i> حركة نقدية في الصندوق</h5>
+                <button class="modal-close" onclick="closeModal('cashboxEntryModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="cbEntryType" value="in">
+                <div class="form-group mb-3">
+                    <label>نوع الحركة *</label>
+                    <select id="cbEntryTypeSelect" onchange="onCbEntryTypeChange(this.value)" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                        <option value="in">➕ إيداع نقدي / تغذية فكة للصندوق (Cash In)</option>
+                        <option value="out">➖ سحب نقدي / توريد للبنك / أمانات (Cash Out)</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label>المبلغ النقدي (₪) *</label>
+                    <input type="number" step="0.5" min="0.5" id="cbEntryAmount" placeholder="أدخل المبلغ..." style="width:100%;font-size:1.25rem;font-weight:700;padding:10px;border:2px solid var(--primary);border-radius:8px;font-family:inherit;">
+                </div>
+                <div class="form-group mb-3">
+                    <label>السبب / البيان *</label>
+                    <input type="text" id="cbEntryReason" placeholder="مثال: فكة صباحية، إيداع أمانات للمالك، توريد بنكي..." style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                </div>
+                <div class="form-group mb-3">
+                    <label>ملاحظات إضافية</label>
+                    <input type="text" id="cbEntryNote" placeholder="اختياري..." style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                </div>
+            </div>
+            <div class="modal-actions" style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('cashboxEntryModal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="saveCashboxEntry()">
+                    <i class="fas fa-check"></i> حفظ الحركة النقدية
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة ضبط الرصيد الافتتاحي للصندوق -->
+    <div class="modal-overlay" id="cashboxOpeningModal">
+        <div class="modal-box" style="max-width:440px;">
+            <div class="modal-header">
+                <h5><i class="fas fa-cog text-primary"></i> الرصيد الافتتاحي للصندوق (العهدة)</h5>
+                <button class="modal-close" onclick="closeModal('cashboxOpeningModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem;color:var(--gray);margin-bottom:14px;line-height:1.6;">
+                    الرصيد الافتتاحي هو مبلغ النقد الأساسي (الفكة) المخصص لدرج الكاشير في بداية اليوم.
+                </p>
+                <div class="form-group mb-3">
+                    <label style="font-weight:700;">مبلغ الرصيد الافتتاحي (₪) *</label>
+                    <input type="number" step="1" min="0" id="cbOpeningBalanceInput" placeholder="200" style="width:100%;font-size:1.3rem;font-weight:800;padding:10px;border:2px solid var(--primary);border-radius:8px;font-family:inherit;">
+                </div>
+            </div>
+            <div class="modal-actions" style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('cashboxOpeningModal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="saveCashboxOpening()">
+                    <i class="fas fa-save"></i> حفظ وتحديث الرصيد
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة كشف حساب التاجر والمورد التفصيلي -->
+    <div class="modal-overlay" id="merchantStatementModal">
+        <div class="modal-box" style="max-width:860px;width:95vw;">
+            <div class="modal-header">
+                <h5 id="merchantStatementTitle"><i class="fas fa-file-invoice-dollar text-primary"></i> كشف حساب المورد</h5>
+                <button class="modal-close" onclick="closeModal('merchantStatementModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="merchantStatementBody" style="max-height:75vh;overflow-y:auto;padding:16px;">
+                <!-- تفاصيل الكشف -->
+            </div>
+            <div class="modal-actions" style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('merchantStatementModal')">إغلاق</button>
+                <button type="button" class="btn btn-primary" id="printMerchantStatementBtn" onclick="">
+                    <i class="fas fa-print"></i> طباعة كشف الحساب
+                </button>
             </div>
         </div>
     </div>

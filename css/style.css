@@ -1209,6 +1209,24 @@ table .empty {
     color: var(--danger);
 }
 
+#tenderBtn-cash.active {
+    border-color: #16a34a !important;
+    background: #f0fdf4 !important;
+    color: #15803d !important;
+}
+
+#tenderBtn-digital.active {
+    border-color: #f59e0b !important;
+    background: #fffbeb !important;
+    color: #b45309 !important;
+}
+
+#tenderBtn-split.active {
+    border-color: #8b5cf6 !important;
+    background: #f5f3ff !important;
+    color: #6d28d9 !important;
+}
+
 /* ============================================
    Modal
    ============================================ */
@@ -1955,7 +1973,38 @@ table .empty {
     justify-content: center;
     font-size: 1.05rem;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
     transition: all .2s;
+}
+
+.mobile-header .notif-bell-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    cursor: pointer;
+    padding: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: all .2s;
+}
+
+.mobile-header .notif-bell-btn:hover {
+    background: #eef2ff;
+    color: var(--primary);
+    border-color: #c7d2fe;
+}
+
+.mobile-header .notif-bell-btn:active {
+    transform: scale(0.92);
+    background: #e0e7ff;
 }
 
 .notif-bell-btn:hover {
@@ -1997,6 +2046,7 @@ table .empty {
     justify-content: center;
     border: 2px solid #fff;
     box-shadow: 0 2px 4px rgba(239, 68, 68, 0.35);
+    pointer-events: none;
 }
 
 .notif-badge.show {
@@ -2009,18 +2059,42 @@ table .empty {
     50% { transform: scale(1.18); }
 }
 
+/* غطاء خلفي لإغلاق التنبيهات */
+.notif-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 10002;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.notif-backdrop.show {
+    display: block;
+    opacity: 1;
+}
+
+@media (min-width: 768px) {
+    .notif-backdrop {
+        background: transparent;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
 /* القائمة المنسدلة للتنبيهات */
 .notif-dropdown {
-    position: absolute;
-    left: 0;
-    top: calc(100% + 10px);
+    position: fixed;
     width: 390px;
     max-width: 90vw;
     background: #fff;
     border-radius: 14px;
-    box-shadow: 0 12px 36px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.06);
     border: 1px solid #e2e8f0;
-    z-index: 1050;
+    z-index: 10005;
     display: none;
     flex-direction: column;
     overflow: hidden;
@@ -2354,13 +2428,51 @@ table .empty {
     }
 
     .notif-dropdown {
-        position: fixed;
-        top: 60px;
-        left: 12px;
-        right: 12px;
-        width: auto;
-        max-height: 82vh;
+        position: fixed !important;
+        top: 60px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: 480px !important;
+        margin: 0 auto !important;
+        max-height: calc(100vh - 75px) !important;
+        border-radius: 14px !important;
     }
+
+    .notif-list {
+        max-height: calc(100vh - 225px) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .notif-header {
+        padding: 10px 12px;
+    }
+    .notif-header-title {
+        font-size: 0.8rem;
+        gap: 6px;
+    }
+    .notif-action-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+    .notif-tab {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+    .notif-dismiss-btn {
+        min-width: 28px;
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.purch-prod-body .table-responsive {
+    margin: 0;
+    padding: 0;
 }
 
 
@@ -2436,3 +2548,325 @@ table .empty {
 .purch-thumb-del-btn:hover {
     transform: scale(1.15);
 }
+
+/* ============================================
+   بضاعة أول المدة (الرصيد الافتتاحي للمخزون)
+   ============================================ */
+.purch-mode-pill-box {
+    display: inline-flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+}
+
+.purch-mode-pill {
+    padding: 7px 14px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #64748b;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.purch-mode-pill:hover {
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.purch-mode-pill.active {
+    background: #fff;
+    color: var(--primary);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.purch-mode-pill.active#purchModePillOpening {
+    color: #0284c7;
+    background: #f0f9ff;
+    border-color: #bae6fd;
+}
+
+.purch-opening-banner {
+    background: #f0f9ff;
+    border: 1.5px solid #bae6fd;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #0369a1;
+}
+
+.quick-stock-table input,
+.quick-stock-table select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    background: #fff;
+}
+
+.quick-stock-table input:focus,
+.quick-stock-table select:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+/* ============================================
+   القائمة الجانبية - القوائم الفرعية (Sidebar Submenus)
+   ============================================ */
+.nav-item.has-sub {
+    justify-content: space-between;
+}
+.nav-item.has-sub .sub-arrow {
+    font-size: 0.72rem;
+    transition: transform 0.25s ease;
+    margin-right: auto;
+}
+.nav-item.has-sub.expanded .sub-arrow {
+    transform: rotate(180deg);
+}
+.nav-sub-menu {
+    display: none;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    margin: 3px 12px 6px;
+    padding: 4px 0;
+    overflow: hidden;
+}
+.nav-sub-menu.show {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+.nav-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 18px 8px 12px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-right: 2px solid transparent;
+}
+.nav-sub-item:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+.nav-sub-item.active {
+    color: #fbbf24;
+    border-right-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+    font-weight: 700;
+}
+.nav-sub-item i {
+    font-size: 0.78rem;
+    width: 14px;
+    text-align: center;
+}
+
+/* ============================================
+   التبويبات العلوية للشاشات (Screen Subtabs)
+   ============================================ */
+.screen-subtabs-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+.screen-subtab-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #64748b;
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.screen-subtab-btn:hover {
+    color: var(--primary);
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+.screen-subtab-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+/* ============================================
+   تنسيقات شاشة المرتجعات والتبديل (Returns & Exchanges)
+   ============================================ */
+.return-item-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    background: #fff;
+    transition: all 0.2s;
+}
+.return-item-card:hover {
+    border-color: #cbd5e1;
+}
+.return-mode-chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+.return-type-pill {
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+.return-type-pill:hover {
+    background: #f1f5f9;
+}
+.return-type-pill.active-none {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #334155;
+}
+.return-type-pill.active-return {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+.return-type-pill.active-exchange {
+    background: #e0e7ff;
+    color: #4338ca;
+    border-color: #a5b4fc;
+}
+.exchange-picker-box {
+    margin-top: 10px;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 10px;
+}
+.financial-action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+.financial-action-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.financial-action-card:hover {
+    border-color: #a5b4fc;
+    background: #fafafa;
+}
+.financial-action-card.selected {
+    border-color: var(--primary);
+    background: #f5f3ff;
+}
+
+/* ============================================
+   تنسيقات شاشة الصندوق والحركات المالية (Cashbox)
+   ============================================ */
+.cashbox-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+.cashbox-kpi-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    position: relative;
+    overflow: hidden;
+}
+.cashbox-kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 4px;
+}
+.cashbox-kpi-card.opening::before { background: #64748b; }
+.cashbox-kpi-card.cash-in::before { background: #10b981; }
+.cashbox-kpi-card.digital::before { background: #0284c7; }
+.cashbox-kpi-card.cash-out::before { background: #ef4444; }
+.cashbox-kpi-card.expected::before { background: linear-gradient(90deg, #4f46e5, #818cf8); }
+
+.cashbox-kpi-card.expected {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 14px rgba(49, 46, 129, 0.25);
+}
+.cashbox-kpi-card.expected .stat-label,
+.cashbox-kpi-card.expected .stat-sub {
+    color: #c7d2fe;
+}
+.cashbox-kpi-card.expected .stat-value {
+    color: #fff;
+}
+.cash-reconcile-result {
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 14px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-weight: 700;
+}
+.cash-reconcile-result.matched {
+    background: #ecfdf5;
+    border: 1.5px solid #a7f3d0;
+    color: #047857;
+}
+.cash-reconcile-result.deficit {
+    background: #fef2f2;
+    border: 1.5px solid #fecaca;
+    color: #b91c1c;
+}
+.cash-reconcile-result.surplus {
+    background: #eff6ff;
+    border: 1.5px solid #bfdbfe;
+    color: #1d4ed8;
+}
+

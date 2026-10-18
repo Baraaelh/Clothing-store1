@@ -16,6 +16,11 @@ const KEYS = {
     MERCHANTS: 'store_merchants_v6',
     MERCHANT_TRANSACTIONS: 'store_merchant_tx_v6',
     CUSTOMER_DEBTS: 'store_customer_debts_v6',
+    CUSTOMERS: 'store_customers_v6',
+    RETURNS: 'store_returns_v6',
+    CASHBOX_ENTRIES: 'store_cashbox_entries_v6',
+    CASHBOX_SETTINGS: 'store_cashbox_settings_v6',
+    CASHBOX_CLOSINGS: 'store_cashbox_closings_v6',
     AUDIT_LOG: 'store_audit_log_v6',
     CURRENT_USER: 'store_current_user_v6',
 };
@@ -229,6 +234,118 @@ const saveMerchantTransactions = (x) => saveMerchantTx(x);
 const getCustomerDebts = () => JSON.parse(localStorage.getItem(KEYS.CUSTOMER_DEBTS)) || [];
 const saveCustomerDebts = (x) => localStorage.setItem(KEYS.CUSTOMER_DEBTS, JSON.stringify(x));
 
+const getCustomers = () => {
+    let list = JSON.parse(localStorage.getItem(KEYS.CUSTOMERS || 'store_customers_v6'));
+    if (!list || !Array.isArray(list) || list.length === 0) {
+        let defaults = [
+            { id: 1, name: 'خالد محمود', phone: '0599111111', note: 'عميل دائم' },
+            { id: 2, name: 'ريم سعيد', phone: '0599222222', note: '' },
+            { id: 3, name: 'محمد خليل', phone: '0599333333', note: '' }
+        ];
+        try {
+            const debts = typeof getCustomerDebts === 'function' ? getCustomerDebts() : [];
+            const names = new Set(defaults.map(d => d.name));
+            debts.forEach(d => {
+                if (d.customer_name && !names.has(d.customer_name)) {
+                    names.add(d.customer_name);
+                    defaults.push({
+                        id: defaults.length + 1,
+                        name: d.customer_name,
+                        phone: d.customer_phone || '',
+                        note: d.note || ''
+                    });
+                }
+            });
+        } catch(e) {}
+        localStorage.setItem(KEYS.CUSTOMERS || 'store_customers_v6', JSON.stringify(defaults));
+        return defaults;
+    }
+    return list;
+};
+const saveCustomers = (x) => localStorage.setItem(KEYS.CUSTOMERS || 'store_customers_v6', JSON.stringify(x));
+
+const getReturns = () => {
+    let list = JSON.parse(localStorage.getItem(KEYS.RETURNS));
+    if (!list || !Array.isArray(list)) {
+        list = [
+            {
+                id: 1,
+                return_no: 'RET-1001',
+                sale_id: 1001,
+                customer_name: 'عميل نقدي',
+                customer_phone: '-',
+                type: 'return',
+                return_items: [
+                    { product_id: 5, name: 'تيشيرت صيفي', size: 'M', color: 'أزرق', quantity: 1, unit_price: 20, total: 20 }
+                ],
+                exchange_items: [],
+                refund_amount: 20,
+                difference_amount: 0,
+                financial_action: 'cash_refund',
+                cashier_id: 1,
+                cashier_name: 'محمد المالك',
+                reason: 'مقاس غير مناسب للزبون',
+                note: 'تم إرجاع نقدي من الصندوق',
+                created_at: new Date(Date.now() - 3600000).toISOString()
+            }
+        ];
+        saveReturns(list);
+    }
+    return list;
+};
+const saveReturns = (x) => localStorage.setItem(KEYS.RETURNS, JSON.stringify(x));
+
+const getCashboxEntries = () => {
+    let list = JSON.parse(localStorage.getItem(KEYS.CASHBOX_ENTRIES));
+    if (!list || !Array.isArray(list)) {
+        list = [
+            {
+                id: 1,
+                type: 'in',
+                amount: 100,
+                reason: 'تغذية صندوق فكة صباحية',
+                cashier_name: 'محمد المالك',
+                created_at: new Date(Date.now() - 4 * 3600000).toISOString()
+            }
+        ];
+        saveCashboxEntries(list);
+    }
+    return list;
+};
+const saveCashboxEntries = (x) => localStorage.setItem(KEYS.CASHBOX_ENTRIES, JSON.stringify(x));
+
+const getCashboxSettings = () => {
+    let settings = JSON.parse(localStorage.getItem(KEYS.CASHBOX_SETTINGS));
+    if (!settings) {
+        settings = { opening_balance: 200, last_opened_date: new Date().toISOString().slice(0, 10) };
+        saveCashboxSettings(settings);
+    }
+    return settings;
+};
+const saveCashboxSettings = (x) => localStorage.setItem(KEYS.CASHBOX_SETTINGS, JSON.stringify(x));
+
+const getCashboxClosings = () => JSON.parse(localStorage.getItem(KEYS.CASHBOX_CLOSINGS)) || [];
+const saveCashboxClosings = (x) => localStorage.setItem(KEYS.CASHBOX_CLOSINGS, JSON.stringify(x));
+
+function getProductReturnsQuantity(productId) {
+    const allReturns = getReturns();
+    let net = 0;
+    allReturns.forEach(ret => {
+        if (ret.status === 'cancelled') return;
+        (ret.return_items || []).forEach(it => {
+            if (Number(it.product_id) === Number(productId)) {
+                net += Number(it.quantity || 0);
+            }
+        });
+        (ret.exchange_items || []).forEach(it => {
+            if (Number(it.product_id) === Number(productId)) {
+                net -= Number(it.quantity || 0);
+            }
+        });
+    });
+    return net;
+}
+
 const getAuditLog = () => JSON.parse(localStorage.getItem(KEYS.AUDIT_LOG)) || [];
 const saveAuditLog = (x) => localStorage.setItem(KEYS.AUDIT_LOG, JSON.stringify(x));
 
@@ -270,7 +387,8 @@ function getProductQuantity(productId) {
             return sum + items.reduce((s, i) => s + Number(i.quantity || 0), 0);
         }, 0);
 
-    return totalPurchased - totalSold;
+    const returnsAdjustment = (typeof getProductReturnsQuantity === 'function') ? getProductReturnsQuantity(productId) : 0;
+    return totalPurchased - totalSold + returnsAdjustment;
 }
 
 function getProductAvgCost(productId) {
@@ -296,8 +414,8 @@ function getAccruedRevenue() {
 
 function getCashRevenue() {
     return getActiveSales()
-        .filter(s => s.payment && s.payment.method !== 'debt')
-        .reduce((s, x) => s + Number(x.total || 0), 0);
+        .filter(s => s.status !== 'voided')
+        .reduce((s, x) => s + Number(x.payment && x.payment.total_paid !== undefined ? x.payment.total_paid : (x.payment && x.payment.method === 'debt' ? (x.payment.paid_upfront || 0) : x.total || 0)), 0);
 }
 
 function getDebtSalesRevenue() {
