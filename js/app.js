@@ -88,6 +88,7 @@ function startApp() {
     renderOnlineOrders();
     updateOnlineOrdersBadge();
     if (typeof updateOnlineProductsCountBadge === 'function') updateOnlineProductsCountBadge();
+    if (typeof updateCustomersCountBadge === 'function') updateCustomersCountBadge();
 
     if (user.role === 'cashier') switchScreen('pos');
 }
@@ -177,6 +178,9 @@ function buildSidebar() {
             <div class="nav-item" onclick="switchScreen('merchants')">
                 <i class="fas fa-handshake"></i><span>حسابات التجار</span>
             </div>
+            <div class="nav-item" onclick="switchScreen('customers')">
+                <i class="fas fa-user-friends"></i><span>الزبائن وقاعدة العملاء</span>
+            </div>
             <div class="nav-item" onclick="switchScreen('debts')">
                 <i class="fas fa-hand-holding-usd"></i><span>ديون العملاء</span>
             </div>
@@ -194,6 +198,10 @@ function buildSidebar() {
         <div class="nav-item" onclick="switchScreen('online-products')">
             <i class="fas fa-tshirt"></i><span>منتجات المتجر أونلاين</span>
             <span class="badge success" id="onlineProductsCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
+        </div>
+        <div class="nav-item" onclick="switchScreen('customers')">
+            <i class="fas fa-users-cog"></i><span>حسابات العملاء والزبائن</span>
+            <span class="badge info" id="customersCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
         </div>
         <a href="store/index.html" target="_blank" class="nav-item" style="text-decoration:none;color:inherit;display:flex;align-items:center;">
             <i class="fas fa-external-link-alt text-primary"></i><span>عرض المتجر الإلكتروني</span>
@@ -275,6 +283,7 @@ function switchScreen(screenId) {
     if (screenId === 'sales-record') loadSalesHistory();
     if (screenId === 'online-orders') renderOnlineOrders();
     if (screenId === 'online-products') renderOnlineProducts();
+    if (screenId === 'customers') loadCustomersScreen();
     if (screenId === 'returns') loadReturnsScreen();
     if (screenId === 'cashbox') loadCashboxScreen();
     if (screenId === 'purchases') {
@@ -6198,6 +6207,504 @@ window.deleteOnlineProduct = deleteOnlineProduct;
 window.updateOnlineProductsCountBadge = updateOnlineProductsCountBadge;
 
 /* ============================================
+   25. ب. إدارة حسابات الزبائن وقاعدة بيانات العملاء
+   ============================================ */
+let currentCustomerFilterTab = 'all';
+let currentCustomerSearchQuery = '';
+
+function updateCustomersCountBadge() {
+    try {
+        const customers = typeof getCustomers === 'function' ? getCustomers() : [];
+        const onlineCount = customers.filter(c => c.source === 'online').length;
+        const badge = document.getElementById('customersCountBadge');
+        if (badge) {
+            if (onlineCount > 0) {
+                badge.textContent = `${onlineCount} أونلاين`;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    } catch (e) {}
+}
+
+function loadCustomersScreen() {
+    renderCustomersTable();
+}
+
+function filterCustomerTab(tab, btn) {
+    currentCustomerFilterTab = tab;
+    const group = document.getElementById('customerFilterGroup');
+    if (group) {
+        group.querySelectorAll('button').forEach(b => {
+            b.classList.remove('btn-primary');
+            b.classList.add('btn-outline');
+        });
+    }
+    if (btn) {
+        btn.classList.remove('btn-outline');
+        btn.classList.add('btn-primary');
+    }
+    renderCustomersTable();
+}
+
+function handleCustomerSearch(query) {
+    currentCustomerSearchQuery = (query || '').trim().toLowerCase();
+    renderCustomersTable();
+}
+
+function renderCustomersTable() {
+    const tbody = document.getElementById('customersTableBody');
+    if (!tbody) return;
+
+    const customers = typeof getCustomers === 'function' ? getCustomers() : [];
+    const onlineOrders = JSON.parse(localStorage.getItem('store_online_orders_v6')) || (typeof mockOnlineOrders !== 'undefined' ? mockOnlineOrders : []);
+    const debts = typeof getCustomerDebts === 'function' ? getCustomerDebts() : [];
+
+    // حساب الإحصائيات
+    const totalCust = customers.length;
+    const onlineCust = customers.filter(c => c.source === 'online').length;
+    const posCust = customers.filter(c => c.source !== 'online').length;
+    const totalOrdersCount = onlineOrders.length;
+
+    const statTotalEl = document.getElementById('statCustTotal');
+    const statOnlineEl = document.getElementById('statCustOnline');
+    const statPosEl = document.getElementById('statCustPos');
+    const statOrdersEl = document.getElementById('statCustOrders');
+
+    if (statTotalEl) statTotalEl.textContent = totalCust;
+    if (statOnlineEl) statOnlineEl.textContent = onlineCust;
+    if (statPosEl) statPosEl.textContent = posCust;
+    if (statOrdersEl) statOrdersEl.textContent = totalOrdersCount;
+
+    updateCustomersCountBadge();
+
+    // تصفية حسب التبويب
+    let filtered = [...customers];
+    if (currentCustomerFilterTab === 'online') {
+        filtered = filtered.filter(c => c.source === 'online');
+    } else if (currentCustomerFilterTab === 'pos') {
+        filtered = filtered.filter(c => c.source !== 'online');
+    } else if (currentCustomerFilterTab === 'debts') {
+        const debtNames = new Set(debts.filter(d => (d.balance || d.amount) > 0).map(d => (d.customer_name || '').toLowerCase()));
+        filtered = filtered.filter(c => debtNames.has((c.name || '').toLowerCase()));
+    }
+
+    // تصفية حسب البحث
+    if (currentCustomerSearchQuery) {
+        filtered = filtered.filter(c => {
+            const name = (c.name || '').toLowerCase();
+            const phone = (c.phone || '').toLowerCase();
+            const city = (c.city || '').toLowerCase();
+            const addr = (c.address || '').toLowerCase();
+            return name.includes(currentCustomerSearchQuery) ||
+                   phone.includes(currentCustomerSearchQuery) ||
+                   city.includes(currentCustomerSearchQuery) ||
+                   addr.includes(currentCustomerSearchQuery);
+        });
+    }
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center" style="padding:40px;color:#64748b;">
+                    <i class="fas fa-user-slash" style="font-size:2rem;color:#cbd5e1;margin-bottom:10px;display:block;"></i>
+                    <strong style="font-size:1.05rem;color:#1e293b;display:block;">لا يوجد عملاء مطابقين للبحث أو التصفية</strong>
+                    <span style="font-size:0.85rem;">يمكنك إضافة عميل جديد أو انتظار تسجيل عملاء عبر المتجر الإلكتروني.</span>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map((c, idx) => {
+        const isOnline = c.source === 'online';
+        const cleanPhone = (c.phone || '').replace(/\D/g, '');
+        const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '970' + cleanPhone.substring(1) : cleanPhone}` : null;
+        
+        // حساب عدد طلبات هذا العميل
+        const custOrders = onlineOrders.filter(o => {
+            const oPhone = (o.phone || o.customerPhone || '').replace(/\D/g, '');
+            const oName = (o.customer || o.customerName || '').trim().toLowerCase();
+            return (cleanPhone && oPhone === cleanPhone) || (c.name && oName === c.name.trim().toLowerCase());
+        });
+
+        // تنسيق التاريخ
+        let dateStr = '—';
+        if (c.createdAt) {
+            try {
+                dateStr = new Date(c.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+            } catch(e) {
+                dateStr = c.createdAt;
+            }
+        }
+
+        const initial = c.name ? c.name.trim().charAt(0) : 'ع';
+
+        return `
+            <tr>
+                <td style="font-weight:700;color:#64748b;">${idx + 1}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:36px;height:36px;border-radius:50%;background:${isOnline ? '#eef2ff' : '#f1f5f9'};color:${isOnline ? '#4f46e5' : '#475569'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.95rem;flex-shrink:0;">
+                            ${initial}
+                        </div>
+                        <div>
+                            <div style="font-weight:800;color:#0f172a;cursor:pointer;" onclick="viewCustomerDetails('${c.id}')" title="عرض تفاصيل وسجل العميل">
+                                ${c.name}
+                            </div>
+                            ${c.note ? `<small style="color:#64748b;font-size:0.75rem;">${c.note}</small>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:6px;direction:ltr;justify-content:flex-end;">
+                        <strong style="color:#1e293b;font-size:0.88rem;">${c.phone || '—'}</strong>
+                        ${waLink ? `
+                            <a href="${waLink}" target="_blank" class="btn btn-sm" style="padding:3px 8px;background:#dcfce7;color:#16a34a;border:none;border-radius:6px;text-decoration:none;" title="محادثة واتساب">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        ` : ''}
+                    </div>
+                </td>
+                <td>
+                    ${isOnline ? `
+                        <span class="badge" style="background:#eef2ff;color:#4f46e5;font-weight:800;padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;font-size:0.78rem;">
+                            <i class="fas fa-globe"></i> متجر أونلاين
+                        </span>
+                    ` : `
+                        <span class="badge" style="background:#f1f5f9;color:#475569;font-weight:800;padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;font-size:0.78rem;">
+                            <i class="fas fa-cash-register"></i> كاشير محلي
+                        </span>
+                    `}
+                </td>
+                <td>
+                    <div style="font-size:0.85rem;color:#334155;">
+                        <strong>${c.city || 'المدينة غير محددة'}</strong>
+                        ${c.address ? `<div style="font-size:0.75rem;color:#64748b;">${c.address}</div>` : ''}
+                    </div>
+                </td>
+                <td>
+                    ${custOrders.length > 0 ? `
+                        <button type="button" class="btn btn-sm" onclick="viewCustomerDetails('${c.id}')" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;font-weight:800;padding:3px 10px;border-radius:12px;font-size:0.78rem;cursor:pointer;">
+                            <i class="fas fa-shopping-bag"></i> ${custOrders.length} طلبات
+                        </button>
+                    ` : `
+                        <span style="font-size:0.8rem;color:#94a3b8;">لا توجد طلبات</span>
+                    `}
+                </td>
+                <td style="font-size:0.82rem;color:#64748b;">${dateStr}</td>
+                <td style="text-align:center;">
+                    <div style="display:inline-flex;gap:4px;">
+                        <button type="button" class="btn btn-sm btn-outline" onclick="viewCustomerDetails('${c.id}')" title="عرض السجل والطلبات" style="padding:4px 8px;border-radius:6px;">
+                            <i class="fas fa-eye text-primary"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="openCustomerModal('${c.id}')" title="تعديل بيانات العميل" style="padding:4px 8px;border-radius:6px;">
+                            <i class="fas fa-edit text-info"></i>
+                        </button>
+                        ${typeof viewCustomerStatement === 'function' ? `
+                            <button type="button" class="btn btn-sm btn-outline" onclick="viewCustomerStatement('${c.name}', '${c.phone || ''}')" title="كشف الحساب" style="padding:4px 8px;border-radius:6px;">
+                                <i class="fas fa-file-invoice-dollar text-warning"></i>
+                            </button>
+                        ` : ''}
+                        <button type="button" class="btn btn-sm btn-outline text-danger" onclick="deleteCustomerRecord('${c.id}')" title="حذف العميل" style="padding:4px 8px;border-radius:6px;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function viewCustomerDetails(custId) {
+    const customers = typeof getCustomers === 'function' ? getCustomers() : [];
+    const cust = customers.find(c => String(c.id) === String(custId) || c.phone === custId);
+    if (!cust) {
+        showToast('تعذر العثور على بيانات العميل', 'error');
+        return;
+    }
+
+    const modalBody = document.getElementById('customerDetailsBody');
+    if (!modalBody) return;
+
+    const onlineOrders = JSON.parse(localStorage.getItem('store_online_orders_v6')) || (typeof mockOnlineOrders !== 'undefined' ? mockOnlineOrders : []);
+    const cleanPhone = (cust.phone || '').replace(/\D/g, '');
+    const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '970' + cleanPhone.substring(1) : cleanPhone}` : null;
+
+    const custOrders = onlineOrders.filter(o => {
+        const oPhone = (o.phone || o.customerPhone || '').replace(/\D/g, '');
+        const oName = (o.customer || o.customerName || '').trim().toLowerCase();
+        return (cleanPhone && oPhone === cleanPhone) || (cust.name && oName === cust.name.trim().toLowerCase());
+    });
+
+    const totalSpent = custOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+
+    const isOnline = cust.source === 'online';
+    const initial = cust.name ? cust.name.trim().charAt(0) : 'ع';
+
+    modalBody.innerHTML = `
+        <!-- كرت العميل الرئيسي -->
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <div style="width:54px;height:54px;border-radius:50%;background:#eef2ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;">
+                    ${initial}
+                </div>
+                <div>
+                    <h3 style="font-size:1.2rem;font-weight:900;color:#0f172a;margin:0 0 4px;">
+                        ${cust.name}
+                        ${isOnline ? '<span class="badge" style="background:#eef2ff;color:#4f46e5;font-size:0.75rem;padding:2px 8px;margin-right:6px;"><i class="fas fa-globe"></i> متجر أونلاين</span>' : '<span class="badge" style="background:#f1f5f9;color:#475569;font-size:0.75rem;padding:2px 8px;margin-right:6px;"><i class="fas fa-cash-register"></i> كاشير</span>'}
+                    </h3>
+                    <div style="font-size:0.85rem;color:#64748b;display:flex;gap:14px;flex-wrap:wrap;">
+                        <span><i class="fas fa-phone-alt"></i> ${cust.phone || 'بدون هاتف'}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> ${cust.city || 'المدينة غير محددة'} ${cust.address ? ' - ' + cust.address : ''}</span>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                ${waLink ? `
+                    <a href="${waLink}" target="_blank" class="btn btn-sm" style="background:#25d366;color:#fff;border:none;border-radius:20px;padding:6px 14px;text-decoration:none;font-weight:700;">
+                        <i class="fab fa-whatsapp"></i> محادثة واتساب
+                    </a>
+                ` : ''}
+                <button type="button" class="btn btn-sm btn-outline" onclick="closeModal('customerDetailsModal'); openCustomerModal('${cust.id}');">
+                    <i class="fas fa-edit"></i> تعديل
+                </button>
+            </div>
+        </div>
+
+        <!-- ملخص مالي وسجلات -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:20px;">
+            <div style="background:#fff;border:1px solid #e2e8f0;padding:14px;border-radius:10px;text-align:center;">
+                <span style="font-size:0.8rem;color:#64748b;font-weight:700;">عدد الطلبات الكلي</span>
+                <div style="font-size:1.4rem;font-weight:900;color:#0f172a;margin-top:4px;">${custOrders.length}</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e2e8f0;padding:14px;border-radius:10px;text-align:center;">
+                <span style="font-size:0.8rem;color:#64748b;font-weight:700;">إجمالي مشتريات المتجر</span>
+                <div style="font-size:1.4rem;font-weight:900;color:#10b981;margin-top:4px;">₪${totalSpent.toFixed(2)}</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e2e8f0;padding:14px;border-radius:10px;text-align:center;">
+                <span style="font-size:0.8rem;color:#64748b;font-weight:700;">تاريخ الانضمام</span>
+                <div style="font-size:0.95rem;font-weight:800;color:#3b82f6;margin-top:8px;">
+                    ${cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('ar-EG') : 'عميل معتمد'}
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول طلبات هذا العميل -->
+        <h4 style="font-size:1rem;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+            <i class="fas fa-shopping-bag text-primary"></i> سجل طلبات العميل من المتجر أونلاين:
+        </h4>
+        ${custOrders.length === 0 ? `
+            <div style="text-align:center;padding:25px;background:#f8fafc;border-radius:10px;color:#64748b;font-size:0.9rem;">
+                <i class="fas fa-box-open" style="font-size:1.8rem;color:#cbd5e1;margin-bottom:6px;display:block;"></i>
+                لم يقم هذا العميل بأي طلبات شراء إلكترونية حتى الآن.
+            </div>
+        ` : `
+            <div class="table-responsive" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+                <table class="data-table" style="width:100%;margin:0;">
+                    <thead>
+                        <tr>
+                            <th>رقم الطلب</th>
+                            <th>التاريخ</th>
+                            <th>المنتجات والكمية</th>
+                            <th>المبلغ الإجمالي</th>
+                            <th>حالة الطلب</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${custOrders.map(o => {
+                            let badgeStyle = 'background:#fef3c7;color:#d97706;';
+                            let statusText = 'قيد الانتظار';
+                            if (o.status === 'accepted') { badgeStyle = 'background:#dcfce7;color:#16a34a;'; statusText = 'مقبول وجاري التجهيز'; }
+                            else if (o.status === 'rejected') { badgeStyle = 'background:#fee2e2;color:#dc2626;'; statusText = 'مرفوض'; }
+                            else if (o.status === 'delivered') { badgeStyle = 'background:#eff6ff;color:#2563eb;'; statusText = 'تم التسليم'; }
+
+                            const dateFmt = o.date ? new Date(o.date).toLocaleDateString('ar-EG') : (o.time || '—');
+                            const itemsDesc = o.items ? o.items.map(it => `${it.name} (x${it.quantity})`).join(', ') : (o.productName || 'طلب متجر');
+
+                            return `
+                                <tr>
+                                    <td><strong>#${o.id}</strong></td>
+                                    <td style="font-size:0.82rem;color:#64748b;">${dateFmt}</td>
+                                    <td style="font-size:0.85rem;max-width:220px;">${itemsDesc}</td>
+                                    <td><strong style="color:#0f172a;">₪${Number(o.total || 0).toFixed(2)}</strong></td>
+                                    <td>
+                                        <span class="badge" style="${badgeStyle};padding:3px 8px;border-radius:12px;font-size:0.75rem;font-weight:800;">
+                                            ${statusText}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `}
+    `;
+
+    openModal('customerDetailsModal');
+}
+
+function openCustomerModal(custId = null) {
+    const idInput = document.getElementById('custModalId');
+    const nameInput = document.getElementById('custModalName');
+    const phoneInput = document.getElementById('custModalPhone');
+    const cityInput = document.getElementById('custModalCity');
+    const sourceSelect = document.getElementById('custModalSource');
+    const addrInput = document.getElementById('custModalAddress');
+    const noteInput = document.getElementById('custModalNote');
+    const titleEl = document.getElementById('customerModalTitle');
+
+    if (custId) {
+        const customers = typeof getCustomers === 'function' ? getCustomers() : [];
+        const cust = customers.find(c => String(c.id) === String(custId) || c.phone === custId);
+        if (cust) {
+            if (titleEl) titleEl.innerHTML = '<i class="fas fa-user-edit text-primary"></i> تعديل بيانات العميل';
+            if (idInput) idInput.value = cust.id;
+            if (nameInput) nameInput.value = cust.name || '';
+            if (phoneInput) phoneInput.value = cust.phone || '';
+            if (cityInput) cityInput.value = cust.city || '';
+            if (sourceSelect) sourceSelect.value = cust.source || 'pos';
+            if (addrInput) addrInput.value = cust.address || '';
+            if (noteInput) noteInput.value = cust.note || '';
+        }
+    } else {
+        if (titleEl) titleEl.innerHTML = '<i class="fas fa-user-plus text-primary"></i> إضافة عميل جديد';
+        if (idInput) idInput.value = '';
+        if (nameInput) nameInput.value = '';
+        if (phoneInput) phoneInput.value = '';
+        if (cityInput) cityInput.value = '';
+        if (sourceSelect) sourceSelect.value = 'pos';
+        if (addrInput) addrInput.value = '';
+        if (noteInput) noteInput.value = '';
+    }
+
+    openModal('customerModal');
+}
+
+function saveCustomerForm(e) {
+    if (e) e.preventDefault();
+
+    const id = document.getElementById('custModalId')?.value;
+    const name = document.getElementById('custModalName')?.value.trim();
+    const phone = document.getElementById('custModalPhone')?.value.trim();
+    const city = document.getElementById('custModalCity')?.value.trim();
+    const source = document.getElementById('custModalSource')?.value || 'pos';
+    const address = document.getElementById('custModalAddress')?.value.trim();
+    const note = document.getElementById('custModalNote')?.value.trim();
+
+    if (!name || !phone) {
+        showToast('يرجى إدخال اسم العميل ورقم الهاتف على الأقل', 'error');
+        return;
+    }
+
+    let customers = typeof getCustomers === 'function' ? getCustomers() : [];
+
+    if (id) {
+        // تعديل
+        const idx = customers.findIndex(c => String(c.id) === String(id));
+        if (idx !== -1) {
+            customers[idx].name = name;
+            customers[idx].phone = phone;
+            customers[idx].city = city;
+            customers[idx].source = source;
+            customers[idx].address = address;
+            customers[idx].note = note;
+        }
+        showToast('تم تحديث بيانات العميل بنجاح', 'success');
+    } else {
+        // إضافة
+        if (customers.some(c => c.phone === phone)) {
+            showToast('هذا الرقم مسجل لعميل آخر بالفعل!', 'warning');
+            return;
+        }
+        const nextId = customers.length > 0 ? Math.max(...customers.map(c => Number(c.id) || 0)) + 1 : 1;
+        customers.push({
+            id: nextId,
+            name: name,
+            phone: phone,
+            city: city,
+            source: source,
+            address: address,
+            note: note,
+            createdAt: new Date().toISOString()
+        });
+        showToast('تمت إضافة العميل الجديد بنجاح', 'success');
+    }
+
+    if (typeof saveCustomers === 'function') {
+        saveCustomers(customers);
+    } else {
+        localStorage.setItem('store_customers_v6', JSON.stringify(customers));
+    }
+
+    // إذا كان المصدر أونلاين، مزامنة مع store_online_users_v1
+    if (source === 'online') {
+        try {
+            let onlineUsers = JSON.parse(localStorage.getItem('store_online_users_v1')) || [];
+            const oIdx = onlineUsers.findIndex(u => u.phone === phone);
+            if (oIdx !== -1) {
+                onlineUsers[oIdx].name = name;
+                onlineUsers[oIdx].city = city;
+                onlineUsers[oIdx].address = address;
+            } else {
+                onlineUsers.push({
+                    id: 'CUST-' + Date.now(),
+                    name: name,
+                    phone: phone,
+                    city: city,
+                    address: address,
+                    password: '123',
+                    createdAt: new Date().toISOString()
+                });
+            }
+            localStorage.setItem('store_online_users_v1', JSON.stringify(onlineUsers));
+        } catch(e) {}
+    }
+
+    closeModal('customerModal');
+    renderCustomersTable();
+    if (typeof initPosCustomers === 'function') initPosCustomers();
+}
+
+function deleteCustomerRecord(custId) {
+    let customers = typeof getCustomers === 'function' ? getCustomers() : [];
+    const cust = customers.find(c => String(c.id) === String(custId));
+    if (!cust) return;
+
+    if (!confirm(`هل أنت متأكد من حذف العميل "${cust.name}" نهائياً من النظام؟`)) return;
+
+    customers = customers.filter(c => String(c.id) !== String(custId));
+    if (typeof saveCustomers === 'function') {
+        saveCustomers(customers);
+    } else {
+        localStorage.setItem('store_customers_v6', JSON.stringify(customers));
+    }
+
+    // حذف من قائمة مستخدمي المتجر أيضاً إن وجد
+    try {
+        let onlineUsers = JSON.parse(localStorage.getItem('store_online_users_v1')) || [];
+        onlineUsers = onlineUsers.filter(u => u.phone !== cust.phone);
+        localStorage.setItem('store_online_users_v1', JSON.stringify(onlineUsers));
+    } catch(e) {}
+
+    renderCustomersTable();
+    if (typeof initPosCustomers === 'function') initPosCustomers();
+    showToast('تم حذف العميل من قاعدة البيانات', 'info');
+}
+
+window.loadCustomersScreen = loadCustomersScreen;
+window.renderCustomersTable = renderCustomersTable;
+window.filterCustomerTab = filterCustomerTab;
+window.handleCustomerSearch = handleCustomerSearch;
+window.viewCustomerDetails = viewCustomerDetails;
+window.openCustomerModal = openCustomerModal;
+window.saveCustomerForm = saveCustomerForm;
+window.deleteCustomerRecord = deleteCustomerRecord;
+window.updateCustomersCountBadge = updateCustomersCountBadge;
+
+/* ============================================
    26. بدء التشغيل
    ============================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -6407,6 +6914,29 @@ function getStoreNotificationsList() {
             }
         });
     }
+
+    // و. تنبيهات حسابات العملاء المسجلين حديثاً في المتجر أونلاين
+    try {
+        const onlineUsers = JSON.parse(localStorage.getItem('store_online_users_v1')) || [];
+        onlineUsers.slice(-5).forEach(u => {
+            const id = 'cust-' + (u.id || u.phone);
+            if (!dismissedIds.includes(id)) {
+                list.push({
+                    id: id,
+                    type: 'orders',
+                    severity: 'info',
+                    icon: 'fas fa-user-plus',
+                    tag: 'حساب جديد',
+                    title: `عميل جديد بالمتجر: ${u.name}`,
+                    desc: `الهاتف: ${u.phone} | المدينة: ${u.city || 'غير محدد'}`,
+                    actionText: 'عرض العملاء',
+                    actionCode: "switchScreen('customers'); closeNotifDropdown();",
+                    time: u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-EG') : 'جديد',
+                    isRead: readIds.includes(id)
+                });
+            }
+        });
+    } catch(e) {}
 
     return list;
 }

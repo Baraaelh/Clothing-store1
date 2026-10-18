@@ -1167,12 +1167,42 @@ function registerCustomer(e) {
         city: city,
         address: address,
         password: password,
+        source: 'online',
         createdAt: new Date().toISOString()
     };
 
     customers.push(newCust);
     saveOnlineCustomers(customers);
     saveCurrentCustomer(newCust);
+
+    // مزامنة فورية مع نظام إدارة المتجر الرئيسي (ERP / الكاشير)
+    try {
+        let erpCusts = JSON.parse(localStorage.getItem('store_customers_v6')) || [];
+        const existingIdx = erpCusts.findIndex(c => c.phone === phone || (c.name && c.name.toLowerCase() === name.toLowerCase()));
+        if (existingIdx !== -1) {
+            erpCusts[existingIdx].name = name;
+            erpCusts[existingIdx].phone = phone;
+            erpCusts[existingIdx].city = city;
+            erpCusts[existingIdx].address = address;
+            erpCusts[existingIdx].source = 'online';
+            erpCusts[existingIdx].note = erpCusts[existingIdx].note || 'عميل مسجل عبر المتجر الإلكتروني';
+        } else {
+            const nextId = erpCusts.length > 0 ? Math.max(...erpCusts.map(c => Number(c.id) || 0)) + 1 : 1;
+            erpCusts.push({
+                id: nextId,
+                name: name,
+                phone: phone,
+                city: city,
+                address: address,
+                source: 'online',
+                note: 'عميل مسجل عبر المتجر أونلاين (' + city + ')',
+                createdAt: new Date().toISOString()
+            });
+        }
+        localStorage.setItem('store_customers_v6', JSON.stringify(erpCusts));
+    } catch(err) {
+        console.warn('ERP sync warning:', err);
+    }
 
     // إشعار ترحيبي
     let notifs = getCustomerNotifications();
@@ -1253,6 +1283,18 @@ function updateCustomerProfile(e) {
         saveOnlineCustomers(customers);
     }
     saveCurrentCustomer(currentCust);
+
+    // مزامنة التعديل مع نظام الإدارة الرئيسي
+    try {
+        let erpCusts = JSON.parse(localStorage.getItem('store_customers_v6')) || [];
+        const erpIdx = erpCusts.findIndex(c => c.phone === currentCust.phone);
+        if (erpIdx !== -1) {
+            erpCusts[erpIdx].name = name;
+            erpCusts[erpIdx].city = city;
+            erpCusts[erpIdx].address = address;
+            localStorage.setItem('store_customers_v6', JSON.stringify(erpCusts));
+        }
+    } catch(err) {}
 
     updateCustomerHeaderUI();
     showToastNotification('✅ تم حفظ تعديلات بياناتك بنجاح');

@@ -237,29 +237,60 @@ const saveCustomerDebts = (x) => localStorage.setItem(KEYS.CUSTOMER_DEBTS, JSON.
 const getCustomers = () => {
     let list = JSON.parse(localStorage.getItem(KEYS.CUSTOMERS || 'store_customers_v6'));
     if (!list || !Array.isArray(list) || list.length === 0) {
-        let defaults = [
-            { id: 1, name: 'خالد محمود', phone: '0599111111', note: 'عميل دائم' },
-            { id: 2, name: 'ريم سعيد', phone: '0599222222', note: '' },
-            { id: 3, name: 'محمد خليل', phone: '0599333333', note: '' }
+        list = [
+            { id: 1, name: 'خالد محمود', phone: '0599111111', note: 'عميل دائم', source: 'pos', city: 'القدس', address: 'شارع صلاح الدين', createdAt: '2026-01-10T10:00:00Z' },
+            { id: 2, name: 'ريم سعيد', phone: '0599222222', note: 'عميل مميز', source: 'pos', city: 'رام الله', address: 'شارع الإرسال', createdAt: '2026-02-15T11:30:00Z' },
+            { id: 3, name: 'محمد خليل', phone: '0599333333', note: '', source: 'pos', city: 'نابلس', address: 'حي رفيديا', createdAt: '2026-03-01T14:20:00Z' }
         ];
         try {
             const debts = typeof getCustomerDebts === 'function' ? getCustomerDebts() : [];
-            const names = new Set(defaults.map(d => d.name));
+            const names = new Set(list.map(d => d.name));
             debts.forEach(d => {
                 if (d.customer_name && !names.has(d.customer_name)) {
                     names.add(d.customer_name);
-                    defaults.push({
-                        id: defaults.length + 1,
+                    list.push({
+                        id: list.length + 1,
                         name: d.customer_name,
                         phone: d.customer_phone || '',
-                        note: d.note || ''
+                        note: d.note || '',
+                        source: 'pos',
+                        createdAt: new Date().toISOString()
                     });
                 }
             });
         } catch(e) {}
-        localStorage.setItem(KEYS.CUSTOMERS || 'store_customers_v6', JSON.stringify(defaults));
-        return defaults;
     }
+
+    // مزامنة تلقائية مع عملاء المتجر الإلكتروني المسجلين أونلاين
+    try {
+        const onlineUsers = JSON.parse(localStorage.getItem('store_online_users_v1')) || [];
+        let hasChanges = false;
+        onlineUsers.forEach(u => {
+            const existing = list.find(c => (u.phone && c.phone === u.phone) || (u.name && c.name && c.name.toLowerCase() === u.name.toLowerCase()));
+            if (!existing) {
+                const nextId = list.length > 0 ? Math.max(...list.map(c => Number(c.id) || 0)) + 1 : 1;
+                list.push({
+                    id: nextId,
+                    name: u.name,
+                    phone: u.phone,
+                    city: u.city || '',
+                    address: u.address || '',
+                    source: 'online',
+                    note: 'مسجل عبر المتجر الإلكتروني أونلاين',
+                    createdAt: u.createdAt || new Date().toISOString()
+                });
+                hasChanges = true;
+            } else {
+                if (!existing.city && u.city) { existing.city = u.city; hasChanges = true; }
+                if (!existing.address && u.address) { existing.address = u.address; hasChanges = true; }
+                if (!existing.source) { existing.source = 'online'; hasChanges = true; }
+            }
+        });
+        if (hasChanges) {
+            localStorage.setItem(KEYS.CUSTOMERS || 'store_customers_v6', JSON.stringify(list));
+        }
+    } catch(e) {}
+
     return list;
 };
 const saveCustomers = (x) => localStorage.setItem(KEYS.CUSTOMERS || 'store_customers_v6', JSON.stringify(x));

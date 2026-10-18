@@ -894,6 +894,104 @@
             </div>
         </div>
 
+        <!-- ============ إدارة حسابات الزبائن والعملاء ============ -->
+        <div id="screen-customers" class="screen">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+                <div>
+                    <h1 class="section-title"><i class="fas fa-users-cog text-primary"></i> إدارة حسابات الزبائن والعملاء</h1>
+                    <p class="section-subtitle" style="margin:0;">متابعة حسابات الزبائن المسجلين عبر المتجر الإلكتروني والكاشير، والاطلاع على سجلات طلباتهم وأرقام التواصل</p>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn btn-primary" onclick="openCustomerModal()">
+                        <i class="fas fa-user-plus"></i> إضافة عميل جديد
+                    </button>
+                    <button class="btn btn-outline" onclick="loadCustomersScreen()" title="تحديث البيانات">
+                        <i class="fas fa-sync-alt"></i> تحديث
+                    </button>
+                </div>
+            </div>
+
+            <!-- بطاقات إحصائيات سريعة للعملاء -->
+            <div class="stats-grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:18px;">
+                <div class="stat-card" style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+                    <div style="width:48px;height:48px;border-radius:12px;background:#eef2ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:0.8rem;color:#64748b;font-weight:700;">إجمالي العملاء المسجلين</div>
+                        <div style="font-size:1.5rem;font-weight:900;color:#0f172a;margin-top:2px;" id="statCustTotal">0</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+                    <div style="width:48px;height:48px;border-radius:12px;background:#ecfdf5;color:#10b981;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:0.8rem;color:#64748b;font-weight:700;">عملاء المتجر أونلاين</div>
+                        <div style="font-size:1.5rem;font-weight:900;color:#10b981;margin-top:2px;" id="statCustOnline">0</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+                    <div style="width:48px;height:48px;border-radius:12px;background:#eff6ff;color:#3b82f6;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:0.8rem;color:#64748b;font-weight:700;">عملاء الكاشير المحلي</div>
+                        <div style="font-size:1.5rem;font-weight:900;color:#3b82f6;margin-top:2px;" id="statCustPos">0</div>
+                    </div>
+                </div>
+                <div class="stat-card" style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;">
+                    <div style="width:48px;height:48px;border-radius:12px;background:#fef3c7;color:#d97706;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:0.8rem;color:#64748b;font-weight:700;">إجمالي طلبات العملاء</div>
+                        <div style="font-size:1.5rem;font-weight:900;color:#d97706;margin-top:2px;" id="statCustOrders">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- شريط الفلترة والبحث -->
+            <div class="card" style="padding:14px;margin-bottom:18px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;" id="customerFilterGroup">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="filterCustomerTab('all', this)">الكل</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="filterCustomerTab('online', this)">عملاء المتجر أونلاين</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="filterCustomerTab('pos', this)">عملاء الكاشير</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="filterCustomerTab('debts', this)">أصحاب الديون</button>
+                    </div>
+                    <div style="position:relative;width:280px;max-width:100%;">
+                        <input type="text" id="customerSearchInput" placeholder="بحث بالاسم أو الهاتف أو المدينة..." oninput="handleCustomerSearch(this.value)"
+                               style="width:100%;padding:8px 32px 8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem;">
+                        <i class="fas fa-search" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.8rem;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- جدول العملاء -->
+            <div class="card" style="padding:0;overflow:hidden;">
+                <div class="table-responsive">
+                    <table class="data-table" style="width:100%;margin:0;">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>العميل</th>
+                                <th>رقم الهاتف / الواتساب</th>
+                                <th>مصدر الحساب</th>
+                                <th>المدينة والعنوان</th>
+                                <th>إجمالي الطلبات</th>
+                                <th>تاريخ التسجيل</th>
+                                <th style="text-align:center;">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTableBody">
+                            <tr><td colspan="8" class="text-center" style="padding:30px;color:#94a3b8;">جاري تحميل العملاء...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- ============ شاشة المرتجعات والتبديل ============ -->
         <div id="screen-returns" class="screen">
             <h1 class="section-title"><i class="fas fa-exchange-alt text-primary"></i> المرتجعات والتبديل</h1>
@@ -2262,6 +2360,72 @@
                     <button type="button" class="btn btn-outline" onclick="closeModal('onlineProductModal')">إلغاء</button>
                     <button type="submit" class="btn btn-primary" style="padding:10px 24px;">
                         <i class="fas fa-check-circle"></i> حفظ ونشر في المتجر
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة تفاصيل العميل وسجل طلباته -->
+    <div class="modal-overlay" id="customerDetailsModal">
+        <div class="modal-box" style="max-width:760px;width:95vw;">
+            <div class="modal-header">
+                <h5><i class="fas fa-id-card text-primary"></i> تفاصيل حساب العميل وسجل الطلبات</h5>
+                <button class="modal-close" onclick="closeModal('customerDetailsModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:20px;max-height:80vh;overflow-y:auto;" id="customerDetailsBody">
+                <!-- يتم تعبئتها ديناميكياً -->
+            </div>
+            <div class="modal-actions" style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;">
+                <button type="button" class="btn btn-outline" onclick="closeModal('customerDetailsModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة / تعديل عميل -->
+    <div class="modal-overlay" id="customerModal">
+        <div class="modal-box" style="max-width:550px;width:95vw;">
+            <div class="modal-header">
+                <h5 id="customerModalTitle"><i class="fas fa-user-plus text-primary"></i> إضافة عميل جديد</h5>
+                <button class="modal-close" onclick="closeModal('customerModal')">&times;</button>
+            </div>
+            <form onsubmit="saveCustomerForm(event)">
+                <input type="hidden" id="custModalId">
+                <div class="modal-body" style="padding:18px 22px;">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="font-weight:700;font-size:0.85rem;">اسم العميل الكامل *</label>
+                        <input type="text" id="custModalName" placeholder="الاسم الثلاثي أو الثنائي" required style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="font-weight:700;font-size:0.85rem;">رقم الهاتف / الواتساب *</label>
+                        <input type="tel" id="custModalPhone" placeholder="059xxxxxxx" required style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;direction:ltr;text-align:right;">
+                    </div>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                        <div class="form-group">
+                            <label style="font-weight:700;font-size:0.85rem;">المدينة / المحافظة</label>
+                            <input type="text" id="custModalCity" placeholder="مثال: القدس / رام الله / غزة" style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-weight:700;font-size:0.85rem;">مصدر الحساب</label>
+                            <select id="custModalSource" style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                                <option value="online">متجر أونلاين</option>
+                                <option value="pos" selected>كاشير محلي</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="font-weight:700;font-size:0.85rem;">العنوان التفصيلي</label>
+                        <input type="text" id="custModalAddress" placeholder="المنطقة، الشارع، المعلم القريب" style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight:700;font-size:0.85rem;">ملاحظات خاصة</label>
+                        <textarea id="custModalNote" rows="2" placeholder="أي ملاحظات حول تفضيلات الزبون أو ديونه..." style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:0.85rem;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions" style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('customerModal')">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" style="padding:10px 24px;">
+                        <i class="fas fa-save"></i> حفظ بيانات العميل
                     </button>
                 </div>
             </form>
