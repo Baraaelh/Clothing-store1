@@ -705,7 +705,7 @@ function openQuickView(productId) {
                 <img src="${prod.image}" style="width:100%;height:100%;object-fit:cover;">
             </div>
             <div style="display:flex;flex-direction:column;">
-                <span style="font-size:0.8rem;color:#be185d;font-weight:800;text-transform:uppercase;">${prod.subCategory || prod.category}</span>
+                <span style="font-size:0.8rem;color:var(--brand-accent);font-weight:800;text-transform:uppercase;">${prod.subCategory || prod.category}</span>
                 <h2 style="font-size:1.35rem;font-weight:900;color:#0f172a;margin:6px 0 10px;">${prod.name}</h2>
                 
                 <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;">
