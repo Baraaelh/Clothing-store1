@@ -201,6 +201,9 @@ function initStore() {
     updateCartBadge();
     updateWishlistBadge();
     renderProducts();
+    updateCustomerHeaderUI();
+    checkCustomerNotifications();
+    setInterval(checkCustomerNotifications, 2500);
 
     // إغلاق الفلاتر عند الضغط خارجها
     document.addEventListener('click', function(e) {
@@ -787,6 +790,19 @@ function openCheckoutModal() {
 
     if (totalEl) totalEl.textContent = `₪${subtotal.toFixed(2)}`;
 
+    // التعبئة التلقائية لبيانات الزبون إذا كان مسجلاً دخوله
+    const currentCust = typeof getCurrentCustomer === 'function' ? getCurrentCustomer() : null;
+    if (currentCust) {
+        const nameInp = document.getElementById('custOrderName');
+        const phoneInp = document.getElementById('custOrderPhone');
+        const cityInp = document.getElementById('custOrderCity');
+        const addrInp = document.getElementById('custOrderAddress');
+        if (nameInp && !nameInp.value) nameInp.value = currentCust.name || '';
+        if (phoneInp && !phoneInp.value) phoneInp.value = currentCust.phone || '';
+        if (cityInp && !cityInp.value) cityInp.value = currentCust.city || '';
+        if (addrInp && !addrInp.value) addrInp.value = currentCust.address || '';
+    }
+
     modal.classList.add('open');
 }
 
@@ -838,8 +854,28 @@ function submitOnlineOrder(e) {
         let existingOrders = JSON.parse(localStorage.getItem('store_online_orders_v6')) || [];
         existingOrders.unshift(newOrder);
         localStorage.setItem('store_online_orders_v6', JSON.stringify(existingOrders));
+
+        // إرسال إشعار أولي فوري لحساب الزبون
+        if (phone) {
+            let notifs = JSON.parse(localStorage.getItem('store_customer_notifications_v1')) || [];
+            notifs.unshift({
+                id: 'NOTIF-' + Date.now(),
+                customerPhone: phone,
+                orderId: orderId,
+                title: '⏳ تم استلام طلبك بنجاح!',
+                message: `تم إرسال طلبك رقم (${orderId}) بقيمة ₪${subtotal.toFixed(2)} إلى إدارة المتجر وسيتم إشعارك فور مراجعته والموافقة عليه.`,
+                type: 'pending',
+                read: false,
+                date: new Date().toISOString()
+            });
+            localStorage.setItem('store_customer_notifications_v1', JSON.stringify(notifs));
+        }
     } catch (err) {
         console.error('Error saving order to system:', err);
+    }
+
+    if (typeof checkCustomerNotifications === 'function') {
+        checkCustomerNotifications();
     }
 
     // تفريغ السلة
@@ -935,6 +971,540 @@ function showToastNotification(text) {
         toast.style.opacity = '0';
         setTimeout(() => { toast.style.display = 'none'; }, 300);
     }, 2800);
+}
+
+
+// ============================================
+// 10. نظام إدارة حسابات الزبائن وبوابة العميل والإشعارات
+// ============================================
+const CUSTOMERS_KEY = 'store_online_users_v1';
+const CURRENT_CUSTOMER_KEY = 'store_current_customer_v1';
+const CUSTOMER_NOTIFS_KEY = 'store_customer_notifications_v1';
+
+function getOnlineCustomers() {
+    try {
+        return JSON.parse(localStorage.getItem(CUSTOMERS_KEY)) || [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveOnlineCustomers(list) {
+    try {
+        localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(list));
+    } catch (e) {}
+}
+
+function getCurrentCustomer() {
+    try {
+        return JSON.parse(localStorage.getItem(CURRENT_CUSTOMER_KEY)) || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function saveCurrentCustomer(cust) {
+    try {
+        if (cust) {
+            localStorage.setItem(CURRENT_CUSTOMER_KEY, JSON.stringify(cust));
+        } else {
+            localStorage.removeItem(CURRENT_CUSTOMER_KEY);
+        }
+    } catch (e) {}
+}
+
+function getCustomerNotifications(phone) {
+    try {
+        const all = JSON.parse(localStorage.getItem(CUSTOMER_NOTIFS_KEY)) || [];
+        if (!phone) return all;
+        return all.filter(n => n.customerPhone === phone);
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveCustomerNotifications(list) {
+    try {
+        localStorage.setItem(CUSTOMER_NOTIFS_KEY, JSON.stringify(list));
+    } catch (e) {}
+}
+
+// تحديث شريط الهيدر وقائمة الموبايل لحساب الزبون
+function updateCustomerHeaderUI() {
+    const headerBox = document.getElementById('customerHeaderAccountBox');
+    const mobileBox = document.getElementById('mobileCustomerAccountBox');
+    const cust = getCurrentCustomer();
+
+    if (cust) {
+        const firstName = cust.name ? cust.name.trim().split(' ')[0] : 'حسابي';
+        const html = `
+            <button type="button" class="notif-bell-icon-btn" onclick="openCustomerPortal('notifs')" title="التنبيهات والإشعارات">
+                <i class="far fa-bell"></i>
+                <span class="notif-count-badge" id="custNotifBadge" style="display:none;">0</span>
+            </button>
+            <button type="button" class="header-user-btn" onclick="openCustomerPortal('orders')" title="حسابي وطلباتي">
+                <i class="fas fa-user-circle"></i>
+                <span>${firstName}</span>
+            </button>
+        `;
+        if (headerBox) headerBox.innerHTML = html;
+
+        if (mobileBox) {
+            mobileBox.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <button type="button" class="header-user-btn" style="flex:1;justify-content:flex-start;" onclick="openCustomerPortal('orders')">
+                        <i class="fas fa-user-circle"></i>
+                        <span>حسابي: ${cust.name}</span>
+                    </button>
+                    <button type="button" class="notif-bell-icon-btn" onclick="openCustomerPortal('notifs')" title="الإشعارات">
+                        <i class="far fa-bell"></i>
+                        <span class="notif-count-badge" id="custMobileNotifBadge" style="display:none;">0</span>
+                    </button>
+                </div>
+            `;
+        }
+    } else {
+        const html = `
+            <button type="button" class="header-user-btn" onclick="openAuthModal('login')" title="تسجيل الدخول أو إنشاء حساب">
+                <i class="fas fa-user"></i>
+                <span>دخول / حساب</span>
+            </button>
+        `;
+        if (headerBox) headerBox.innerHTML = html;
+
+        if (mobileBox) {
+            mobileBox.innerHTML = `
+                <button type="button" class="header-user-btn" style="width:100%;justify-content:center;padding:10px;" onclick="openAuthModal('login')">
+                    <i class="fas fa-user-plus"></i>
+                    <span>تسجيل الدخول / إنشاء حساب</span>
+                </button>
+            `;
+        }
+    }
+
+    checkCustomerNotifications();
+}
+
+// التحكم بنافذة تسجيل الدخول وإنشاء الحساب
+function openAuthModal(tab = 'login') {
+    switchAuthTab(tab);
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.add('open');
+    toggleMobileMenu(false);
+}
+
+function switchAuthTab(tab) {
+    const tabLogin = document.getElementById('tabAuthLogin');
+    const tabRegister = document.getElementById('tabAuthRegister');
+    const formLogin = document.getElementById('authLoginForm');
+    const formRegister = document.getElementById('authRegisterForm');
+
+    if (tab === 'login') {
+        if (tabLogin) tabLogin.classList.add('active');
+        if (tabRegister) tabRegister.classList.remove('active');
+        if (formLogin) formLogin.style.display = 'block';
+        if (formRegister) formRegister.style.display = 'none';
+    } else {
+        if (tabLogin) tabLogin.classList.remove('active');
+        if (tabRegister) tabRegister.classList.add('active');
+        if (formLogin) formLogin.style.display = 'none';
+        if (formRegister) formRegister.style.display = 'block';
+    }
+}
+
+function registerCustomer(e) {
+    if (e) e.preventDefault();
+
+    const name = document.getElementById('regName')?.value.trim();
+    const phone = document.getElementById('regPhone')?.value.trim();
+    const city = document.getElementById('regCity')?.value.trim();
+    const address = document.getElementById('regAddress')?.value.trim();
+    const password = document.getElementById('regPassword')?.value.trim();
+
+    if (!name || name.length < 2) {
+        showToastNotification('يرجى إدخال الاسم الكريم');
+        return;
+    }
+    if (!phone || phone.length < 7) {
+        showToastNotification('يرجى إدخال رقم الهاتف / الواتساب بشكل صحيح');
+        return;
+    }
+    if (!city || !address) {
+        showToastNotification('يرجى اختيار المدينة وتحديد العنوان');
+        return;
+    }
+    if (!password || password.length < 4) {
+        showToastNotification('كلمة المرور يجب أن تكون 4 خانات على الأقل');
+        return;
+    }
+
+    const customers = getOnlineCustomers();
+    if (customers.some(c => c.phone === phone)) {
+        showToastNotification('هذا الرقم مسجل لدينا بالفعل! يمكنك تسجيل الدخول مباشرة');
+        switchAuthTab('login');
+        const loginPhone = document.getElementById('loginPhone');
+        if (loginPhone) loginPhone.value = phone;
+        return;
+    }
+
+    const newCust = {
+        id: 'CUST-' + Date.now(),
+        name: name,
+        phone: phone,
+        city: city,
+        address: address,
+        password: password,
+        createdAt: new Date().toISOString()
+    };
+
+    customers.push(newCust);
+    saveOnlineCustomers(customers);
+    saveCurrentCustomer(newCust);
+
+    // إشعار ترحيبي
+    let notifs = getCustomerNotifications();
+    notifs.unshift({
+        id: 'NOTIF-' + Date.now(),
+        customerPhone: phone,
+        title: '🎉 أهلاً بك في متجر الأناقة!',
+        message: `مرحباً بك يا ${name}! نسعد بانضمامك إلينا. ستصلك هنا إشعارات فورية عند مراجعة وقبول طلباتك.`,
+        type: 'welcome',
+        read: false,
+        date: new Date().toISOString()
+    });
+    saveCustomerNotifications(notifs);
+
+    closeModal('authModal');
+    updateCustomerHeaderUI();
+    showToastNotification(`🎉 تم إنشاء حسابك بنجاح! مرحباً بك يا ${name}`);
+}
+
+function loginCustomer(e) {
+    if (e) e.preventDefault();
+
+    const phone = document.getElementById('loginPhone')?.value.trim();
+    const password = document.getElementById('loginPassword')?.value.trim();
+
+    if (!phone || !password) {
+        showToastNotification('يرجى إدخال رقم الهاتف وكلمة المرور');
+        return;
+    }
+
+    const customers = getOnlineCustomers();
+    const found = customers.find(c => c.phone === phone && c.password === password);
+
+    if (found) {
+        saveCurrentCustomer(found);
+        closeModal('authModal');
+        updateCustomerHeaderUI();
+        showToastNotification(`مرحباً بعودتك يا ${found.name}! ✨`);
+    } else {
+        showToastNotification('رقم الهاتف أو كلمة المرور غير صحيحة، حاول مجدداً');
+    }
+}
+
+function logoutCustomer() {
+    if (!confirm('هل تريد بالتأكيد تسجيل الخروج؟')) return;
+    saveCurrentCustomer(null);
+    closeModal('customerPortalModal');
+    updateCustomerHeaderUI();
+    showToastNotification('تم تسجيل الخروج بنجاح 👋');
+}
+
+function updateCustomerProfile(e) {
+    if (e) e.preventDefault();
+
+    const currentCust = getCurrentCustomer();
+    if (!currentCust) return;
+
+    const name = document.getElementById('profName')?.value.trim();
+    const city = document.getElementById('profCity')?.value.trim();
+    const address = document.getElementById('profAddress')?.value.trim();
+    const password = document.getElementById('profPassword')?.value.trim();
+
+    if (!name || !city || !address) {
+        showToastNotification('يرجى ملء كافة الحقول الأساسية');
+        return;
+    }
+
+    currentCust.name = name;
+    currentCust.city = city;
+    currentCust.address = address;
+    if (password) currentCust.password = password;
+
+    // تحديث في القائمة الشاملة
+    const customers = getOnlineCustomers();
+    const idx = customers.findIndex(c => c.phone === currentCust.phone);
+    if (idx !== -1) {
+        customers[idx] = currentCust;
+        saveOnlineCustomers(customers);
+    }
+    saveCurrentCustomer(currentCust);
+
+    updateCustomerHeaderUI();
+    showToastNotification('✅ تم حفظ تعديلات بياناتك بنجاح');
+}
+
+// التحكم ببوابة ولوحة تحكم الزبون
+function openCustomerPortal(tab = 'orders') {
+    const cust = getCurrentCustomer();
+    if (!cust) {
+        openAuthModal('login');
+        return;
+    }
+
+    toggleMobileMenu(false);
+
+    // تحديث بيانات الهيدر في البوابة
+    const nameEl = document.getElementById('portalCustomerName');
+    const phoneEl = document.getElementById('portalCustomerPhone');
+    const avatarEl = document.getElementById('portalAvatar');
+    if (nameEl) nameEl.textContent = cust.name;
+    if (phoneEl) phoneEl.textContent = `${cust.phone} • ${cust.city}`;
+    if (avatarEl) avatarEl.textContent = cust.name.charAt(0);
+
+    switchPortalTab(tab);
+    const modal = document.getElementById('customerPortalModal');
+    if (modal) modal.classList.add('open');
+}
+
+function switchPortalTab(tab) {
+    const tabOrders = document.getElementById('tabPortalOrders');
+    const tabNotifs = document.getElementById('tabPortalNotifs');
+    const tabProfile = document.getElementById('tabPortalProfile');
+
+    const paneOrders = document.getElementById('panePortalOrders');
+    const paneNotifs = document.getElementById('panePortalNotifs');
+    const paneProfile = document.getElementById('panePortalProfile');
+
+    [tabOrders, tabNotifs, tabProfile].forEach(t => t && t.classList.remove('active'));
+    [paneOrders, paneNotifs, paneProfile].forEach(p => p && (p.style.display = 'none'));
+
+    if (tab === 'orders') {
+        if (tabOrders) tabOrders.classList.add('active');
+        if (paneOrders) paneOrders.style.display = 'block';
+        renderCustomerOrders();
+    } else if (tab === 'notifs') {
+        if (tabNotifs) tabNotifs.classList.add('active');
+        if (paneNotifs) paneNotifs.style.display = 'block';
+        renderCustomerNotifications();
+    } else if (tab === 'profile') {
+        if (tabProfile) tabProfile.classList.add('active');
+        if (paneProfile) paneProfile.style.display = 'block';
+        renderCustomerProfile();
+    }
+}
+
+function renderCustomerOrders() {
+    const cust = getCurrentCustomer();
+    const listEl = document.getElementById('custOrdersList');
+    const countEl = document.getElementById('custOrdersCount');
+    if (!listEl) return;
+
+    let orders = [];
+    try {
+        const allOrders = JSON.parse(localStorage.getItem('store_online_orders_v6')) || [];
+        orders = allOrders.filter(o => o.phone === cust?.phone);
+    } catch (e) {}
+
+    if (countEl) countEl.textContent = orders.length;
+
+    if (orders.length === 0) {
+        listEl.innerHTML = `
+            <div style="text-align:center;padding:36px 14px;color:#94a3b8;">
+                <i class="fas fa-shopping-bag" style="font-size:2.8rem;margin-bottom:12px;color:#cbd5e1;display:block;"></i>
+                <h4 style="color:#475569;margin-bottom:6px;">لا توجد لديك طلبات سابقة حتى الآن</h4>
+                <p style="font-size:0.85rem;margin-bottom:18px;">تصفح تشكيلاتنا الفاخرة واختر ما يناسبك ليصلك أينما كنت</p>
+                <button type="button" class="btn-checkout-drawer" onclick="closeModal('customerPortalModal')" style="display:inline-block;width:auto;padding:10px 24px;">
+                    ابدأ التسوق الآن
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    listEl.innerHTML = orders.map(o => {
+        let statusBadge = '';
+        if (o.status === 'accepted') {
+            statusBadge = '<span class="cust-order-status-badge status-accepted"><i class="fas fa-check-circle"></i> تم القبول وجارٍ التجهيز للشحن 🚀</span>';
+        } else if (o.status === 'rejected') {
+            statusBadge = '<span class="cust-order-status-badge status-rejected"><i class="fas fa-times-circle"></i> تعذر القبول (نعتذر)</span>';
+        } else {
+            statusBadge = '<span class="cust-order-status-badge status-pending"><i class="fas fa-clock"></i> قيد مراجعة الإدارة</span>';
+        }
+
+        const dateStr = o.date ? new Date(o.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+        return `
+            <div class="cust-order-card">
+                <div class="cust-order-header">
+                    <div>
+                        <span class="cust-order-id">طلب رقم #${o.id}</span>
+                        <div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">${dateStr}</div>
+                    </div>
+                    <div>${statusBadge}</div>
+                </div>
+                <div style="font-size:0.85rem;color:#334155;line-height:1.6;margin-bottom:10px;">
+                    <div style="font-weight:700;margin-bottom:2px;">الأصناف المطلوبة:</div>
+                    <div style="color:#64748b;font-size:0.82rem;">${o.productName || 'تشكيلة ملابس'}</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px 12px;border-radius:8px;font-size:0.85rem;">
+                    <div>
+                        الإجمالي: <strong style="color:var(--brand-accent);font-size:0.95rem;">₪${Number(o.total).toFixed(2)}</strong>
+                        <span style="font-size:0.75rem;color:#64748b;margin-right:6px;">(${o.payment_method === 'cod' ? 'دفع عند الاستلام' : 'تحويل'})</span>
+                    </div>
+                    <button type="button" class="btn-whatsapp-drawer" onclick="sendOrderReceiptToWhatsApp('${o.id}')" style="width:auto;margin:0;padding:6px 14px;font-size:0.78rem;border-radius:15px;">
+                        <i class="fab fa-whatsapp"></i> تتبع بالواتساب
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderCustomerNotifications() {
+    const cust = getCurrentCustomer();
+    const listEl = document.getElementById('custNotifsList');
+    const countEl = document.getElementById('custNotifsCount');
+    if (!listEl) return;
+
+    const notifs = getCustomerNotifications(cust?.phone);
+    if (countEl) countEl.textContent = notifs.length;
+
+    if (notifs.length === 0) {
+        listEl.innerHTML = `
+            <div style="text-align:center;padding:36px 14px;color:#94a3b8;">
+                <i class="far fa-bell" style="font-size:2.8rem;margin-bottom:12px;color:#cbd5e1;display:block;"></i>
+                <h4 style="color:#475569;margin-bottom:6px;">صندوق الإشعارات فارغ</h4>
+                <p style="font-size:0.85rem;">ستظهر هنا أي تحديثات فورية حول قبول طلباتك وشحنها</p>
+            </div>
+        `;
+        return;
+    }
+
+    listEl.innerHTML = notifs.map(n => {
+        let iconClass = 'icon-box-pending';
+        let icon = '<i class="fas fa-clock"></i>';
+
+        if (n.type === 'accepted') {
+            iconClass = 'icon-box-accepted';
+            icon = '<i class="fas fa-check"></i>';
+        } else if (n.type === 'rejected') {
+            iconClass = 'icon-box-rejected';
+            icon = '<i class="fas fa-times"></i>';
+        } else if (n.type === 'welcome') {
+            iconClass = 'icon-box-welcome';
+            icon = '<i class="fas fa-gift"></i>';
+        }
+
+        const timeStr = n.date ? new Date(n.date).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+        return `
+            <div class="cust-notif-card ${!n.read ? 'unread' : ''}">
+                <div class="cust-notif-icon-box ${iconClass}">
+                    ${icon}
+                </div>
+                <div class="cust-notif-content" style="flex:1;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <h5>${n.title}</h5>
+                        ${!n.read ? '<span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;"></span>' : ''}
+                    </div>
+                    <p>${n.message}</p>
+                    <span class="cust-notif-time">${timeStr}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderCustomerProfile() {
+    const cust = getCurrentCustomer();
+    if (!cust) return;
+
+    const nameInp = document.getElementById('profName');
+    const phoneInp = document.getElementById('profPhone');
+    const cityInp = document.getElementById('profCity');
+    const addrInp = document.getElementById('profAddress');
+    const pwdInp = document.getElementById('profPassword');
+
+    if (nameInp) nameInp.value = cust.name || '';
+    if (phoneInp) phoneInp.value = cust.phone || '';
+    if (cityInp) cityInp.value = cust.city || '';
+    if (addrInp) addrInp.value = cust.address || '';
+    if (pwdInp) pwdInp.value = '';
+}
+
+function markAllNotificationsAsRead() {
+    const cust = getCurrentCustomer();
+    if (!cust) return;
+
+    let all = JSON.parse(localStorage.getItem(CUSTOMER_NOTIFS_KEY)) || [];
+    let updated = false;
+    all.forEach(n => {
+        if (n.customerPhone === cust.phone && !n.read) {
+            n.read = true;
+            updated = true;
+        }
+    });
+
+    if (updated) {
+        saveCustomerNotifications(all);
+        renderCustomerNotifications();
+        checkCustomerNotifications();
+        showToastNotification('تم تحديد جميع الإشعارات كمقروءة ✓');
+    }
+}
+
+// فحص دوري للإشعارات والتنبيه الفوري
+let knownNotifIds = new Set();
+let isFirstNotifCheck = true;
+
+function checkCustomerNotifications() {
+    const cust = getCurrentCustomer();
+    const bellBadge = document.getElementById('custNotifBadge');
+    const mobileBellBadge = document.getElementById('custMobileNotifBadge');
+
+    if (!cust) {
+        if (bellBadge) bellBadge.style.display = 'none';
+        if (mobileBellBadge) mobileBellBadge.style.display = 'none';
+        return;
+    }
+
+    const notifs = getCustomerNotifications(cust.phone);
+    const unread = notifs.filter(n => !n.read);
+    const unreadCount = unread.length;
+
+    // تحديث الشارات
+    [bellBadge, mobileBellBadge].forEach(badge => {
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 9 ? '+9' : unreadCount;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    });
+
+    // كشف الإشعارات الجديدة لعرض توست تنبيه فوري
+    if (isFirstNotifCheck) {
+        notifs.forEach(n => knownNotifIds.add(n.id));
+        isFirstNotifCheck = false;
+    } else {
+        notifs.forEach(n => {
+            if (!knownNotifIds.has(n.id)) {
+                knownNotifIds.add(n.id);
+                // إشعار جديد وارد للتو (مثل موافقة الأدمن على الطلب)
+                showToastNotification(`🔔 ${n.title}: ${n.message.slice(0, 60)}...`);
+                // إذا كانت البوابة مفتوحة على تبويب الطلبات أو الإشعارات، قم بالتحديث
+                const portal = document.getElementById('customerPortalModal');
+                if (portal && portal.classList.contains('open')) {
+                    renderCustomerOrders();
+                    renderCustomerNotifications();
+                }
+            }
+        });
+    }
 }
 
 // بدء تشغيل المتجر عند تحميل الصفحة

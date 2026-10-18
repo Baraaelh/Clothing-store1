@@ -5408,9 +5408,25 @@ function acceptOnlineOrder(index) {
         const found = stored.find(s => s.id === order.id);
         if (found) found.status = 'accepted';
         localStorage.setItem('store_online_orders_v6', JSON.stringify(stored));
+
+        // إرسال إشعار فوري لحساب الزبون
+        if (order.phone) {
+            let notifs = JSON.parse(localStorage.getItem('store_customer_notifications_v1')) || [];
+            notifs.unshift({
+                id: 'NOTIF-' + Date.now(),
+                customerPhone: order.phone,
+                orderId: order.id,
+                title: '🎉 تمت الموافقة على طلبك بنجاح!',
+                message: `يسعدنا إبلاغك بأنه تمت الموافقة على طلبك رقم (${order.id}) بقيمة ₪${Number(order.total).toFixed(2)}، وفريق المتجر يقوم الآن بتجهيزه للشحن والتوصيل.`,
+                type: 'accepted',
+                read: false,
+                date: new Date().toISOString()
+            });
+            localStorage.setItem('store_customer_notifications_v1', JSON.stringify(notifs));
+        }
     } catch(e) {}
 
-    showToast('تم الموافقة على الطلب! يرجى تحضيره.');
+    showToast('تمت الموافقة على الطلب وإرسال إشعار فوري للزبون! 🔔');
     updateOnlineOrdersBadge();
     renderOnlineOrders();
 }
@@ -5426,9 +5442,25 @@ function rejectOnlineOrder(index) {
         const found = stored.find(s => s.id === order.id);
         if (found) found.status = 'rejected';
         localStorage.setItem('store_online_orders_v6', JSON.stringify(stored));
+
+        // إرسال إشعار للزبون بخصوص الرفض
+        if (order.phone) {
+            let notifs = JSON.parse(localStorage.getItem('store_customer_notifications_v1')) || [];
+            notifs.unshift({
+                id: 'NOTIF-' + Date.now(),
+                customerPhone: order.phone,
+                orderId: order.id,
+                title: 'تحديث بخصوص طلبك',
+                message: `نعتذر منك، تعذر قبول طلبك رقم (${order.id}) حالياً نظراً لنفاد الكمية من المخزون أو عدم توفر الموديل.`,
+                type: 'rejected',
+                read: false,
+                date: new Date().toISOString()
+            });
+            localStorage.setItem('store_customer_notifications_v1', JSON.stringify(notifs));
+        }
     } catch(e) {}
 
-    showToast('تم رفض الطلب', 'warning');
+    showToast('تم رفض الطلب وتحديث حالة الزبون', 'warning');
     updateOnlineOrdersBadge();
     renderOnlineOrders();
 }
