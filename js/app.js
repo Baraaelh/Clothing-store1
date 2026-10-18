@@ -87,6 +87,7 @@ function startApp() {
     loadReports();
     renderOnlineOrders();
     updateOnlineOrdersBadge();
+    if (typeof updateOnlineProductsCountBadge === 'function') updateOnlineProductsCountBadge();
 
     if (user.role === 'cashier') switchScreen('pos');
 }
@@ -189,10 +190,14 @@ function buildSidebar() {
     }
 
     nav += `
-        <div class="nav-title">الموقع الخارجي</div>
+        <div class="nav-title">الموقع الإلكتروني والمتجر</div>
+        <div class="nav-item" onclick="switchScreen('online-products')">
+            <i class="fas fa-tshirt"></i><span>منتجات المتجر أونلاين</span>
+            <span class="badge success" id="onlineProductsCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
+        </div>
         <a href="store/index.html" target="_blank" class="nav-item" style="text-decoration:none;color:inherit;display:flex;align-items:center;">
-            <i class="fas fa-store text-primary"></i><span>المتجر الإلكتروني</span>
-            <span class="badge info" style="margin-right:auto;font-size:0.65rem;border-radius:12px;padding:2px 8px;">عرض</span>
+            <i class="fas fa-external-link-alt text-primary"></i><span>عرض المتجر الإلكتروني</span>
+            <span class="badge info" style="margin-right:auto;font-size:0.65rem;border-radius:12px;padding:2px 8px;">معاينة ↗</span>
         </a>
 
         <div class="nav-title">النظام</div>
@@ -269,6 +274,7 @@ function switchScreen(screenId) {
     if (screenId === 'pos') loadPosProducts();
     if (screenId === 'sales-record') loadSalesHistory();
     if (screenId === 'online-orders') renderOnlineOrders();
+    if (screenId === 'online-products') renderOnlineProducts();
     if (screenId === 'returns') loadReturnsScreen();
     if (screenId === 'cashbox') loadCashboxScreen();
     if (screenId === 'purchases') {
@@ -5397,10 +5403,16 @@ function updateOnlineOrdersBadge() {
     }
 }
 
-function acceptOnlineOrder(index) {
+function acceptOnlineOrder(target) {
     if(!confirm('هل تريد الموافقة على هذا الطلب وتحويله للكاشير؟')) return;
     
-    const order = mockOnlineOrders[index];
+    let order = null;
+    if (typeof target === 'string') {
+        order = mockOnlineOrders.find(o => o.id === target);
+    } else {
+        order = mockOnlineOrders[target];
+    }
+    if (!order) return;
     order.status = 'accepted';
 
     try {
@@ -5431,10 +5443,16 @@ function acceptOnlineOrder(index) {
     renderOnlineOrders();
 }
 
-function rejectOnlineOrder(index) {
+function rejectOnlineOrder(target) {
     if(!confirm('هل تريد رفض هذا الطلب؟')) return;
     
-    const order = mockOnlineOrders[index];
+    let order = null;
+    if (typeof target === 'string') {
+        order = mockOnlineOrders.find(o => o.id === target);
+    } else {
+        order = mockOnlineOrders[target];
+    }
+    if (!order) return;
     order.status = 'rejected';
 
     try {
@@ -5467,8 +5485,13 @@ function rejectOnlineOrder(index) {
 
 let currentWaOrder = null;
 
-function openOnlineOrderWhatsApp(index) {
-    const order = mockOnlineOrders[index];
+function openOnlineOrderWhatsApp(target) {
+    let order = null;
+    if (typeof target === 'string') {
+        order = mockOnlineOrders.find(o => o.id === target);
+    } else {
+        order = mockOnlineOrders[target];
+    }
     if (!order) return;
 
     currentWaOrder = order;
@@ -5573,13 +5596,12 @@ function renderOnlineOrders() {
     }
     
     tbody.innerHTML = mockOnlineOrders.slice().reverse().map((o, i) => {
-        const realIndex = mockOnlineOrders.length - 1 - i;
         let statusBadge = '<span class="badge warning">قيد الانتظار</span>';
         let actions = `
             <div style="display:inline-flex;align-items:center;gap:4px;">
-                <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${realIndex})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
-                <button class="btn-icon success" onclick="acceptOnlineOrder(${realIndex})" title="قبول الطلب"><i class="fas fa-check"></i></button>
-                <button class="btn-icon danger" onclick="rejectOnlineOrder(${realIndex})" title="رفض الطلب"><i class="fas fa-times"></i></button>
+                <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp('${o.id}')" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                <button class="btn-icon success" onclick="acceptOnlineOrder('${o.id}')" title="قبول الطلب"><i class="fas fa-check"></i></button>
+                <button class="btn-icon danger" onclick="rejectOnlineOrder('${o.id}')" title="رفض الطلب"><i class="fas fa-times"></i></button>
             </div>
         `;
         
@@ -5587,7 +5609,7 @@ function renderOnlineOrders() {
             statusBadge = '<span class="badge success">مقبول</span>';
             actions = `
                 <div style="display:inline-flex;align-items:center;gap:6px;">
-                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${realIndex})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp('${o.id}')" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
                     <span style="color:var(--success);font-size:.8rem;"><i class="fas fa-check-double"></i> تم المعالجة</span>
                 </div>
             `;
@@ -5595,7 +5617,7 @@ function renderOnlineOrders() {
             statusBadge = '<span class="badge danger">مرفوض</span>';
             actions = `
                 <div style="display:inline-flex;align-items:center;gap:6px;">
-                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${realIndex})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp('${o.id}')" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
                     <span style="color:var(--danger);font-size:.8rem;"><i class="fas fa-ban"></i> ملغى</span>
                 </div>
             `;
@@ -5622,6 +5644,558 @@ window.openOnlineOrderWhatsApp = openOnlineOrderWhatsApp;
 window.setWaTemplate = setWaTemplate;
 window.formatWhatsAppPhone = formatWhatsAppPhone;
 window.sendWhatsAppMessageNow = sendWhatsAppMessageNow;
+
+/* ============================================
+   26. إدارة منتجات المتجر الإلكتروني أونلاين
+   ============================================ */
+const STOREFRONT_CATALOG_KEY = 'storefront_catalog_v1';
+
+const INITIAL_STOREFRONT_CATALOG = [
+    {
+        id: 'CAT-101',
+        name: 'طقم سويت شيرت وبنطال شتوي نبيذي مبطن',
+        category: 'رجالي',
+        subCategory: 'أطقم شتوية',
+        price: 135,
+        oldPrice: 175,
+        badge: 'الأكثر مبيعاً 🔥',
+        badgeType: 'sale',
+        image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'نبيذي / أحمر', hex: '#881337' },
+            { name: 'أسود ملكي', hex: '#0f172a' },
+            { name: 'رمادي داكن', hex: '#475569' }
+        ],
+        sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+        desc: 'طقم شتوي فاخر مكون من سويت شيرت هودي بسحاب كامل مع بطانة فليس دافئة فائقة النعومة، وبنطال رياضي بقصة مريحة مع جيوب عملية وحزام خصر مطاطي.'
+    },
+    {
+        id: 'CAT-102',
+        name: 'طقم رياضي سحاب كامل رمادي أنيق',
+        category: 'رجالي',
+        subCategory: 'أطقم رياضية',
+        price: 125,
+        oldPrice: 155,
+        badge: 'وصل حديثاً ✨',
+        badgeType: 'new',
+        image: 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'رمادي فاتح', hex: '#94a3b8' },
+            { name: 'كحلي ملكي', hex: '#1e3a8a' },
+            { name: 'أسود', hex: '#0f172a' }
+        ],
+        sizes: ['M', 'L', 'XL', 'XXL'],
+        desc: 'طقم رياضي عصري بلون رمادي مريح مع ياقة عالية وسحاب متين، نسيج مرن يسمح بمرور الهواء ومثالي للإطلالات اليومية والنشاطات الرياضية.'
+    },
+    {
+        id: 'CAT-103',
+        name: 'طقم شتوي رياضي أسود فاخر مع تفاصيل جلدية',
+        category: 'رجالي',
+        subCategory: 'أطقم شتوية',
+        price: 145,
+        oldPrice: 190,
+        badge: 'خصم خاص 💥',
+        badgeType: 'sale',
+        image: 'https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'أسود', hex: '#000000' },
+            { name: 'زيتي', hex: '#365314' }
+        ],
+        sizes: ['S', 'M', 'L', 'XL'],
+        desc: 'طقم متكامل بتصميم رجالي فخم وقماش مقاوم للتوبير ومقاوم للرياح، مبطن بطبقة خفيفة من القطن الفاخر لتوفير أقصى درجات الدفء والأناقة.'
+    },
+    {
+        id: 'CAT-104',
+        name: 'جاكيت بومبر شتوي مقاوم للمطر والرياح',
+        category: 'رجالي',
+        subCategory: 'جاكيتات',
+        price: 160,
+        oldPrice: 210,
+        badge: 'شتاء 2026 ❄️',
+        badgeType: 'hot',
+        image: 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'كحلي ملكي', hex: '#172554' },
+            { name: 'أسود', hex: '#0f172a' },
+            { name: 'زيتي', hex: '#3f6212' }
+        ],
+        sizes: ['M', 'L', 'XL', 'XXL'],
+        desc: 'جاكيت شتوي أنيق بتقنية العزل الحراري وطبقة خارجية طاردة للمياه مع جيوب سحاب داخلية وخارجية وسوار مطاطي مانع لدخول الهواء.'
+    },
+    {
+        id: 'CAT-105',
+        name: 'هودي أوفر سايز قطن تركي 100%',
+        category: 'رجالي',
+        subCategory: 'هوديز',
+        price: 85,
+        oldPrice: 110,
+        badge: 'عرض حصري ⭐',
+        badgeType: 'sale',
+        image: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'بيج ميلانج', hex: '#d6d3d1' },
+            { name: 'أسود', hex: '#18181b' },
+            { name: 'زيتي', hex: '#4d7c0f' }
+        ],
+        sizes: ['S', 'M', 'L', 'XL'],
+        desc: 'هودي شبابي بقصة أوفر سايز عصرية منسوج من أجود خيوط القطن الخالص مع جيب كنغر أمامي وغطاء رأس مزدوج الطبقات.'
+    },
+    {
+        id: 'CAT-106',
+        name: 'معطف ترانش نسائي طويل فاخر مع حزام',
+        category: 'ستاتي',
+        subCategory: 'معاطف وجواكيت',
+        price: 195,
+        oldPrice: 260,
+        badge: 'الأكثر مبيعاً 🔥',
+        badgeType: 'sale',
+        image: 'https://images.unsplash.com/photo-1539533018447-63fcce667823?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'بيج ميلانج', hex: '#d6d3d1' },
+            { name: 'أسود', hex: '#000000' }
+        ],
+        sizes: ['S', 'M', 'L', 'XL'],
+        desc: 'معطف أنيق وعصري بقصة كلاسيكية راقية، قماش جوخ دافئ وخفيف الوزن مع حزام خصر وأزرار رخامية مزدوجة.'
+    },
+    {
+        id: 'CAT-107',
+        name: 'طقم بيجامة صوف شتوية قطعتين مريحة',
+        category: 'ستاتي',
+        subCategory: 'أطقم شتوية',
+        price: 95,
+        oldPrice: 125,
+        badge: 'وصل حديثاً ✨',
+        badgeType: 'new',
+        image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'وردي ناعم', hex: '#f43f5e' },
+            { name: 'رمادي داكن', hex: '#475569' },
+            { name: 'أبيض', hex: '#ffffff' }
+        ],
+        sizes: ['S', 'M', 'L', 'XL'],
+        desc: 'طقم بيجامة شتوية مخملية فائقة النعومة توفر راحة تامة والدفء المطلوب في الأجواء الباردة مع تفاصيل تطريز راقية.'
+    },
+    {
+        id: 'CAT-108',
+        name: 'طقم شتوي بناتي هودي وتنورة كنزة ناعمة',
+        category: 'أطفال',
+        subCategory: 'بناتي',
+        price: 90,
+        oldPrice: 120,
+        badge: 'شتاء 2026 ❄️',
+        badgeType: 'hot',
+        image: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'وردي', hex: '#fb7185' },
+            { name: 'بيج ميلانج', hex: '#e7e5e4' }
+        ],
+        sizes: ['4 سنوات', '6 سنوات', '8 سنوات', '10 سنوات'],
+        desc: 'طقم بناتي كاجوال وأنيق مصنوع من قطن ناعم ومناسب لبشرة الأطفال، خياطة متينة ومقاومة للغسيل المتكرر.'
+    },
+    {
+        id: 'CAT-109',
+        name: 'طقم ترينينج أولادي شتوي مبطن كابتشينو',
+        category: 'أطفال',
+        subCategory: 'أولادي',
+        price: 85,
+        oldPrice: 115,
+        badge: 'الأكثر مبيعاً 🔥',
+        badgeType: 'sale',
+        image: 'https://images.unsplash.com/photo-1503919545889-aef636e10ad4?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'كحلي ملكي', hex: '#1e3a8a' },
+            { name: 'رمادي داكن', hex: '#334155' }
+        ],
+        sizes: ['4 سنوات', '6 سنوات', '8 سنوات', '10 سنوات', '12 سنة'],
+        desc: 'ترينينج رياضي ولادي مريح وعملي جداً للمدرسة واللعب اليومي، مزود بسحاب متين وجيوب عملية للحفاظ على الدفء.'
+    },
+    {
+        id: 'CAT-110',
+        name: 'حذاء سنيكرز رياضي كلاسيك مريح مقاوم للانزلاق',
+        category: 'أحذية',
+        subCategory: 'سنيكرز كاجوال',
+        price: 110,
+        oldPrice: 145,
+        badge: 'وصل حديثاً ✨',
+        badgeType: 'new',
+        image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=900&q=80',
+        colors: [
+            { name: 'أبيض', hex: '#ffffff' },
+            { name: 'أسود', hex: '#0f172a' }
+        ],
+        sizes: ['39', '40', '41', '42', '43', '44'],
+        desc: 'حذاء رياضي خفيف الوزن بنعل مرن يوفر راحة فائقة للقدمين طوال اليوم، تصميم كاجوال يناسب جميع الإطلالات اليومية.'
+    }
+];
+
+function getStorefrontCatalog() {
+    try {
+        const stored = localStorage.getItem(STOREFRONT_CATALOG_KEY);
+        if (stored) {
+            return JSON.parse(stored);
+        } else {
+            localStorage.setItem(STOREFRONT_CATALOG_KEY, JSON.stringify(INITIAL_STOREFRONT_CATALOG));
+            return [...INITIAL_STOREFRONT_CATALOG];
+        }
+    } catch (e) {
+        return [...INITIAL_STOREFRONT_CATALOG];
+    }
+}
+
+function saveStorefrontCatalog(list) {
+    try {
+        localStorage.setItem(STOREFRONT_CATALOG_KEY, JSON.stringify(list));
+        updateOnlineProductsCountBadge();
+    } catch (e) {
+        console.error('Error saving storefront catalog:', e);
+    }
+}
+
+let currentOnlineFilterCategory = 'all';
+let currentOnlineSearchQuery = '';
+
+function renderOnlineProducts(filterCat = null, searchQuery = null) {
+    if (filterCat !== null) currentOnlineFilterCategory = filterCat;
+    if (searchQuery !== null) currentOnlineSearchQuery = searchQuery.trim().toLowerCase();
+
+    const catalog = getStorefrontCatalog();
+    updateOnlineProductsStats(catalog);
+    updateOnlineProductsCountBadge();
+
+    const container = document.getElementById('onlineProductsContainer');
+    if (!container) return;
+
+    let filtered = catalog.filter(p => {
+        const matchCategory = currentOnlineFilterCategory === 'all' || p.category === currentOnlineFilterCategory;
+        const matchSearch = !currentOnlineSearchQuery || 
+            (p.name && p.name.toLowerCase().includes(currentOnlineSearchQuery)) ||
+            (p.subCategory && p.subCategory.toLowerCase().includes(currentOnlineSearchQuery)) ||
+            (p.id && p.id.toLowerCase().includes(currentOnlineSearchQuery));
+        return matchCategory && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1;text-align:center;padding:50px 20px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;color:#94a3b8;">
+                <i class="fas fa-box-open" style="font-size:3rem;margin-bottom:12px;color:#cbd5e1;display:block;"></i>
+                <h4 style="color:#475569;margin-bottom:6px;">لم يتم العثور على أي منتجات تطابق البحث</h4>
+                <p style="font-size:0.85rem;margin-bottom:16px;">يمكنك إضافة منتجات جديدة أو تغيير معايير التصفية</p>
+                <button type="button" class="btn btn-primary btn-sm" onclick="openOnlineProductModal()">
+                    <i class="fas fa-plus"></i> إضافة منتج جديد الآن
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(p => {
+        const badgeHtml = p.badge && p.badge !== 'none' ? `
+            <span style="position:absolute;top:10px;right:10px;background:rgba(225,29,72,0.95);color:#fff;font-size:0.7rem;font-weight:800;padding:3px 9px;border-radius:20px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                ${p.badge}
+            </span>
+        ` : '';
+
+        const discountHtml = p.oldPrice && Number(p.oldPrice) > Number(p.price) ? `
+            <span style="text-decoration:line-through;color:#94a3b8;font-size:0.82rem;margin-right:6px;">₪${Number(p.oldPrice).toFixed(2)}</span>
+        ` : '';
+
+        const colorsHtml = (p.colors || []).map(c => `
+            <span title="${c.name || ''}" style="width:14px;height:14px;border-radius:50%;background:${c.hex || '#475569'};display:inline-block;border:1.5px solid #fff;box-shadow:0 0 2px rgba(0,0,0,0.3);"></span>
+        `).join('');
+
+        const sizesHtml = (p.sizes || []).map(s => `
+            <span style="background:#f1f5f9;color:#475569;font-size:0.7rem;font-weight:700;padding:2px 6px;border-radius:4px;">${s}</span>
+        `).join('');
+
+        return `
+            <div class="card" style="margin-bottom:0;display:flex;flex-direction:column;overflow:hidden;border:1.5px solid #e2e8f0;border-radius:14px;transition:transform 0.2s, box-shadow 0.2s;" onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)';" onmouseleave="this.style.transform='';this.style.boxShadow='';">
+                <div style="position:relative;background:#f8fafc;aspect-ratio:1/1.05;overflow:hidden;">
+                    <img src="${p.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80'}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">
+                    ${badgeHtml}
+                    <span style="position:absolute;bottom:10px;left:10px;background:rgba(15,23,42,0.85);color:#fff;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:6px;">
+                        ${p.category}
+                    </span>
+                </div>
+                <div style="padding:14px;display:flex;flex-direction:column;flex:1;">
+                    <div style="font-size:0.75rem;color:#64748b;font-weight:600;margin-bottom:2px;">${p.subCategory || p.category} • كود: ${p.id}</div>
+                    <h4 style="font-size:0.95rem;font-weight:800;color:#0f172a;margin-bottom:8px;line-height:1.4;">${p.name}</h4>
+                    
+                    <div style="display:flex;align-items:center;margin-bottom:10px;">
+                        <strong style="color:var(--primary);font-size:1.15rem;font-weight:900;">₪${Number(p.price).toFixed(2)}</strong>
+                        ${discountHtml}
+                    </div>
+
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-top:8px;border-top:1px dashed #e2e8f0;">
+                        <div style="display:flex;gap:3px;align-items:center;">
+                            ${colorsHtml}
+                        </div>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                            ${sizesHtml}
+                        </div>
+                    </div>
+
+                    <div style="margin-top:auto;display:flex;gap:8px;padding-top:10px;border-top:1px solid #f1f5f9;">
+                        <button type="button" class="btn btn-sm btn-outline" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;" onclick="openOnlineProductModal('${p.id}')">
+                            <i class="fas fa-edit text-primary"></i> تعديل
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444;border-color:#fecaca;display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;" title="حذف من المتجر" onclick="deleteOnlineProduct('${p.id}')">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateOnlineProductsStats(catalog) {
+    const list = catalog || getStorefrontCatalog();
+    const totalEl = document.getElementById('statOnlineTotal');
+    const menEl = document.getElementById('statOnlineMen');
+    const womenEl = document.getElementById('statOnlineWomen');
+    const kidsEl = document.getElementById('statOnlineKids');
+    const shoesEl = document.getElementById('statOnlineShoes');
+
+    if (totalEl) totalEl.textContent = list.length;
+    if (menEl) menEl.textContent = list.filter(p => p.category === 'رجالي').length;
+    if (womenEl) womenEl.textContent = list.filter(p => p.category === 'ستاتي').length;
+    if (kidsEl) kidsEl.textContent = list.filter(p => p.category === 'أطفال').length;
+    if (shoesEl) shoesEl.textContent = list.filter(p => p.category === 'أحذية').length;
+}
+
+function updateOnlineProductsCountBadge() {
+    const badge = document.getElementById('onlineProductsCountBadge');
+    if (!badge) return;
+    const list = getStorefrontCatalog();
+    badge.textContent = list.length;
+    badge.style.display = list.length > 0 ? 'inline-block' : 'none';
+}
+
+function filterOnlineProductsCategory(cat, btn) {
+    if (btn) {
+        document.querySelectorAll('#onlineProductCatFilterGroup button').forEach(b => {
+            b.className = 'btn btn-sm btn-outline';
+        });
+        btn.className = 'btn btn-sm btn-primary';
+    }
+    renderOnlineProducts(cat, null);
+}
+
+function searchOnlineProducts(query) {
+    renderOnlineProducts(null, query);
+}
+
+function openOnlineProductModal(prodId = null) {
+    const modal = document.getElementById('onlineProductModal');
+    if (!modal) return;
+
+    const titleEl = document.getElementById('onlineProdModalTitle');
+    const idInput = document.getElementById('onlineProdId');
+    const nameInput = document.getElementById('onlineProdName');
+    const catSelect = document.getElementById('onlineProdCategory');
+    const subCatInput = document.getElementById('onlineProdSubCategory');
+    const priceInput = document.getElementById('onlineProdPrice');
+    const oldPriceInput = document.getElementById('onlineProdOldPrice');
+    const badgeSelect = document.getElementById('onlineProdBadge');
+    const imgUrlInput = document.getElementById('onlineProdImgUrl');
+    const imgPreview = document.getElementById('onlineProdImgPreview');
+    const imgPlaceholder = document.getElementById('onlineProdImgPlaceholder');
+    const descInput = document.getElementById('onlineProdDesc');
+
+    if (prodId) {
+        // وضع التعديل
+        const catalog = getStorefrontCatalog();
+        const p = catalog.find(item => item.id === prodId);
+        if (!p) return;
+
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-edit text-primary"></i> تعديل منتج: ${p.name}`;
+        if (idInput) idInput.value = p.id;
+        if (nameInput) nameInput.value = p.name || '';
+        if (catSelect) catSelect.value = p.category || 'رجالي';
+        if (subCatInput) subCatInput.value = p.subCategory || '';
+        if (priceInput) priceInput.value = p.price || '';
+        if (oldPriceInput) oldPriceInput.value = p.oldPrice || '';
+        if (badgeSelect) badgeSelect.value = p.badge || 'none';
+        if (imgUrlInput) imgUrlInput.value = p.image || '';
+        if (descInput) descInput.value = p.desc || '';
+
+        if (p.image) {
+            if (imgPreview) { imgPreview.src = p.image; imgPreview.style.display = 'block'; }
+            if (imgPlaceholder) imgPlaceholder.style.display = 'none';
+        } else {
+            if (imgPreview) imgPreview.style.display = 'none';
+            if (imgPlaceholder) imgPlaceholder.style.display = 'block';
+        }
+
+        // تحديد المقاسات
+        document.querySelectorAll('input[name="onlineProdSizes"]').forEach(cb => {
+            cb.checked = (p.sizes || []).includes(cb.value);
+        });
+
+        // تحديد الألوان
+        const prodColorNames = (p.colors || []).map(c => c.name);
+        document.querySelectorAll('input[name="onlineProdColors"]').forEach(cb => {
+            const colorName = cb.value.split('|')[0];
+            cb.checked = prodColorNames.includes(colorName);
+        });
+
+    } else {
+        // وضع إضافة جديد
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-plus-circle text-primary"></i> إضافة منتج جديد للمتجر الإلكتروني`;
+        if (idInput) idInput.value = '';
+        if (nameInput) nameInput.value = '';
+        if (catSelect) catSelect.value = 'رجالي';
+        if (subCatInput) subCatInput.value = '';
+        if (priceInput) priceInput.value = '';
+        if (oldPriceInput) oldPriceInput.value = '';
+        if (badgeSelect) badgeSelect.value = 'none';
+        if (imgUrlInput) imgUrlInput.value = '';
+        if (descInput) descInput.value = '';
+        if (imgPreview) { imgPreview.src = ''; imgPreview.style.display = 'none'; }
+        if (imgPlaceholder) imgPlaceholder.style.display = 'block';
+
+        // قيم افتراضية للمقاسات والألوان
+        document.querySelectorAll('input[name="onlineProdSizes"]').forEach(cb => {
+            cb.checked = ['S', 'M', 'L', 'XL'].includes(cb.value);
+        });
+        document.querySelectorAll('input[name="onlineProdColors"]').forEach(cb => {
+            cb.checked = cb.value.includes('أسود') || cb.value.includes('نبيذي') || cb.value.includes('رمادي');
+        });
+    }
+
+    openModal('onlineProductModal');
+}
+
+function handleOnlineProductImageUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataUrl = e.target.result;
+            const imgPreview = document.getElementById('onlineProdImgPreview');
+            const imgPlaceholder = document.getElementById('onlineProdImgPlaceholder');
+            const imgUrlInput = document.getElementById('onlineProdImgUrl');
+
+            if (imgPreview) {
+                imgPreview.src = dataUrl;
+                imgPreview.style.display = 'block';
+            }
+            if (imgPlaceholder) imgPlaceholder.style.display = 'none';
+            if (imgUrlInput) imgUrlInput.value = dataUrl;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function updateOnlineProdImgFromUrl(url) {
+    const imgPreview = document.getElementById('onlineProdImgPreview');
+    const imgPlaceholder = document.getElementById('onlineProdImgPlaceholder');
+    if (url && url.trim().length > 5) {
+        if (imgPreview) {
+            imgPreview.src = url.trim();
+            imgPreview.style.display = 'block';
+        }
+        if (imgPlaceholder) imgPlaceholder.style.display = 'none';
+    } else {
+        if (imgPreview) imgPreview.style.display = 'none';
+        if (imgPlaceholder) imgPlaceholder.style.display = 'block';
+    }
+}
+
+function saveOnlineProduct(e) {
+    if (e) e.preventDefault();
+
+    const editId = document.getElementById('onlineProdId')?.value;
+    const name = document.getElementById('onlineProdName')?.value.trim();
+    const category = document.getElementById('onlineProdCategory')?.value || 'رجالي';
+    const subCategory = document.getElementById('onlineProdSubCategory')?.value.trim() || category;
+    const price = parseFloat(document.getElementById('onlineProdPrice')?.value);
+    const oldPriceRaw = document.getElementById('onlineProdOldPrice')?.value;
+    const oldPrice = oldPriceRaw ? parseFloat(oldPriceRaw) : null;
+    const badge = document.getElementById('onlineProdBadge')?.value || 'none';
+    const image = document.getElementById('onlineProdImgUrl')?.value.trim() || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80';
+    const desc = document.getElementById('onlineProdDesc')?.value.trim() || `أحدث تشكيلة ${name} الفاخرة بأعلى معايير الجودة والأناقة.`;
+
+    if (!name || isNaN(price) || price <= 0) {
+        showToast('يرجى إدخال اسم المنتج والسعر بشكل صحيح', 'error');
+        return;
+    }
+
+    const sizes = Array.from(document.querySelectorAll('input[name="onlineProdSizes"]:checked')).map(cb => cb.value);
+    const colors = Array.from(document.querySelectorAll('input[name="onlineProdColors"]:checked')).map(cb => {
+        const parts = cb.value.split('|');
+        return { name: parts[0], hex: parts[1] || '#475569' };
+    });
+
+    const catalog = getStorefrontCatalog();
+
+    if (editId) {
+        // تعديل منتج قائم
+        const idx = catalog.findIndex(item => item.id === editId);
+        if (idx !== -1) {
+            catalog[idx] = {
+                ...catalog[idx],
+                name: name,
+                category: category,
+                subCategory: subCategory,
+                price: price,
+                oldPrice: oldPrice,
+                badge: badge,
+                badgeType: badge.includes('مبيعاً') || badge.includes('خصم') ? 'sale' : (badge.includes('شتاء') ? 'hot' : 'new'),
+                image: image,
+                sizes: sizes.length > 0 ? sizes : ['M', 'L', 'XL'],
+                colors: colors.length > 0 ? colors : [{ name: 'أسود', hex: '#0f172a' }],
+                desc: desc
+            };
+            showToast('✅ تم تحديث بيانات المنتج في المتجر بنجاح');
+        }
+    } else {
+        // إضافة منتج جديد
+        const newProduct = {
+            id: 'CAT-' + Math.floor(Math.random() * 9000 + 1000),
+            name: name,
+            category: category,
+            subCategory: subCategory,
+            price: price,
+            oldPrice: oldPrice,
+            badge: badge,
+            badgeType: badge.includes('مبيعاً') || badge.includes('خصم') ? 'sale' : (badge.includes('شتاء') ? 'hot' : 'new'),
+            image: image,
+            sizes: sizes.length > 0 ? sizes : ['M', 'L', 'XL'],
+            colors: colors.length > 0 ? colors : [{ name: 'أسود', hex: '#0f172a' }],
+            desc: desc
+        };
+        catalog.unshift(newProduct);
+        showToast('🎉 تم نشر المنتج الجديد في المتجر الإلكتروني بنجاح!');
+    }
+
+    saveStorefrontCatalog(catalog);
+    closeModal('onlineProductModal');
+    renderOnlineProducts();
+}
+
+function deleteOnlineProduct(prodId) {
+    const catalog = getStorefrontCatalog();
+    const p = catalog.find(item => item.id === prodId);
+    if (!p) return;
+
+    if (!confirm(`هل أنت متأكد من حذف المنتج "${p.name}" من المتجر الإلكتروني؟`)) return;
+
+    const updated = catalog.filter(item => item.id !== prodId);
+    saveStorefrontCatalog(updated);
+    renderOnlineProducts();
+    showToast('تم حذف المنتج من المتجر الإلكتروني', 'info');
+}
+
+window.renderOnlineProducts = renderOnlineProducts;
+window.filterOnlineProductsCategory = filterOnlineProductsCategory;
+window.searchOnlineProducts = searchOnlineProducts;
+window.openOnlineProductModal = openOnlineProductModal;
+window.handleOnlineProductImageUpload = handleOnlineProductImageUpload;
+window.updateOnlineProdImgFromUrl = updateOnlineProdImgFromUrl;
+window.saveOnlineProduct = saveOnlineProduct;
+window.deleteOnlineProduct = deleteOnlineProduct;
+window.updateOnlineProductsCountBadge = updateOnlineProductsCountBadge;
 
 /* ============================================
    26. بدء التشغيل

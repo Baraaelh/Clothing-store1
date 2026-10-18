@@ -221,25 +221,37 @@ function initStore() {
     });
 }
 
-// دمج المنتجات الحقيقية المسجلة بنظام الإدارة (إذا وجدت) مع الكتالوج
+// دمج المنتجات الحقيقية المسجلة بنظام الإدارة مع الكتالوج
 function getAllStoreProducts() {
-    let combined = [...DEFAULT_CATALOG];
+    let combined = [];
+    try {
+        const storedCatalog = localStorage.getItem('storefront_catalog_v1');
+        if (storedCatalog) {
+            combined = JSON.parse(storedCatalog);
+        } else {
+            combined = [...DEFAULT_CATALOG];
+            localStorage.setItem('storefront_catalog_v1', JSON.stringify(DEFAULT_CATALOG));
+        }
+    } catch (e) {
+        combined = [...DEFAULT_CATALOG];
+    }
+
+    // دمج المنتجات المسجلة في نظام المشتريات والمخزون الداخلي إن وجدت
     try {
         const raw = localStorage.getItem('store_products_v6');
         if (raw) {
             const adminProducts = JSON.parse(raw);
             if (Array.isArray(adminProducts) && adminProducts.length > 0) {
                 adminProducts.forEach(p => {
-                    // تجنب التكرار إذا كان المنتج موجوداً بالفعل
-                    if (!combined.some(c => c.name === p.name)) {
+                    if (!combined.some(c => c.name === p.name || c.id === 'ADM-' + p.id)) {
                         combined.unshift({
                             id: 'ADM-' + p.id,
                             name: p.name,
-                            category: p.category || 'عام',
+                            category: p.category || 'رجالي',
                             subCategory: p.category || 'ملابس',
                             price: Number(p.price || 50),
                             oldPrice: Math.round(Number(p.price || 50) * 1.25),
-                            badge: 'متوفر بالمتجر',
+                            badge: 'متوفر بالمخزون',
                             badgeType: 'new',
                             image: p.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80',
                             colors: p.color ? [{ name: p.color, hex: '#475569' }] : [{ name: 'أسود', hex: '#0f172a' }],
@@ -251,6 +263,7 @@ function getAllStoreProducts() {
             }
         }
     } catch (e) {}
+
     return combined;
 }
 

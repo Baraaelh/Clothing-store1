@@ -829,6 +829,71 @@
             </div>
         </div>
 
+        <!-- ============ إدارة منتجات المتجر أونلاين ============ -->
+        <div id="screen-online-products" class="screen">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+                <div>
+                    <h1 class="section-title"><i class="fas fa-tshirt text-primary"></i> إدارة منتجات المتجر أونلاين</h1>
+                    <p class="section-subtitle" style="margin:0;">التحكم بجميع المنتجات والموديلات المعروضة للزبائن على الموقع وتحديث الأسعار والأقسام والصور</p>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn btn-primary" onclick="openOnlineProductModal()">
+                        <i class="fas fa-plus-circle"></i> إضافة منتج جديد للمتجر
+                    </button>
+                    <a href="store/index.html" target="_blank" class="btn btn-outline" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="fas fa-external-link-alt"></i> معاينة المتجر ↗
+                    </a>
+                </div>
+            </div>
+
+            <!-- بطاقات إحصائيات سريعة لمنتجات المتجر -->
+            <div class="stats-grid" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:18px;">
+                <div class="stat-card" style="padding:14px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
+                    <div style="font-size:0.8rem;color:#64748b;font-weight:700;">إجمالي المنتجات المعروضة</div>
+                    <div style="font-size:1.4rem;font-weight:900;color:#0f172a;margin-top:4px;" id="statOnlineTotal">0</div>
+                </div>
+                <div class="stat-card" style="padding:14px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
+                    <div style="font-size:0.8rem;color:#64748b;font-weight:700;">قسم الرجالي</div>
+                    <div style="font-size:1.4rem;font-weight:900;color:#4f46e5;margin-top:4px;" id="statOnlineMen">0</div>
+                </div>
+                <div class="stat-card" style="padding:14px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
+                    <div style="font-size:0.8rem;color:#64748b;font-weight:700;">قسم الستاتي</div>
+                    <div style="font-size:1.4rem;font-weight:900;color:#e11d48;margin-top:4px;" id="statOnlineWomen">0</div>
+                </div>
+                <div class="stat-card" style="padding:14px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
+                    <div style="font-size:0.8rem;color:#64748b;font-weight:700;">قسم الأطفال</div>
+                    <div style="font-size:1.4rem;font-weight:900;color:#f59e0b;margin-top:4px;" id="statOnlineKids">0</div>
+                </div>
+                <div class="stat-card" style="padding:14px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
+                    <div style="font-size:0.8rem;color:#64748b;font-weight:700;">الأحذية والإكسسوارات</div>
+                    <div style="font-size:1.4rem;font-weight:900;color:#10b981;margin-top:4px;" id="statOnlineShoes">0</div>
+                </div>
+            </div>
+
+            <!-- شريط الفلترة والبحث -->
+            <div class="card" style="padding:14px;margin-bottom:18px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;" id="onlineProductCatFilterGroup">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="filterOnlineProductsCategory('all', this)">الكل</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="filterOnlineProductsCategory('رجالي', this)">رجالي</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="filterOnlineProductsCategory('ستاتي', this)">ستاتي</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="filterOnlineProductsCategory('أطفال', this)">أطفال</button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="filterOnlineProductsCategory('أحذية', this)">أحذية</button>
+                    </div>
+                    <div style="position:relative;width:260px;max-width:100%;">
+                        <input type="text" id="onlineProductSearchInput" placeholder="بحث بالاسم أو الكود..." oninput="searchOnlineProducts(this.value)"
+                               style="width:100%;padding:8px 32px 8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.85rem;">
+                        <i class="fas fa-search" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.8rem;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- شبكة كروت المنتجات -->
+            <div id="onlineProductsContainer" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:16px;">
+                <!-- يتم تعبئتها ديناميكياً عبر JS -->
+            </div>
+        </div>
+
         <!-- ============ شاشة المرتجعات والتبديل ============ -->
         <div id="screen-returns" class="screen">
             <h1 class="section-title"><i class="fas fa-exchange-alt text-primary"></i> المرتجعات والتبديل</h1>
@@ -2040,6 +2105,166 @@
                     <i class="fas fa-print"></i> طباعة كشف الحساب
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة / تعديل منتج بالمتجر أونلاين -->
+    <div class="modal-overlay" id="onlineProductModal">
+        <div class="modal-box" style="max-width:680px;width:95vw;">
+            <div class="modal-header">
+                <h5 id="onlineProdModalTitle"><i class="fas fa-tshirt text-primary"></i> إضافة منتج جديد للمتجر الإلكتروني</h5>
+                <button class="modal-close" onclick="closeModal('onlineProductModal')">&times;</button>
+            </div>
+            <form onsubmit="saveOnlineProduct(event)">
+                <div class="modal-body" style="padding:16px 20px;max-height:75vh;overflow-y:auto;">
+                    <input type="hidden" id="onlineProdId">
+                    
+                    <div class="form-grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label style="font-weight:700;font-size:0.85rem;">اسم المنتج / الموديل المعروض *</label>
+                            <input type="text" id="onlineProdName" placeholder="مثال: طقم سويت شيرت وبنطال شتوي مبطن" required style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-weight:700;font-size:0.85rem;">القسم الرئيسي بالمتجر *</label>
+                            <select id="onlineProdCategory" required style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                                <option value="رجالي">رجالي</option>
+                                <option value="ستاتي">ستاتي</option>
+                                <option value="أطفال">أطفال</option>
+                                <option value="أحذية">أحذية وإكسسوارات</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-weight:700;font-size:0.85rem;">التصنيف الفرعي</label>
+                            <input type="text" id="onlineProdSubCategory" placeholder="مثال: أطقم شتوية / هوديز / جاكيتات" style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-weight:700;font-size:0.85rem;">سعر البيع للزبائن (₪) *</label>
+                            <input type="number" id="onlineProdPrice" step="0.5" min="1" placeholder="135" required style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;font-weight:700;color:var(--primary);">
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-weight:700;font-size:0.85rem;">السعر قبل الخصم (₪) (اختياري للشطب)</label>
+                            <input type="number" id="onlineProdOldPrice" step="0.5" min="0" placeholder="175" style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label style="font-weight:700;font-size:0.85rem;">شارة العرض التسويقية (Badge)</label>
+                            <select id="onlineProdBadge" style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;">
+                                <option value="none">بدون شارة</option>
+                                <option value="الأكثر مبيعاً 🔥">الأكثر مبيعاً 🔥</option>
+                                <option value="وصل حديثاً ✨">وصل حديثاً ✨</option>
+                                <option value="خصم خاص 💥">خصم خاص 💥</option>
+                                <option value="شتاء 2026 ❄️">شتاء 2026 ❄️</option>
+                                <option value="عرض حصري ⭐">عرض حصري ⭐</option>
+                            </select>
+                        </div>
+
+                        <!-- قسم صورة المنتج -->
+                        <div class="form-group" style="grid-column: 1 / -1;background:#f8fafc;padding:14px;border-radius:10px;border:1px solid #e2e8f0;">
+                            <label style="font-weight:700;font-size:0.85rem;margin-bottom:8px;display:block;">صورة المنتج للموقع *</label>
+                            <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
+                                <div style="width:110px;height:110px;border-radius:10px;border:1.5px dashed #cbd5e1;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                                    <img id="onlineProdImgPreview" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;">
+                                    <i id="onlineProdImgPlaceholder" class="fas fa-image" style="font-size:2rem;color:#cbd5e1;"></i>
+                                </div>
+                                <div style="flex:1;min-width:220px;">
+                                    <div style="margin-bottom:10px;">
+                                        <label class="btn btn-sm btn-outline" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                                            <i class="fas fa-upload text-primary"></i> رفع صورة من جهازك
+                                            <input type="file" id="onlineProdFileInput" accept="image/*" style="display:none;" onchange="handleOnlineProductImageUpload(this)">
+                                        </label>
+                                    </div>
+                                    <div style="font-size:0.75rem;color:#64748b;margin-bottom:4px;">أو الصق رابط صورة مباشرة:</div>
+                                    <input type="url" id="onlineProdImgUrl" placeholder="https://..." oninput="updateOnlineProdImgFromUrl(this.value)" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:0.82rem;font-family:inherit;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- المقاسات المتوفرة -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label style="font-weight:700;font-size:0.85rem;margin-bottom:6px;display:block;">المقاسات المتوفرة للزبون:</label>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="onlineProdSizesBox">
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="S" checked> S
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="M" checked> M
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="L" checked> L
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="XL" checked> XL
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="XXL"> XXL
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="38"> 38
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="39"> 39
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="40"> 40
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdSizes" value="42"> 42
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- الألوان المتوفرة -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label style="font-weight:700;font-size:0.85rem;margin-bottom:6px;display:block;">الألوان المتوفرة للزبون:</label>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="onlineProdColorsBox">
+                                <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdColors" value="أسود|#0f172a" checked> 
+                                    <span style="width:12px;height:12px;border-radius:50%;background:#0f172a;display:inline-block;"></span> أسود
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdColors" value="نبيذي / أحمر|#881337" checked> 
+                                    <span style="width:12px;height:12px;border-radius:50%;background:#881337;display:inline-block;"></span> نبيذي
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdColors" value="رمادي داكن|#475569" checked> 
+                                    <span style="width:12px;height:12px;border-radius:50%;background:#475569;display:inline-block;"></span> رمادي
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdColors" value="كحلي ملكي|#1e3a8a"> 
+                                    <span style="width:12px;height:12px;border-radius:50%;background:#1e3a8a;display:inline-block;"></span> كحلي
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdColors" value="زيتي|#365314"> 
+                                    <span style="width:12px;height:12px;border-radius:50%;background:#365314;display:inline-block;"></span> زيتي
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdColors" value="أبيض|#ffffff"> 
+                                    <span style="width:12px;height:12px;border-radius:50%;background:#ffffff;border:1px solid #cbd5e1;display:inline-block;"></span> أبيض
+                                </label>
+                                <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.85rem;background:#f1f5f9;padding:4px 10px;border-radius:6px;cursor:pointer;">
+                                    <input type="checkbox" name="onlineProdColors" value="بيج ميلانج|#d6d3d1"> 
+                                    <span style="width:12px;height:12px;border-radius:50%;background:#d6d3d1;display:inline-block;"></span> بيج
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label style="font-weight:700;font-size:0.85rem;">وصف ومواصفات المنتج للزبائن</label>
+                            <textarea id="onlineProdDesc" rows="3" placeholder="أدخل تفاصيل الخامة، القصة، مميزات القماش والموديل..." style="width:100%;padding:10px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:inherit;font-size:0.85rem;"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions" style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('onlineProductModal')">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" style="padding:10px 24px;">
+                        <i class="fas fa-check-circle"></i> حفظ ونشر في المتجر
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </body>
