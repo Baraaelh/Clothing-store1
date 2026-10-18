@@ -189,6 +189,12 @@ function buildSidebar() {
     }
 
     nav += `
+        <div class="nav-title">الموقع الخارجي</div>
+        <a href="store/index.html" target="_blank" class="nav-item" style="text-decoration:none;color:inherit;display:flex;align-items:center;">
+            <i class="fas fa-store text-primary"></i><span>المتجر الإلكتروني</span>
+            <span class="badge info" style="margin-right:auto;font-size:0.65rem;border-radius:12px;padding:2px 8px;">عرض</span>
+        </a>
+
         <div class="nav-title">النظام</div>
         <div class="nav-item" onclick="logout()">
             <i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span>
@@ -5396,16 +5402,32 @@ function acceptOnlineOrder(index) {
     
     const order = mockOnlineOrders[index];
     order.status = 'accepted';
+
+    try {
+        let stored = JSON.parse(localStorage.getItem('store_online_orders_v6')) || [];
+        const found = stored.find(s => s.id === order.id);
+        if (found) found.status = 'accepted';
+        localStorage.setItem('store_online_orders_v6', JSON.stringify(stored));
+    } catch(e) {}
+
     showToast('تم الموافقة على الطلب! يرجى تحضيره.');
     updateOnlineOrdersBadge();
     renderOnlineOrders();
-    // Here you would typically send the order to POS cart or automatically register a sale
 }
 
 function rejectOnlineOrder(index) {
     if(!confirm('هل تريد رفض هذا الطلب؟')) return;
     
-    mockOnlineOrders[index].status = 'rejected';
+    const order = mockOnlineOrders[index];
+    order.status = 'rejected';
+
+    try {
+        let stored = JSON.parse(localStorage.getItem('store_online_orders_v6')) || [];
+        const found = stored.find(s => s.id === order.id);
+        if (found) found.status = 'rejected';
+        localStorage.setItem('store_online_orders_v6', JSON.stringify(stored));
+    } catch(e) {}
+
     showToast('تم رفض الطلب', 'warning');
     updateOnlineOrdersBadge();
     renderOnlineOrders();
@@ -5497,6 +5519,22 @@ function renderOnlineOrders() {
     const tbody = document.getElementById('onlineOrdersTableBody');
     if(!tbody) return;
     
+    // مزامنة الطلبات الواردة من واجهة المتجر الإلكتروني الخارجي
+    try {
+        const stored = JSON.parse(localStorage.getItem('store_online_orders_v6'));
+        if (Array.isArray(stored) && stored.length > 0) {
+            stored.forEach(item => {
+                const existing = mockOnlineOrders.find(m => m.id === item.id);
+                if (!existing) {
+                    mockOnlineOrders.unshift(item);
+                } else {
+                    existing.status = item.status;
+                }
+            });
+        }
+    } catch(e) {}
+    updateOnlineOrdersBadge();
+
     if (mockOnlineOrders.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="empty">لا توجد طلبات جديدة حالياً</td></tr>';
         return;
