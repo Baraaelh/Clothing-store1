@@ -3,6 +3,24 @@
  * Storefront Interactive Controller (Cart, Catalog, Wishlist, WhatsApp Checkout)
  */
 
+/* ============================================
+   أدوات الحماية عند بناء HTML من بيانات المستخدم
+   ============================================ */
+// تهريب النص قبل إدراجه داخل innerHTML أو قيمة attribute
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// تمرير نص كوسيط آمن لدالة داخل onclick/onchange، مثل: onclick="fn(${jsArg(name)})"
+function jsArg(value) {
+    return escapeHtml(JSON.stringify(String(value ?? '')));
+}
+
 // ============================================
 // 1. الكتالوج الأولي الفاخر ومطابقة الصورة المرفقة
 // ============================================
@@ -423,10 +441,10 @@ function renderProducts() {
 
         return `
             <div class="product-card-luxury">
-                <div class="product-image-box" onclick="openQuickView('${p.id}')">
+                <div class="product-image-box" onclick="openQuickView(${jsArg(p.id)})">
                     ${badgeHtml}
                     <button type="button" class="btn-wishlist-float ${isWish ? 'active' : ''}" 
-                            onclick="event.stopPropagation(); toggleWishlist('${p.id}')" 
+                            onclick="event.stopPropagation(); toggleWishlist(${jsArg(p.id)})" 
                             title="${isWish ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}">
                         <i class="${isWish ? 'fas fa-heart' : 'far fa-heart'}"></i>
                     </button>
@@ -435,7 +453,7 @@ function renderProducts() {
 
                 <div class="product-details">
                     <div class="product-category-label">${p.subCategory || p.category}</div>
-                    <h3 class="product-title" onclick="openQuickView('${p.id}')">${p.name}</h3>
+                    <h3 class="product-title" onclick="openQuickView(${jsArg(p.id)})">${p.name}</h3>
 
                     <div class="product-pricing">
                         <span class="price-current">₪${p.price.toFixed(2)}</span>
@@ -448,10 +466,10 @@ function renderProducts() {
                     </div>
 
                     <div class="product-actions-row">
-                        <button type="button" class="btn-add-cart-primary" onclick="quickAddToCart('${p.id}')">
+                        <button type="button" class="btn-add-cart-primary" onclick="quickAddToCart(${jsArg(p.id)})">
                             <i class="fas fa-shopping-bag"></i> أضف للسلة
                         </button>
-                        <button type="button" class="btn-whatsapp-direct" onclick="orderSingleViaWhatsApp('${p.id}')" title="طلب مباشر وسريع عبر واتساب">
+                        <button type="button" class="btn-whatsapp-direct" onclick="orderSingleViaWhatsApp(${jsArg(p.id)})" title="طلب مباشر وسريع عبر واتساب">
                             <i class="fab fa-whatsapp"></i>
                         </button>
                     </div>
@@ -663,10 +681,10 @@ function openWishlistModal() {
                             <strong style="color:#0f172a;">₪${p.price.toFixed(2)}</strong>
                         </div>
                         <div style="display:flex;gap:6px;">
-                            <button type="button" class="btn-add-cart-primary" onclick="quickAddToCart('${p.id}'); closeModal('wishlistModal');" style="padding:6px 12px;font-size:0.8rem;">
+                            <button type="button" class="btn-add-cart-primary" onclick="quickAddToCart(${jsArg(p.id)}); closeModal('wishlistModal');" style="padding:6px 12px;font-size:0.8rem;">
                                 للسلة
                             </button>
-                            <button type="button" onclick="toggleWishlist('${p.id}'); openWishlistModal();" style="border:none;background:none;color:#ef4444;cursor:pointer;padding:6px;">
+                            <button type="button" onclick="toggleWishlist(${jsArg(p.id)}); openWishlistModal();" style="border:none;background:none;color:#ef4444;cursor:pointer;padding:6px;">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -723,7 +741,7 @@ function openQuickView(productId) {
                     <label style="display:block;font-size:0.8rem;font-weight:800;color:#1e293b;margin-bottom:6px;">المقاس المطلوب:</label>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
                         ${prod.sizes.map((s, idx) => `
-                            <button type="button" class="chip-option ${idx === 0 ? 'selected' : ''}" onclick="selectQuickViewSize('${s}', this)">
+                            <button type="button" class="chip-option ${idx === 0 ? 'selected' : ''}" onclick="selectQuickViewSize(${jsArg(s)}, this)">
                                 ${s}
                             </button>
                         `).join('')}
@@ -735,7 +753,7 @@ function openQuickView(productId) {
                     <label style="display:block;font-size:0.8rem;font-weight:800;color:#1e293b;margin-bottom:6px;">اللون المطلوب:</label>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
                         ${prod.colors.map((c, idx) => `
-                            <button type="button" class="color-chip-option ${idx === 0 ? 'selected' : ''}" onclick="selectQuickViewColor('${c.name}', this)">
+                            <button type="button" class="color-chip-option ${idx === 0 ? 'selected' : ''}" onclick="selectQuickViewColor(${jsArg(c.name)}, this)">
                                 <span class="color-dot" style="background:${c.hex};"></span> ${c.name}
                             </button>
                         `).join('')}
@@ -747,7 +765,7 @@ function openQuickView(productId) {
                     <button type="button" class="btn-add-cart-primary" onclick="confirmQuickViewAddToCart()" style="flex:1;padding:12px;font-size:0.95rem;">
                         <i class="fas fa-shopping-bag"></i> إضافة إلى السلة
                     </button>
-                    <button type="button" class="btn-whatsapp-direct" onclick="orderSingleViaWhatsApp('${prod.id}')" title="طلب مباشر عبر واتساب">
+                    <button type="button" class="btn-whatsapp-direct" onclick="orderSingleViaWhatsApp(${jsArg(prod.id)})" title="طلب مباشر عبر واتساب">
                         <i class="fab fa-whatsapp"></i>
                     </button>
                 </div>
@@ -842,8 +860,34 @@ function submitOnlineOrder(e) {
         return;
     }
 
+    // إعادة تسعير السلة من الكتالوج الحالي بدل الاعتماد على السعر المحفوظ في السلة
+    const catalog = getAllStoreProducts();
+    const removed = [];
+    cart = cart.filter(i => {
+        const prod = catalog.find(p => p.id === i.product_id);
+        if (!prod) {
+            removed.push(i.name);
+            return false;
+        }
+        i.price = Number(prod.price) || 0;
+        i.quantity = Math.max(1, Math.floor(Number(i.quantity) || 1));
+        return true;
+    });
+    saveCart();
+    updateCartBadge();
+
+    if (removed.length > 0) {
+        renderCartDrawerItems();
+        showToastNotification(`تمت إزالة منتجات لم تعد متوفرة من السلة: ${removed.join('، ')}`);
+        return;
+    }
+    if (cart.length === 0) {
+        showToastNotification('السلة فارغة');
+        return;
+    }
+
     const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
-    const orderId = 'WEB-' + Math.floor(Math.random() * 90000 + 10000);
+    const orderId = 'WEB-' + Date.now().toString().slice(-8) + Math.floor(Math.random() * 90 + 10);
     const orderItemsSummary = cart.map(i => `${i.name} (${i.size}) ×${i.quantity}`).join('، ');
 
     const newOrder = {
@@ -920,7 +964,7 @@ function openOrderSuccessModal(order) {
         <p style="font-size:0.85rem;color:#64748b;margin-bottom:18px;">
             تم إرسال طلبك بنجاح إلى فريق المتجر وجارٍ تحضيره. يمكنك تأكيد طلبك فوراً والتواصل المباشر مع خدمة الزبائن عبر واتساب:
         </p>
-        <button type="button" class="btn-whatsapp-drawer" onclick="sendOrderReceiptToWhatsApp('${order.id}')" style="padding:13px;font-size:0.98rem;">
+        <button type="button" class="btn-whatsapp-drawer" onclick="sendOrderReceiptToWhatsApp(${jsArg(order.id)})" style="padding:13px;font-size:0.98rem;">
             <i class="fab fa-whatsapp" style="font-size:1.25rem;"></i> متابعة وتأكيد الطلب عبر واتساب
         </button>
     `;
@@ -1408,7 +1452,7 @@ function renderCustomerOrders() {
                         الإجمالي: <strong style="color:var(--brand-accent);font-size:0.95rem;">₪${Number(o.total).toFixed(2)}</strong>
                         <span style="font-size:0.75rem;color:#64748b;margin-right:6px;">(${o.payment_method === 'cod' ? 'دفع عند الاستلام' : 'تحويل'})</span>
                     </div>
-                    <button type="button" class="btn-whatsapp-drawer" onclick="sendOrderReceiptToWhatsApp('${o.id}')" style="width:auto;margin:0;padding:6px 14px;font-size:0.78rem;border-radius:15px;">
+                    <button type="button" class="btn-whatsapp-drawer" onclick="sendOrderReceiptToWhatsApp(${jsArg(o.id)})" style="width:auto;margin:0;padding:6px 14px;font-size:0.78rem;border-radius:15px;">
                         <i class="fab fa-whatsapp"></i> تتبع بالواتساب
                     </button>
                 </div>
