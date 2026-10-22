@@ -57,8 +57,14 @@ function startApp() {
     const user = getCurrentUser();
     if (!user) return;
 
+    if (CURRENT_PANEL === 'online' && !canAccessOnlinePanel(user)) {
+        location.replace('index.html');
+        return;
+    }
+
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'block';
+    applyPanelBranding();
 
     document.getElementById('userAvatar').textContent = user.name.charAt(0);
     document.getElementById('userName').textContent = user.name;
@@ -90,7 +96,14 @@ function startApp() {
     if (typeof updateOnlineProductsCountBadge === 'function') updateOnlineProductsCountBadge();
     if (typeof updateCustomersCountBadge === 'function') updateCustomersCountBadge();
 
-    if (user.role === 'cashier') switchScreen('pos');
+    const requestedScreen = location.hash.slice(1);
+    if (requestedScreen && document.getElementById('screen-' + requestedScreen)) {
+        switchScreen(requestedScreen);
+    } else if (CURRENT_PANEL === 'online') {
+        switchScreen('online-orders');
+    } else if (user.role === 'cashier') {
+        switchScreen('pos');
+    }
 }
 
 function showDemoBanner() {
@@ -109,7 +122,77 @@ function showDemoBanner() {
 /* ============================================
    3. القائمة الجانبية
    ============================================ */
+/* ============================================
+   لوحة الإدارة / لوحة الموقع الإلكتروني
+   نفس التطبيق والبيانات، لكن لوحة الموقع تُفتح على index.html?panel=online
+   وتعرض شاشات الأونلاين فقط، وللمالك والمدير فقط.
+   ============================================ */
+const CURRENT_PANEL = new URLSearchParams(location.search).get('panel') === 'online' ? 'online' : 'admin';
+const ONLINE_ONLY_SCREENS = ['online-orders', 'online-products'];
+const ONLINE_PANEL_SCREENS = [...ONLINE_ONLY_SCREENS, 'customers'];
+
+function canAccessOnlinePanel(user) {
+    return !!user && (user.role === 'owner' || user.role === 'manager');
+}
+
+function openPanel(panel, screenId) {
+    const query = panel === 'online' ? '?panel=online' : '';
+    location.href = 'index.html' + query + (screenId ? '#' + screenId : '');
+}
+
+function openOnlineCustomers() {
+    switchScreen('customers');
+    const btn = document.querySelector('#customerFilterGroup button[onclick*="\'online\'"]');
+    filterCustomerTab('online', btn);
+}
+
+function applyPanelBranding() {
+    if (CURRENT_PANEL !== 'online') return;
+    document.title = 'لوحة الموقع الإلكتروني - متجر الأناقة';
+    const header = document.querySelector('.sidebar-header span');
+    if (header) header.textContent = 'لوحة الموقع';
+    const storeName = document.querySelector('.topbar-store-name');
+    if (storeName) storeName.innerHTML = '<i class="fas fa-globe text-primary"></i> متجر الأناقة - لوحة الموقع';
+}
+
+function buildOnlineSidebar() {
+    document.getElementById('sidebarNav').innerHTML = `
+        <div class="nav-title">الموقع الإلكتروني</div>
+        <div class="nav-item active" onclick="switchScreen('online-orders')">
+            <i class="fas fa-shopping-bag"></i><span>طلبات الموقع</span>
+            <span class="badge danger" id="onlineOrdersBadge" style="margin-right:auto;border-radius:50%;padding:2px 6px;font-size:0.7rem;display:none;">0</span>
+        </div>
+        <div class="nav-item" onclick="switchScreen('online-products')">
+            <i class="fas fa-tshirt"></i><span>منتجات المتجر أونلاين</span>
+            <span class="badge success" id="onlineProductsCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
+        </div>
+        <div class="nav-item" onclick="openOnlineCustomers()">
+            <i class="fas fa-users-cog"></i><span>عملاء المتجر أونلاين</span>
+            <span class="badge info" id="customersCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
+        </div>
+        <a href="store/index.html" target="_blank" class="nav-item" style="text-decoration:none;color:inherit;display:flex;align-items:center;">
+            <i class="fas fa-external-link-alt text-primary"></i><span>عرض المتجر الإلكتروني</span>
+            <span class="badge info" style="margin-right:auto;font-size:0.65rem;border-radius:12px;padding:2px 8px;">معاينة ↗</span>
+        </a>
+
+        <div class="nav-title">التنقل</div>
+        <div class="nav-item" onclick="openPanel('admin')">
+            <i class="fas fa-th-large"></i><span>الانتقال إلى لوحة الإدارة</span>
+        </div>
+
+        <div class="nav-title">النظام</div>
+        <div class="nav-item" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span>
+        </div>
+    `;
+}
+
 function buildSidebar() {
+    if (CURRENT_PANEL === 'online') {
+        buildOnlineSidebar();
+        return;
+    }
+
     const user = getCurrentUser();
     const isCashier = user.role === 'cashier';
 
@@ -128,10 +211,6 @@ function buildSidebar() {
         <div class="nav-title">العمليات</div>
         <div class="nav-item ${isCashier ? 'active' : ''}" onclick="switchScreen('pos')">
             <i class="fas fa-cash-register"></i><span>الكاشير</span>
-        </div>
-        <div class="nav-item" onclick="switchScreen('online-orders')">
-            <i class="fas fa-globe"></i><span>طلبات الموقع</span>
-            <span class="badge danger" id="onlineOrdersBadge" style="margin-right:auto;border-radius:50%;padding:2px 6px;font-size:0.7rem;display:none;">0</span>
         </div>
         <div class="nav-item" onclick="switchScreen('sales-record')">
             <i class="fas fa-history"></i><span>سجل المبيعات</span>
@@ -196,10 +275,12 @@ function buildSidebar() {
 
     nav += `
         <div class="nav-title">الموقع الإلكتروني والمتجر</div>
-        <div class="nav-item" onclick="switchScreen('online-products')">
-            <i class="fas fa-tshirt"></i><span>منتجات المتجر أونلاين</span>
-            <span class="badge success" id="onlineProductsCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
+        ${canAccessOnlinePanel(user) ? `
+        <div class="nav-item" onclick="openPanel('online')">
+            <i class="fas fa-globe"></i><span>لوحة الموقع الإلكتروني</span>
+            <span class="badge danger" id="onlineOrdersBadge" style="margin-right:auto;border-radius:50%;padding:2px 6px;font-size:0.7rem;display:none;" title="طلبات معلقة">0</span>
         </div>
+        ` : ''}
         <a href="store/index.html" target="_blank" class="nav-item" style="text-decoration:none;color:inherit;display:flex;align-items:center;">
             <i class="fas fa-external-link-alt text-primary"></i><span>عرض المتجر الإلكتروني</span>
             <span class="badge info" style="margin-right:auto;font-size:0.65rem;border-radius:12px;padding:2px 8px;">معاينة ↗</span>
@@ -245,6 +326,15 @@ window.toggleSidebarSubmenu = toggleSidebarSubmenu;
    4. التنقل بين الشاشات
    ============================================ */
 function switchScreen(screenId) {
+    if (CURRENT_PANEL === 'admin' && ONLINE_ONLY_SCREENS.includes(screenId)) {
+        openPanel('online', screenId);
+        return;
+    }
+    if (CURRENT_PANEL === 'online' && !ONLINE_PANEL_SCREENS.includes(screenId)) {
+        openPanel('admin', screenId);
+        return;
+    }
+
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const screen = document.getElementById('screen-' + screenId);
     if (screen) screen.classList.add('active');
@@ -6598,7 +6688,7 @@ function getStoreNotificationsList() {
                     title: `عميل جديد بالمتجر: ${u.name}`,
                     desc: `الهاتف: ${u.phone} | المدينة: ${u.city || 'غير محدد'}`,
                     actionText: 'عرض العملاء',
-                    actionCode: "switchScreen('customers'); closeNotifDropdown();",
+                    actionCode: "closeNotifDropdown(); CURRENT_PANEL === 'online' ? openOnlineCustomers() : switchScreen('customers');",
                     time: u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-EG') : 'جديد',
                     isRead: readIds.includes(id)
                 });
@@ -6606,7 +6696,8 @@ function getStoreNotificationsList() {
         });
     } catch(e) {}
 
-    return list;
+    // لوحة الموقع تعرض تنبيهات الطلبات والعملاء الجدد فقط
+    return CURRENT_PANEL === 'online' ? list.filter(n => n.type === 'orders') : list;
 }
 
 function updateNotifications() {
