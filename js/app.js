@@ -393,7 +393,7 @@ function handleColorSelection() {
         html += `
             <div style="display:flex; align-items:center; gap:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
                 <div style="width:80px; font-weight:bold; color:var(--primary);">${c}</div>
-                <input type="file" accept="image/*" class="form-control" style="font-size: 0.9rem; padding: 6px 10px; flex:1;" onchange="handleColorImageUpload(this, '${c}')">
+                <input type="file" accept="image/*" class="form-control" style="font-size: 0.9rem; padding: 6px 10px; flex:1;" onchange="handleColorImageUpload(this, ${jsArg(c)})">
                 <span style="font-size:0.8rem; color:${colorStyle}; white-space:nowrap;" id="img-status-${c}">${hasImg}</span>
             </div>
         `;
@@ -721,8 +721,8 @@ function loadCategoriesTable() {
                 <td><strong>${cat}</strong></td>
                 <td><span class="badge primary">${count} منتج</span></td>
                 <td>
-                    <button class="btn-icon" onclick="editCategory('${cat}')"><i class="fas fa-edit"></i></button>
-                    <button class="btn-icon danger" onclick="deleteCategory('${cat}')"><i class="fas fa-trash"></i></button>
+                    <button class="btn-icon" onclick="editCategory(${jsArg(cat)})"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon danger" onclick="deleteCategory(${jsArg(cat)})"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -811,8 +811,8 @@ function loadColorsTable() {
                 <td><strong>${col}</strong></td>
                 <td><span class="badge primary">${count} منتج</span></td>
                 <td>
-                    <button class="btn-icon" onclick="editColor('${col}')"><i class="fas fa-edit"></i></button>
-                    <button class="btn-icon danger" onclick="deleteColor('${col}')"><i class="fas fa-trash"></i></button>
+                    <button class="btn-icon" onclick="editColor(${jsArg(col)})"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon danger" onclick="deleteColor(${jsArg(col)})"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -897,8 +897,8 @@ function loadSizesTable() {
                 <td><strong>${sz}</strong></td>
                 <td><span class="badge primary">${count} منتج</span></td>
                 <td>
-                    <button class="btn-icon" onclick="editSize('${sz}')"><i class="fas fa-edit"></i></button>
-                    <button class="btn-icon danger" onclick="deleteSize('${sz}')"><i class="fas fa-trash"></i></button>
+                    <button class="btn-icon" onclick="editSize(${jsArg(sz)})"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon danger" onclick="deleteSize(${jsArg(sz)})"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -2288,7 +2288,7 @@ function viewPaymentDetails(id) {
                 <h6 style="font-weight:800;margin-bottom:8px;color:var(--dark);">
                     <i class="fas fa-image"></i> صورة الإشعار:
                 </h6>
-                <img src="${p.screenshot}" style="width:100%;border-radius:12px;border:2px solid #e2e8f0;cursor:pointer;" onclick="window.open('${p.screenshot}','_blank')">
+                <img src="${p.screenshot}" style="width:100%;border-radius:12px;border:2px solid #e2e8f0;cursor:pointer;" onclick="window.open(${jsArg(p.screenshot)},'_blank')">
                 <small style="display:block;text-align:center;color:var(--gray);font-size:.72rem;margin-top:5px;">
                     اضغط على الصورة لعرضها بحجم كامل
                 </small>
@@ -2558,40 +2558,40 @@ function renderQuickOpeningStockTable() {
                 <td style="text-align:center;color:var(--gray);font-weight:700;">${idx + 1}</td>
                 <td>
                     <input type="text" id="qsr-name-${r.id}" class="quick-stock-input" value="${r.name || ''}"
-                        placeholder="مثال: قميص قطني، تيشيرت..." oninput="onQuickStockRowChange('${r.id}', 'name', this.value)">
+                        placeholder="مثال: قميص قطني، تيشيرت..." oninput="onQuickStockRowChange(${jsArg(r.id)}, 'name', this.value)">
                 </td>
                 <td>
-                    <select class="quick-stock-select" onchange="onQuickStockRowChange('${r.id}', 'category', this.value)">
+                    <select class="quick-stock-select" onchange="onQuickStockRowChange(${jsArg(r.id)}, 'category', this.value)">
                         ${catOptions}
                     </select>
                 </td>
                 <td>
-                    <select class="quick-stock-select" onchange="onQuickStockRowChange('${r.id}', 'size', this.value)">
+                    <select class="quick-stock-select" onchange="onQuickStockRowChange(${jsArg(r.id)}, 'size', this.value)">
                         ${sizeOptions}
                     </select>
                 </td>
                 <td>
-                    <select class="quick-stock-select" onchange="onQuickStockRowChange('${r.id}', 'color', this.value)">
+                    <select class="quick-stock-select" onchange="onQuickStockRowChange(${jsArg(r.id)}, 'color', this.value)">
                         ${colOptions}
                     </select>
                 </td>
                 <td>
                     <input type="number" min="1" step="1" class="quick-stock-input" value="${r.qty !== undefined ? r.qty : ''}"
                         placeholder="10" style="text-align:center;font-weight:700;"
-                        oninput="onQuickStockRowChange('${r.id}', 'qty', this.value)">
+                        oninput="onQuickStockRowChange(${jsArg(r.id)}, 'qty', this.value)">
                 </td>
                 <td>
                     <input type="number" min="0" step="0.5" class="quick-stock-input" value="${r.cost !== undefined ? r.cost : ''}"
                         placeholder="25" style="text-align:center;"
-                        oninput="onQuickStockRowChange('${r.id}', 'cost', this.value)">
+                        oninput="onQuickStockRowChange(${jsArg(r.id)}, 'cost', this.value)">
                 </td>
                 <td>
                     <input type="number" id="qsr-price-${r.id}" min="0" step="0.5" class="quick-stock-input" value="${r.price !== undefined ? r.price : ''}"
                         placeholder="40" style="text-align:center;color:var(--primary);font-weight:700;"
-                        oninput="onQuickStockRowChange('${r.id}', 'price', this.value)">
+                        oninput="onQuickStockRowChange(${jsArg(r.id)}, 'price', this.value)">
                 </td>
                 <td style="text-align:center;">
-                    <button type="button" class="btn-icon danger" onclick="removeQuickOpeningStockRow('${r.id}')" title="حذف هذا السطر">
+                    <button type="button" class="btn-icon danger" onclick="removeQuickOpeningStockRow(${jsArg(r.id)})" title="حذف هذا السطر">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -3016,7 +3016,7 @@ function onPurchSearchInput() {
                     <strong style="color:var(--dark);">لم يُعثر على تطابق واضح</strong>
                     <small style="color:var(--gray);display:block;margin-top:2px;">تحقق من الاسم أو أدخل منتجاً جديداً مباشرة</small>
                 </div>
-                <button class="btn btn-primary btn-sm" onclick="openPurchNewProductModal('${cleanQuery}')">
+                <button class="btn btn-primary btn-sm" onclick="openPurchNewProductModal(${jsArg(cleanQuery)})">
                     <i class="fas fa-plus"></i> إدخال منتج جديد
                 </button>
             </div>
@@ -3342,11 +3342,11 @@ function renderPurchProducts() {
                 <td style="color:var(--gray);">${stock}</td>
                 <td>
                     <input type="number" min="0" step="1" class="purch-qty-input" value="${v.qty || ''}" placeholder="كمية"
-                        onchange="onPurchVariantFieldChange('${p.uid}', ${i}, 'qty', this.value)" ${purchPosted ? 'disabled' : ''}>
+                        onchange="onPurchVariantFieldChange(${jsArg(p.uid)}, ${i}, 'qty', this.value)" ${purchPosted ? 'disabled' : ''}>
                 </td>
                 <td>
                     <input type="number" min="0" step="0.01" class="purch-cost-input" value="${v.cost || ''}" placeholder="السعر"
-                        onchange="onPurchVariantFieldChange('${p.uid}', ${i}, 'cost', this.value)" ${purchPosted ? 'disabled' : ''}>
+                        onchange="onPurchVariantFieldChange(${jsArg(p.uid)}, ${i}, 'cost', this.value)" ${purchPosted ? 'disabled' : ''}>
                 </td>
                 <td><strong style="color:var(--primary);">₪${lineTotal.toFixed(2)}</strong></td>
                 <td><span class="badge ${newStock > 0 ? 'success' : 'danger'}">${newStock}</span></td>
@@ -3354,12 +3354,12 @@ function renderPurchProducts() {
                 <td>
                     <div style="display:inline-flex;align-items:center;gap:6px;">
                         <input type="file" accept="image/*" id="purch-img-input-${p.uid}-${i}" style="display:none;"
-                               onchange="handlePurchVariantImageUpload('${p.uid}', ${i}, event)" ${purchPosted ? 'disabled' : ''}>
+                               onchange="handlePurchVariantImageUpload(${jsArg(p.uid)}, ${i}, event)" ${purchPosted ? 'disabled' : ''}>
                         
                         ${v.image ? `
                             <div class="purch-variant-img-box" style="position:relative;display:inline-block;">
                                 <img src="${v.image}" alt="صورة الصنف" class="purch-variant-thumb"
-                                     onclick="previewPurchVariantImage('${v.image}', '${p.name} - ${v.color || ''} ${v.size || ''}')"
+                                     onclick="previewPurchVariantImage(${jsArg(v.image)}, ${jsArg(`${p.name} - ${v.color || ''} ${v.size || ''}`)})"
                                      title="اضغط لمعاينة الصورة">
                                 <button type="button" class="purch-thumb-change-btn"
                                         onclick="document.getElementById('purch-img-input-${p.uid}-${i}').click()"
@@ -3367,7 +3367,7 @@ function renderPurchProducts() {
                                     <i class="fas fa-camera"></i>
                                 </button>
                                 <button type="button" class="purch-thumb-del-btn"
-                                        onclick="removePurchVariantImage('${p.uid}', ${i})"
+                                        onclick="removePurchVariantImage(${jsArg(p.uid)}, ${i})"
                                         ${purchPosted ? 'disabled' : ''} title="حذف الصورة">
                                     &times;
                                 </button>
@@ -3380,7 +3380,7 @@ function renderPurchProducts() {
                             </button>
                         `}
 
-                        <button type="button" class="btn-icon danger" onclick="removeVariantFromPurchProduct('${p.uid}', ${i})" ${purchPosted ? 'disabled' : ''} title="حذف التركيبة">
+                        <button type="button" class="btn-icon danger" onclick="removeVariantFromPurchProduct(${jsArg(p.uid)}, ${i})" ${purchPosted ? 'disabled' : ''} title="حذف التركيبة">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -3406,7 +3406,7 @@ function renderPurchProducts() {
                             • <span style="color:${p.isNew ? 'var(--warning)' : 'var(--success)'};font-weight:700;">${p.isNew ? 'منتج جديد — مسودة' : 'منتج موجود في المتجر'}</span>
                         </div>
                     </div>
-                    <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:#fecaca;" onclick="removeProductFromPurchInvoice('${p.uid}')" ${purchPosted ? 'disabled' : ''}>
+                    <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:#fecaca;" onclick="removeProductFromPurchInvoice(${jsArg(p.uid)})" ${purchPosted ? 'disabled' : ''}>
                         <i class="fas fa-times"></i> إزالة الصنف
                     </button>
                 </div>
@@ -3415,16 +3415,16 @@ function renderPurchProducts() {
                         <div class="form-group">
                             <label style="font-size:0.78rem;margin-bottom:4px;">سعر البيع الافتراضي</label>
                             <input type="number" step="0.01" style="height:38px!important;" value="${p.retail || 0}"
-                                onchange="onPurchProductControlChange('${p.uid}', 'retail', this.value)" ${purchPosted ? 'disabled' : ''}>
+                                onchange="onPurchProductControlChange(${jsArg(p.uid)}, 'retail', this.value)" ${purchPosted ? 'disabled' : ''}>
                         </div>
                         <div class="form-group">
                             <label style="font-size:0.78rem;margin-bottom:4px;">الحد الأدنى للبيع</label>
                             <input type="number" step="0.01" style="height:38px!important;" value="${p.min || 0}"
-                                onchange="onPurchProductControlChange('${p.uid}', 'min', this.value)" ${purchPosted ? 'disabled' : ''}>
+                                onchange="onPurchProductControlChange(${jsArg(p.uid)}, 'min', this.value)" ${purchPosted ? 'disabled' : ''}>
                         </div>
                         <div class="form-group">
                             <label style="font-size:0.78rem;margin-bottom:4px;">طبيعة المنتج</label>
-                            <select style="height:38px!important;" onchange="onPurchProductControlChange('${p.uid}', 'mode', this.value)" ${purchPosted ? 'disabled' : ''}>
+                            <select style="height:38px!important;" onchange="onPurchProductControlChange(${jsArg(p.uid)}, 'mode', this.value)" ${purchPosted ? 'disabled' : ''}>
                                 <option value="both" ${p.mode === 'both' ? 'selected' : ''}>لون ومقاس</option>
                                 <option value="color" ${p.mode === 'color' ? 'selected' : ''}>لون فقط</option>
                                 <option value="size" ${p.mode === 'size' ? 'selected' : ''}>مقاس فقط</option>
@@ -3448,7 +3448,7 @@ function renderPurchProducts() {
                     <div class="purch-tools">
                         ${colorMode ? `<select id="sel-col-${p.uid}">${colOptions}</select>` : ''}
                         ${sizeMode ? `<select id="sel-size-${p.uid}">${sizeOptions}</select>` : ''}
-                        <button class="btn btn-outline btn-sm" onclick="addVariantToPurchProduct('${p.uid}')" ${purchPosted ? 'disabled' : ''}>
+                        <button class="btn btn-outline btn-sm" onclick="addVariantToPurchProduct(${jsArg(p.uid)})" ${purchPosted ? 'disabled' : ''}>
                             <i class="fas fa-plus"></i> إضافة تركيبة / لون / مقاس
                         </button>
                     </div>
@@ -4024,10 +4024,10 @@ function loadPurchasesTable() {
             <td><strong style="color:var(--primary);font-size:0.95rem;">₪${inv.totalCost.toFixed(2)}</strong></td>
             <td>
                 <div style="display:flex;gap:6px;">
-                    <button class="btn-icon" onclick="viewPurchaseInvoiceDetails('${inv.id}')" title="عرض تفاصيل الفاتورة">
+                    <button class="btn-icon" onclick="viewPurchaseInvoiceDetails(${jsArg(inv.id)})" title="عرض تفاصيل الفاتورة">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn-icon danger" onclick="deletePurchaseInvoice('${inv.id}')" title="حذف الفاتورة بالكامل">
+                    <button class="btn-icon danger" onclick="deletePurchaseInvoice(${jsArg(inv.id)})" title="حذف الفاتورة بالكامل">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -4202,7 +4202,7 @@ function loadDebtsTable() {
     if (datalist) {
         datalist.innerHTML = Object.values(summary)
             .filter(c => c.balance > 0.01)
-            .map(c => `<option value="${c.name}">${c.phone}</option>`)
+            .map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.phone)}</option>`)
             .join('');
     }
 
@@ -4213,16 +4213,16 @@ function loadDebtsTable() {
 
     tbody.innerHTML = customers.map(c => `
         <tr>
-            <td><strong>${c.name}</strong></td>
-            <td dir="ltr">${c.phone}</td>
+            <td><strong>${escapeHtml(c.name)}</strong></td>
+            <td dir="ltr">${escapeHtml(c.phone)}</td>
             <td>₪${c.totalDebt.toFixed(2)}</td>
             <td style="color:var(--success);">₪${c.totalPaid.toFixed(2)}</td>
             <td><strong style="color:var(--danger);font-size:1.05rem;">₪${c.balance.toFixed(2)}</strong></td>
             <td>
-                <button class="btn-icon" onclick="viewCustomerStatement('${c.name}', '${c.phone}')" title="كشف حساب">
+                <button class="btn-icon" onclick="viewCustomerStatement(${jsArg(c.name)}, ${jsArg(c.phone)})" title="كشف حساب">
                     <i class="fas fa-file-alt"></i>
                 </button>
-                <button class="btn-icon success" onclick="quickPay('${c.name}', ${c.balance})" title="دفعة سريعة">
+                <button class="btn-icon success" onclick="quickPay(${jsArg(c.name)}, ${c.balance})" title="دفعة سريعة">
                     <i class="fas fa-money-bill-wave"></i>
                 </button>
             </td>
@@ -4552,12 +4552,12 @@ function loadMerchantsTable() {
         } else {
             tbody.innerHTML = merchants.map(m => `
                 <tr>
-                    <td><strong>${m.name}</strong></td>
+                    <td><strong>${escapeHtml(m.name)}</strong></td>
                     <td>₪${m.totalInvoices.toFixed(2)}</td>
                     <td>₪${m.totalPaid.toFixed(2)}</td>
                     <td><strong style="color:${m.balance > 0 ? 'var(--danger)' : 'var(--success)'};">₪${m.balance.toFixed(2)}</strong></td>
                     <td>
-                        <button class="btn btn-outline btn-sm" onclick="viewMerchantStatement('${m.name}')" title="كشف حساب تفصيلي">
+                        <button class="btn btn-outline btn-sm" onclick="viewMerchantStatement(${jsArg(m.name)})" title="كشف حساب تفصيلي">
                             <i class="fas fa-file-alt text-primary"></i> كشف الحساب
                         </button>
                     </td>
@@ -4583,7 +4583,7 @@ function loadMerchantsTable() {
         const sortedNames = Array.from(allSupplierNames).sort();
         paySelect.innerHTML = '<option value="">-- اختر المورد --</option>' + sortedNames.map(name => {
             const bal = summary[name] ? summary[name].balance : 0;
-            return `<option value="${name}" data-balance="${bal}">${name} (الرصيد: ₪${bal.toFixed(2)})` + '</option>';
+            return `<option value="${escapeHtml(name)}" data-balance="${bal}">${escapeHtml(name)} (الرصيد: ₪${bal.toFixed(2)})` + '</option>';
         }).join('');
 
         if (currentVal && allSupplierNames.has(currentVal)) {
@@ -4684,7 +4684,7 @@ function viewMerchantStatement(merchantName) {
     const printBtn = document.getElementById('printMerchantStatementBtn');
 
     if (titleEl) {
-        titleEl.innerHTML = `<i class="fas fa-file-invoice-dollar text-primary"></i> كشف حساب المورد: <span style="color:#0284c7;">${merchantName}</span>`;
+        titleEl.innerHTML = `<i class="fas fa-file-invoice-dollar text-primary"></i> كشف حساب المورد: <span style="color:#0284c7;">${escapeHtml(merchantName)}</span>`;
     }
 
     let running = 0;
@@ -4703,8 +4703,8 @@ function viewMerchantStatement(merchantName) {
             <tr>
                 <td>${new Date(t.created_at).toLocaleDateString('ar-EG')}</td>
                 <td>${typeBadge}</td>
-                <td><strong>${t.reference || '-'}</strong></td>
-                <td><small>${methodLabel} ${t.note || ''}</small></td>
+                <td><strong>${escapeHtml(t.reference || '-')}</strong></td>
+                <td><small>${methodLabel} ${escapeHtml(t.note || '')}</small></td>
                 <td style="color:#b91c1c;font-weight:700;">${isInv ? '₪' + Number(t.amount).toFixed(2) : '-'}</td>
                 <td style="color:#15803d;font-weight:700;">${!isInv ? '₪' + Number(t.amount).toFixed(2) : '-'}</td>
                 <td style="font-weight:800;color:${running > 0 ? '#b91c1c' : '#15803d'};">₪${running.toFixed(2)}</td>
@@ -4848,335 +4848,6 @@ function printMerchantStatement(merchantName) {
 window.printMerchantStatement = printMerchantStatement;
 
 /* ============================================
-   20. الموظفين
-   ============================================ */
-function loadEmployeesTable() {
-    const tbody = document.getElementById('employeesTableBody');
-    const users = getUsers().filter(u => u.role !== 'owner');
-
-    if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">لا يوجد موظفون</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = users.map((u, i) => `
-        <tr>
-            <td>${i + 1}</td>
-            <td><strong>${u.name}</strong></td>
-            <td>${u.email}</td>
-            <td><span class="badge ${u.role === 'manager' ? 'info' : 'primary'}">${u.role === 'manager' ? 'مدير فرع' : 'كاشير'}</span></td>
-            <td>${u.branch_id ? getBranchName(u.branch_id) : '-'}</td>
-            <td>
-                <button class="btn-icon" onclick="editEmployee(${u.id})"><i class="fas fa-edit"></i></button>
-                <button class="btn-icon danger" onclick="deleteEmployee(${u.id})"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function openEmployeeModal() {
-    document.getElementById('employeeModalTitle').textContent = 'موظف جديد';
-    document.getElementById('employeeId').value = '';
-    document.getElementById('emp-name').value = '';
-    document.getElementById('emp-email').value = '';
-    document.getElementById('emp-password').value = '';
-    document.getElementById('emp-role').value = 'cashier';
-    fillAllDropdowns();
-    document.getElementById('employeeModal').classList.add('show');
-}
-
-function editEmployee(id) {
-    const u = getUsers().find(x => x.id === id);
-    if (!u) return;
-
-    document.getElementById('employeeModalTitle').textContent = 'تعديل موظف';
-    document.getElementById('employeeId').value = u.id;
-    document.getElementById('emp-name').value = u.name;
-    document.getElementById('emp-email').value = u.email;
-    document.getElementById('emp-password').value = u.password;
-    document.getElementById('emp-role').value = u.role;
-    fillAllDropdowns();
-    document.getElementById('emp-branch').value = u.branch_id || '';
-    document.getElementById('employeeModal').classList.add('show');
-}
-
-function saveEmployee(e) {
-    e.preventDefault();
-
-    const id = document.getElementById('employeeId').value;
-    const name = document.getElementById('emp-name').value.trim();
-    const email = document.getElementById('emp-email').value.trim();
-    const password = document.getElementById('emp-password').value;
-    const role = document.getElementById('emp-role').value;
-    const branch_id = parseInt(document.getElementById('emp-branch').value) || null;
-
-    if (!name || !email || !password) {
-        showToast('يرجى ملء الحقول', 'error');
-        return;
-    }
-
-    const users = getUsers();
-
-    if (id) {
-        const index = users.findIndex(u => u.id === parseInt(id));
-        if (index !== -1) {
-            users[index] = { ...users[index], name, email, password, role, branch_id };
-        }
-        showToast('تم تحديث الموظف');
-    } else {
-        const employeesCount = users.filter(u => u.role !== 'owner').length;
-        if (IS_DEMO && employeesCount >= DEMO_LIMITS.employees) {
-            showDemoLimit('موظف', DEMO_LIMITS.employees);
-            return;
-        }
-
-        const emailExists = users.find(u => u.email === email);
-        if (emailExists) {
-            showToast('البريد مستخدم مسبقاً', 'error');
-            return;
-        }
-
-        const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
-        users.push({ id: newId, name, email, password, role, branch_id });
-        showToast('تمت إضافة الموظف');
-    }
-
-    saveUsers(users);
-    closeModal('employeeModal');
-    loadEmployeesTable();
-}
-
-function deleteEmployee(id) {
-    if (!confirm('حذف هذا الموظف؟')) return;
-    saveUsers(getUsers().filter(u => u.id !== id));
-    loadEmployeesTable();
-    showToast('تم حذف الموظف');
-}
-
-/* ============================================
-   21. الفروع
-   ============================================ */
-function loadBranchesTable() {
-    const tbody = document.getElementById('branchesTableBody');
-    const branches = getBranches();
-
-    if (branches.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">لا توجد فروع</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = branches.map((b, i) => `
-        <tr>
-            <td>${i + 1}</td>
-            <td><strong>${b.name}</strong></td>
-            <td><span class="badge primary">${b.code || '-'}</span></td>
-            <td>${b.phone || '-'}</td>
-            <td>${b.address || '-'}</td>
-            <td>
-                <button class="btn-icon" onclick="editBranch(${b.id})"><i class="fas fa-edit"></i></button>
-                <button class="btn-icon danger" onclick="deleteBranch(${b.id})"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function openBranchModal() {
-    document.getElementById('branchModalTitle').textContent = 'فرع جديد';
-    document.getElementById('branchId').value = '';
-    ['br-name', 'br-code', 'br-phone', 'br-address'].forEach(id => {
-        document.getElementById(id).value = '';
-    });
-    document.getElementById('branchModal').classList.add('show');
-}
-
-function editBranch(id) {
-    const b = getBranches().find(x => x.id === id);
-    if (!b) return;
-
-    document.getElementById('branchModalTitle').textContent = 'تعديل فرع';
-    document.getElementById('branchId').value = b.id;
-    document.getElementById('br-name').value = b.name;
-    document.getElementById('br-code').value = b.code || '';
-    document.getElementById('br-phone').value = b.phone || '';
-    document.getElementById('br-address').value = b.address || '';
-    document.getElementById('branchModal').classList.add('show');
-}
-
-function saveBranch(e) {
-    e.preventDefault();
-
-    const id = document.getElementById('branchId').value;
-    const name = document.getElementById('br-name').value.trim();
-    const code = document.getElementById('br-code').value.trim();
-    const phone = document.getElementById('br-phone').value.trim();
-    const address = document.getElementById('br-address').value.trim();
-
-    if (!name) {
-        showToast('أدخل اسم الفرع', 'error');
-        return;
-    }
-
-    const branches = getBranches();
-
-    if (id) {
-        const index = branches.findIndex(b => b.id === parseInt(id));
-        if (index !== -1) {
-            branches[index] = { ...branches[index], name, code, phone, address };
-        }
-        showToast('تم تحديث الفرع');
-    } else {
-        if (IS_DEMO && branches.length >= DEMO_LIMITS.branches) {
-            showDemoLimit('فرع', DEMO_LIMITS.branches);
-            return;
-        }
-
-        const newId = branches.length > 0 ? Math.max(...branches.map(b => b.id)) + 1 : 1;
-        branches.push({ id: newId, name, code, phone, address });
-        showToast('تمت إضافة الفرع');
-    }
-
-    saveBranches(branches);
-    closeModal('branchModal');
-    loadBranchesTable();
-    fillAllDropdowns();
-}
-
-function deleteBranch(id) {
-    if (!confirm('حذف هذا الفرع؟')) return;
-    saveBranches(getBranches().filter(b => b.id !== id));
-    loadBranchesTable();
-    showToast('تم حذف الفرع');
-}
-
-/* ============================================
-   22. حسابات التجار
-   ============================================ */
-function loadMerchantsTable() {
-    const summary = getMerchantSummary();
-    const tbody = document.getElementById('merchantsTableBody');
-
-    const totalInvoices = Object.values(summary).reduce((s, m) => s + m.totalInvoices, 0);
-    const totalPaid = Object.values(summary).reduce((s, m) => s + m.totalPaid, 0);
-    const totalBalance = totalInvoices - totalPaid;
-
-    document.getElementById('merchantStatsGrid').innerHTML = `
-        <div class="stat-card"><div class="stat-icon warning"><i class="fas fa-file-invoice"></i></div><div class="stat-label">إجمالي الفواتير</div><div class="stat-value">₪${totalInvoices.toFixed(2)}</div></div>
-        <div class="stat-card"><div class="stat-icon success"><i class="fas fa-check-circle"></i></div><div class="stat-label">المدفوعات</div><div class="stat-value">₪${totalPaid.toFixed(2)}</div></div>
-        <div class="stat-card"><div class="stat-icon danger"><i class="fas fa-hourglass-half"></i></div><div class="stat-label">الرصيد المتبقي</div><div class="stat-value" style="color:var(--danger);">₪${totalBalance.toFixed(2)}</div></div>
-    `;
-
-    const merchants = Object.values(summary);
-
-    if (merchants.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty">لا توجد حسابات تجار</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = merchants.map(m => `
-        <tr>
-            <td><strong>${m.name}</strong></td>
-            <td>₪${m.totalInvoices.toFixed(2)}</td>
-            <td>₪${m.totalPaid.toFixed(2)}</td>
-            <td><strong style="color:${m.balance > 0 ? 'var(--danger)' : 'var(--success)'};">₪${m.balance.toFixed(2)}</strong></td>
-            <td>
-                <button class="btn-icon" onclick="viewMerchantStatement('${m.name}')" title="كشف حساب">
-                    <i class="fas fa-file-alt"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function saveMerchantInvoice() {
-    const name = document.getElementById('m-name').value.trim();
-    const ref = document.getElementById('m-ref').value.trim() || 'INV-' + Date.now();
-    const amount = parseFloat(document.getElementById('m-amount').value);
-    const note = document.getElementById('m-note').value.trim();
-
-    if (!name || isNaN(amount) || amount <= 0) {
-        showToast('يرجى ملء الحقول', 'error');
-        return;
-    }
-
-    const tx = getMerchantTx();
-    if (IS_DEMO && tx.length >= DEMO_LIMITS.merchants) {
-        showDemoLimit('معاملة تاجر', DEMO_LIMITS.merchants);
-        return;
-    }
-
-    tx.push({
-        id: tx.length > 0 ? Math.max(...tx.map(t => t.id)) + 1 : 1,
-        merchant_name: name,
-        type: 'invoice',
-        reference: ref,
-        amount,
-        note,
-        created_at: new Date().toISOString(),
-    });
-    saveMerchantTx(tx);
-
-    ['m-name', 'm-ref', 'm-amount', 'm-note'].forEach(id => {
-        document.getElementById(id).value = '';
-    });
-
-    showToast('تم تسجيل الفاتورة');
-    loadMerchantsTable();
-}
-
-function saveMerchantPayment() {
-    const name = document.getElementById('pay-name').value.trim();
-    const amount = parseFloat(document.getElementById('pay-amount').value);
-    const note = document.getElementById('pay-note').value.trim();
-
-    if (!name || isNaN(amount) || amount <= 0) {
-        showToast('يرجى ملء الحقول', 'error');
-        return;
-    }
-
-    const tx = getMerchantTx();
-    tx.push({
-        id: tx.length > 0 ? Math.max(...tx.map(t => t.id)) + 1 : 1,
-        merchant_name: name,
-        type: 'payment',
-        reference: 'PAY-' + Date.now(),
-        amount,
-        note,
-        created_at: new Date().toISOString(),
-    });
-    saveMerchantTx(tx);
-
-    ['pay-name', 'pay-amount', 'pay-note'].forEach(id => {
-        document.getElementById(id).value = '';
-    });
-
-    showToast('تم تسجيل الدفعة');
-    loadMerchantsTable();
-}
-
-function viewMerchantStatement(name) {
-    const transactions = getMerchantTx()
-        .filter(t => t.merchant_name === name)
-        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-    let running = 0;
-    let html = `كشف حساب التاجر: ${name}\n\n━━━━━━━━━━━━━━━━\n\n`;
-
-    transactions.forEach(t => {
-        if (t.type === 'invoice') running += Number(t.amount);
-        else running -= Number(t.amount);
-
-        html += `📅 ${new Date(t.created_at).toLocaleDateString('ar-EG')}\n`;
-        html += `${t.type === 'invoice' ? '📄 فاتورة' : '💰 دفعة'}: ₪${Number(t.amount).toFixed(2)}\n`;
-        html += `الرصيد: ₪${running.toFixed(2)}\n\n`;
-    });
-
-    html += `━━━━━━━━━━━━━━━━\n`;
-    html += `الرصيد النهائي: ₪${running.toFixed(2)}`;
-
-    alert(html);
-}
-
-/* ============================================
    23. المصروفات
    ============================================ */
 function saveFixedExpense() {
@@ -5265,7 +4936,7 @@ function loadExpensesTable() {
             <td>${e._label}</td>
             <td><strong>₪${Number(e.amount).toFixed(2)}</strong></td>
             <td>
-                <button class="btn-icon danger" onclick="deleteExpense('${e._type}', ${e.id})">
+                <button class="btn-icon danger" onclick="deleteExpense(${jsArg(e._type)}, ${e.id})">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
@@ -5608,9 +5279,9 @@ function renderOnlineOrders() {
         let statusBadge = '<span class="badge warning">قيد الانتظار</span>';
         let actions = `
             <div style="display:inline-flex;align-items:center;gap:4px;">
-                <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp('${o.id}')" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
-                <button class="btn-icon success" onclick="acceptOnlineOrder('${o.id}')" title="قبول الطلب"><i class="fas fa-check"></i></button>
-                <button class="btn-icon danger" onclick="rejectOnlineOrder('${o.id}')" title="رفض الطلب"><i class="fas fa-times"></i></button>
+                <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${jsArg(o.id)})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                <button class="btn-icon success" onclick="acceptOnlineOrder(${jsArg(o.id)})" title="قبول الطلب"><i class="fas fa-check"></i></button>
+                <button class="btn-icon danger" onclick="rejectOnlineOrder(${jsArg(o.id)})" title="رفض الطلب"><i class="fas fa-times"></i></button>
             </div>
         `;
         
@@ -5618,7 +5289,7 @@ function renderOnlineOrders() {
             statusBadge = '<span class="badge success">مقبول</span>';
             actions = `
                 <div style="display:inline-flex;align-items:center;gap:6px;">
-                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp('${o.id}')" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${jsArg(o.id)})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
                     <span style="color:var(--success);font-size:.8rem;"><i class="fas fa-check-double"></i> تم المعالجة</span>
                 </div>
             `;
@@ -5626,7 +5297,7 @@ function renderOnlineOrders() {
             statusBadge = '<span class="badge danger">مرفوض</span>';
             actions = `
                 <div style="display:inline-flex;align-items:center;gap:6px;">
-                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp('${o.id}')" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
+                    <button class="btn-icon whatsapp" onclick="openOnlineOrderWhatsApp(${jsArg(o.id)})" title="مراسلة الزبون عبر واتساب"><i class="fab fa-whatsapp"></i></button>
                     <span style="color:var(--danger);font-size:.8rem;"><i class="fas fa-ban"></i> ملغى</span>
                 </div>
             `;
@@ -5634,14 +5305,14 @@ function renderOnlineOrders() {
 
         return `
             <tr>
-                <td><strong>${o.id}</strong></td>
+                <td><strong>${escapeHtml(o.id)}</strong></td>
                 <td style="font-size:.8rem;">${new Date(o.date).toLocaleString('ar-EG', { dateStyle:'short', timeStyle:'short' })}</td>
                 <td>
-                    <strong>${o.customer}</strong>
-                    ${o.phone ? `<small style="display:block;color:var(--gray);direction:ltr;text-align:right;"><i class="fas fa-phone-alt" style="font-size:0.7rem;"></i> ${o.phone}</small>` : ''}
+                    <strong>${escapeHtml(o.customer)}</strong>
+                    ${o.phone ? `<small style="display:block;color:var(--gray);direction:ltr;text-align:right;"><i class="fas fa-phone-alt" style="font-size:0.7rem;"></i> ${escapeHtml(o.phone)}</small>` : ''}
                 </td>
-                <td>${o.productName} <span class="badge primary">x${o.quantity}</span></td>
-                <td><strong>₪${o.total.toFixed(2)}</strong></td>
+                <td>${escapeHtml(o.productName)} <span class="badge primary">x${escapeHtml(o.quantity)}</span></td>
+                <td><strong>₪${Number(o.total).toFixed(2)}</strong></td>
                 <td>${statusBadge}</td>
                 <td>${actions}</td>
             </tr>
@@ -5944,10 +5615,10 @@ function renderOnlineProducts(filterCat = null, searchQuery = null) {
                     </div>
 
                     <div style="margin-top:auto;display:flex;gap:8px;padding-top:10px;border-top:1px solid #f1f5f9;">
-                        <button type="button" class="btn btn-sm btn-outline" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;" onclick="openOnlineProductModal('${p.id}')">
+                        <button type="button" class="btn btn-sm btn-outline" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;" onclick="openOnlineProductModal(${jsArg(p.id)})">
                             <i class="fas fa-edit text-primary"></i> تعديل
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444;border-color:#fecaca;display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;" title="حذف من المتجر" onclick="deleteOnlineProduct('${p.id}')">
+                        <button type="button" class="btn btn-sm btn-outline" style="color:#ef4444;border-color:#fecaca;display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;" title="حذف من المتجر" onclick="deleteOnlineProduct(${jsArg(p.id)})">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -6347,21 +6018,21 @@ function renderCustomersTable() {
                 <td>
                     <div style="display:flex;align-items:center;gap:10px;">
                         <div style="width:36px;height:36px;border-radius:50%;background:${isOnline ? '#eef2ff' : '#f1f5f9'};color:${isOnline ? '#4f46e5' : '#475569'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.95rem;flex-shrink:0;">
-                            ${initial}
+                            ${escapeHtml(initial)}
                         </div>
                         <div>
-                            <div style="font-weight:800;color:#0f172a;cursor:pointer;" onclick="viewCustomerDetails('${c.id}')" title="عرض تفاصيل وسجل العميل">
-                                ${c.name}
+                            <div style="font-weight:800;color:#0f172a;cursor:pointer;" onclick="viewCustomerDetails(${jsArg(c.id)})" title="عرض تفاصيل وسجل العميل">
+                                ${escapeHtml(c.name)}
                             </div>
-                            ${c.note ? `<small style="color:#64748b;font-size:0.75rem;">${c.note}</small>` : ''}
+                            ${c.note ? `<small style="color:#64748b;font-size:0.75rem;">${escapeHtml(c.note)}</small>` : ''}
                         </div>
                     </div>
                 </td>
                 <td>
                     <div style="display:flex;align-items:center;gap:6px;direction:ltr;justify-content:flex-end;">
-                        <strong style="color:#1e293b;font-size:0.88rem;">${c.phone || '—'}</strong>
+                        <strong style="color:#1e293b;font-size:0.88rem;">${escapeHtml(c.phone || '—')}</strong>
                         ${waLink ? `
-                            <a href="${waLink}" target="_blank" class="btn btn-sm" style="padding:3px 8px;background:#dcfce7;color:#16a34a;border:none;border-radius:6px;text-decoration:none;" title="محادثة واتساب">
+                            <a href="${escapeHtml(waLink)}" target="_blank" class="btn btn-sm" style="padding:3px 8px;background:#dcfce7;color:#16a34a;border:none;border-radius:6px;text-decoration:none;" title="محادثة واتساب">
                                 <i class="fab fa-whatsapp"></i>
                             </a>
                         ` : ''}
@@ -6380,13 +6051,13 @@ function renderCustomersTable() {
                 </td>
                 <td>
                     <div style="font-size:0.85rem;color:#334155;">
-                        <strong>${c.city || 'المدينة غير محددة'}</strong>
-                        ${c.address ? `<div style="font-size:0.75rem;color:#64748b;">${c.address}</div>` : ''}
+                        <strong>${escapeHtml(c.city || 'المدينة غير محددة')}</strong>
+                        ${c.address ? `<div style="font-size:0.75rem;color:#64748b;">${escapeHtml(c.address)}</div>` : ''}
                     </div>
                 </td>
                 <td>
                     ${custOrders.length > 0 ? `
-                        <button type="button" class="btn btn-sm" onclick="viewCustomerDetails('${c.id}')" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;font-weight:800;padding:3px 10px;border-radius:12px;font-size:0.78rem;cursor:pointer;">
+                        <button type="button" class="btn btn-sm" onclick="viewCustomerDetails(${jsArg(c.id)})" style="background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;font-weight:800;padding:3px 10px;border-radius:12px;font-size:0.78rem;cursor:pointer;">
                             <i class="fas fa-shopping-bag"></i> ${custOrders.length} طلبات
                         </button>
                     ` : `
@@ -6396,18 +6067,18 @@ function renderCustomersTable() {
                 <td style="font-size:0.82rem;color:#64748b;">${dateStr}</td>
                 <td style="text-align:center;">
                     <div style="display:inline-flex;gap:4px;">
-                        <button type="button" class="btn btn-sm btn-outline" onclick="viewCustomerDetails('${c.id}')" title="عرض السجل والطلبات" style="padding:4px 8px;border-radius:6px;">
+                        <button type="button" class="btn btn-sm btn-outline" onclick="viewCustomerDetails(${jsArg(c.id)})" title="عرض السجل والطلبات" style="padding:4px 8px;border-radius:6px;">
                             <i class="fas fa-eye text-primary"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline" onclick="openCustomerModal('${c.id}')" title="تعديل بيانات العميل" style="padding:4px 8px;border-radius:6px;">
+                        <button type="button" class="btn btn-sm btn-outline" onclick="openCustomerModal(${jsArg(c.id)})" title="تعديل بيانات العميل" style="padding:4px 8px;border-radius:6px;">
                             <i class="fas fa-edit text-info"></i>
                         </button>
                         ${typeof viewCustomerStatement === 'function' ? `
-                            <button type="button" class="btn btn-sm btn-outline" onclick="viewCustomerStatement('${c.name}', '${c.phone || ''}')" title="كشف الحساب" style="padding:4px 8px;border-radius:6px;">
+                            <button type="button" class="btn btn-sm btn-outline" onclick="viewCustomerStatement(${jsArg(c.name)}, ${jsArg(c.phone || '')})" title="كشف الحساب" style="padding:4px 8px;border-radius:6px;">
                                 <i class="fas fa-file-invoice-dollar text-warning"></i>
                             </button>
                         ` : ''}
-                        <button type="button" class="btn btn-sm btn-outline text-danger" onclick="deleteCustomerRecord('${c.id}')" title="حذف العميل" style="padding:4px 8px;border-radius:6px;">
+                        <button type="button" class="btn btn-sm btn-outline text-danger" onclick="deleteCustomerRecord(${jsArg(c.id)})" title="حذف العميل" style="padding:4px 8px;border-radius:6px;">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -6467,7 +6138,7 @@ function viewCustomerDetails(custId) {
                         <i class="fab fa-whatsapp"></i> محادثة واتساب
                     </a>
                 ` : ''}
-                <button type="button" class="btn btn-sm btn-outline" onclick="closeModal('customerDetailsModal'); openCustomerModal('${cust.id}');">
+                <button type="button" class="btn btn-sm btn-outline" onclick="closeModal('customerDetailsModal'); openCustomerModal(${jsArg(cust.id)});">
                     <i class="fas fa-edit"></i> تعديل
                 </button>
             </div>
@@ -7020,16 +6691,16 @@ function renderNotifList(allList = null) {
             </div>
             <div class="notif-item-content">
                 <div class="notif-item-top">
-                    <span class="notif-tag ${item.severity}">${item.tag}</span>
-                    <span class="notif-time">${item.time}</span>
+                    <span class="notif-tag ${item.severity}">${escapeHtml(item.tag)}</span>
+                    <span class="notif-time">${escapeHtml(item.time)}</span>
                 </div>
-                <h6 class="notif-item-title">${item.title}</h6>
-                <p class="notif-item-desc">${item.desc}</p>
+                <h6 class="notif-item-title">${escapeHtml(item.title)}</h6>
+                <p class="notif-item-desc">${escapeHtml(item.desc)}</p>
                 <div class="notif-item-footer">
                     <button class="notif-item-btn" onclick="${item.actionCode}">
                         ${item.actionText} <i class="fas fa-arrow-left"></i>
                     </button>
-                    <button class="notif-dismiss-btn" onclick="dismissNotification('${item.id}', event)" title="إخفاء التنبيه">
+                    <button class="notif-dismiss-btn" onclick="dismissNotification(${jsArg(item.id)}, event)" title="إخفاء التنبيه">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -7294,7 +6965,7 @@ function renderReturnRecentInvoiceChips() {
 
     container.innerHTML = sales.map(s => `
         <button type="button" class="btn btn-outline btn-sm"
-                onclick="searchInvoiceForReturn('${s.id}')"
+                onclick="searchInvoiceForReturn(${jsArg(s.id)})"
                 style="padding:2px 8px;font-size:0.75rem;border-radius:6px;background:#f8fafc;border-color:#cbd5e1;cursor:pointer;">
             <i class="fas fa-receipt text-primary"></i> #${s.id} - ${s.customer || 'عميل'} (₪${Number(s.total).toFixed(0)})
         </button>
@@ -8012,14 +7683,14 @@ function loadReturnsTable() {
                     <div style="font-weight:600;">${new Date(r.created_at).toLocaleDateString('ar-EG')}</div>
                     <small style="color:#64748b;">${new Date(r.created_at).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</small>
                 </td>
-                <td><a href="#" onclick="event.preventDefault();searchInvoiceForReturn('${r.sale_id}')">#${r.sale_id}</a></td>
+                <td><a href="#" onclick="event.preventDefault();searchInvoiceForReturn(${jsArg(r.sale_id)})">#${r.sale_id}</a></td>
                 <td><strong>${r.customer_name || 'عميل'}</strong></td>
                 <td>${typeBadge}</td>
                 <td><small style="max-width:200px;display:inline-block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${itemsSummary}</small></td>
                 <td>${finBadge}</td>
                 <td>${r.user_name || 'الكاشير'}</td>
                 <td>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="viewReturnDetails('${r.id}')" title="عرض السند وطباعته">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="viewReturnDetails(${jsArg(r.id)})" title="عرض السند وطباعته">
                         <i class="fas fa-print"></i> عرض
                     </button>
                 </td>
@@ -9017,7 +8688,7 @@ function renderCashDigitalTable() {
     tbody.innerHTML = digitalSales.map(s => {
         const p = s.payment || {};
         const screenshotBtn = p.screenshot ? `
-            <button type="button" class="btn btn-outline btn-sm" onclick="previewPurchVariantImage('${p.screenshot}', 'إشعار الحوالة لفاتورة #${s.id}')">
+            <button type="button" class="btn btn-outline btn-sm" onclick="previewPurchVariantImage(${jsArg(p.screenshot)}, 'إشعار الحوالة لفاتورة #${s.id}')">
                 <i class="fas fa-image text-info"></i> عرض الإشعار
             </button>
         ` : '<span style="color:#94a3b8;font-size:0.75rem;">لا يوجد مرفق</span>';

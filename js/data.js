@@ -25,6 +25,24 @@ const KEYS = {
     CURRENT_USER: 'store_current_user_v6',
 };
 
+/* ============================================
+   أدوات الحماية عند بناء HTML من بيانات المستخدم
+   ============================================ */
+// تهريب النص قبل إدراجه داخل innerHTML أو قيمة attribute
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// تمرير نص كوسيط آمن لدالة داخل onclick/onchange، مثل: onclick="fn(${jsArg(name)})"
+function jsArg(value) {
+    return escapeHtml(JSON.stringify(String(value ?? '')));
+}
+
 const IS_DEMO = true;
 const LOW_STOCK = 5;
 
