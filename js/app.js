@@ -164,6 +164,9 @@ function buildSidebar() {
             <div class="nav-item" onclick="switchScreen('inventory')">
                 <i class="fas fa-dolly-flatbed"></i><span>إدارة المشتريات</span>
             </div>
+            <div class="nav-item" onclick="switchScreen('merchants')">
+                <i class="fas fa-handshake"></i><span>الموردين وحساباتهم</span>
+            </div>
             <div class="nav-item" onclick="switchScreen('categories')">
                 <i class="fas fa-tags"></i><span>التصنيفات والسمات</span>
             </div>
@@ -175,11 +178,9 @@ function buildSidebar() {
             <div class="nav-item" onclick="switchScreen('employees')">
                 <i class="fas fa-users"></i><span>الموظفين</span>
             </div>
-            <div class="nav-item" onclick="switchScreen('merchants')">
-                <i class="fas fa-handshake"></i><span>حسابات التجار</span>
-            </div>
             <div class="nav-item" onclick="switchScreen('customers')">
                 <i class="fas fa-user-friends"></i><span>الزبائن وقاعدة العملاء</span>
+                <span class="badge info" id="customersCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
             </div>
             <div class="nav-item" onclick="switchScreen('debts')">
                 <i class="fas fa-hand-holding-usd"></i><span>ديون العملاء</span>
@@ -198,10 +199,6 @@ function buildSidebar() {
         <div class="nav-item" onclick="switchScreen('online-products')">
             <i class="fas fa-tshirt"></i><span>منتجات المتجر أونلاين</span>
             <span class="badge success" id="onlineProductsCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
-        </div>
-        <div class="nav-item" onclick="switchScreen('customers')">
-            <i class="fas fa-users-cog"></i><span>حسابات العملاء والزبائن</span>
-            <span class="badge info" id="customersCountBadge" style="margin-right:auto;font-size:0.7rem;border-radius:12px;padding:2px 8px;display:none;">0</span>
         </div>
         <a href="store/index.html" target="_blank" class="nav-item" style="text-decoration:none;color:inherit;display:flex;align-items:center;">
             <i class="fas fa-external-link-alt text-primary"></i><span>عرض المتجر الإلكتروني</span>
@@ -4525,7 +4522,7 @@ function deleteBranch(id) {
 }
 
 /* ============================================
-   22. حسابات التجار
+   22. الموردين وحساباتهم
    ============================================ */
 function loadMerchantsTable() {
     const summary = getMerchantSummary();
