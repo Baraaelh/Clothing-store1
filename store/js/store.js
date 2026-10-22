@@ -431,10 +431,10 @@ function renderProducts() {
 
     grid.innerHTML = filtered.map(p => {
         const isWish = wishlist.includes(p.id);
-        const badgeHtml = p.badge ? `<span class="product-tag-badge badge-${p.badgeType || 'sale'}">${p.badge}</span>` : '';
+        const badgeHtml = p.badge ? `<span class="product-tag-badge badge-${p.badgeType || 'sale'}">${escapeHtml(p.badge)}</span>` : '';
 
         const dotsHtml = p.colors.map(c => `
-            <span class="variant-dot-mini" style="background-color:${c.hex};" title="${c.name}"></span>
+            <span class="variant-dot-mini" style="background-color:${escapeHtml(c.hex)};" title="${escapeHtml(c.name)}"></span>
         `).join('');
 
         const sizesText = p.sizes.join(' · ');
@@ -448,12 +448,12 @@ function renderProducts() {
                             title="${isWish ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}">
                         <i class="${isWish ? 'fas fa-heart' : 'far fa-heart'}"></i>
                     </button>
-                    <img src="${p.image}" alt="${p.name}" class="product-img" loading="lazy">
+                    <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" class="product-img" loading="lazy">
                 </div>
 
                 <div class="product-details">
-                    <div class="product-category-label">${p.subCategory || p.category}</div>
-                    <h3 class="product-title" onclick="openQuickView(${jsArg(p.id)})">${p.name}</h3>
+                    <div class="product-category-label">${escapeHtml(p.subCategory || p.category)}</div>
+                    <h3 class="product-title" onclick="openQuickView(${jsArg(p.id)})">${escapeHtml(p.name)}</h3>
 
                     <div class="product-pricing">
                         <span class="price-current">₪${p.price.toFixed(2)}</span>
@@ -600,12 +600,12 @@ function renderCartDrawerItems() {
 
     container.innerHTML = cart.map((item, index) => `
         <div class="cart-item-drawer">
-            <img src="${item.image}" alt="${item.name}" class="cart-item-img">
+            <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="cart-item-img">
             <div class="cart-item-info">
-                <h4>${item.name}</h4>
+                <h4>${escapeHtml(item.name)}</h4>
                 <div class="cart-item-meta">
-                    <span>مقاس: <strong>${item.size}</strong></span> | 
-                    <span>لون: <strong>${item.color}</strong></span>
+                    <span>مقاس: <strong>${escapeHtml(item.size)}</strong></span> | 
+                    <span>لون: <strong>${escapeHtml(item.color)}</strong></span>
                 </div>
                 <div class="cart-qty-stepper">
                     <button type="button" onclick="updateCartQty(${index}, -1)">−</button>
@@ -675,9 +675,9 @@ function openWishlistModal() {
             <div style="display:flex;flex-direction:column;gap:12px;">
                 ${wishItems.map(p => `
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border:1px solid #e2e8f0;border-radius:10px;gap:12px;">
-                        <img src="${p.image}" style="width:60px;height:70px;object-fit:cover;border-radius:8px;">
+                        <img src="${escapeHtml(p.image)}" style="width:60px;height:70px;object-fit:cover;border-radius:8px;">
                         <div style="flex-grow:1;">
-                            <h4 style="font-size:0.92rem;margin-bottom:3px;">${p.name}</h4>
+                            <h4 style="font-size:0.92rem;margin-bottom:3px;">${escapeHtml(p.name)}</h4>
                             <strong style="color:#0f172a;">₪${p.price.toFixed(2)}</strong>
                         </div>
                         <div style="display:flex;gap:6px;">
@@ -720,11 +720,11 @@ function openQuickView(productId) {
     content.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:24px;">
             <div style="border-radius:12px;overflow:hidden;background:#f1f5f9;height:380px;">
-                <img src="${prod.image}" style="width:100%;height:100%;object-fit:cover;">
+                <img src="${escapeHtml(prod.image)}" style="width:100%;height:100%;object-fit:cover;">
             </div>
             <div style="display:flex;flex-direction:column;">
-                <span style="font-size:0.8rem;color:var(--brand-accent);font-weight:800;text-transform:uppercase;">${prod.subCategory || prod.category}</span>
-                <h2 style="font-size:1.35rem;font-weight:900;color:#0f172a;margin:6px 0 10px;">${prod.name}</h2>
+                <span style="font-size:0.8rem;color:var(--brand-accent);font-weight:800;text-transform:uppercase;">${escapeHtml(prod.subCategory || prod.category)}</span>
+                <h2 style="font-size:1.35rem;font-weight:900;color:#0f172a;margin:6px 0 10px;">${escapeHtml(prod.name)}</h2>
                 
                 <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;">
                     <span style="font-size:1.6rem;font-weight:900;color:#0f172a;">₪${prod.price.toFixed(2)}</span>
@@ -733,7 +733,7 @@ function openQuickView(productId) {
                 </div>
 
                 <p style="font-size:0.85rem;color:#475569;line-height:1.6;margin-bottom:16px;">
-                    ${prod.desc}
+                    ${escapeHtml(prod.desc)}
                 </p>
 
                 <!-- اختيار المقاس -->
@@ -742,7 +742,7 @@ function openQuickView(productId) {
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
                         ${prod.sizes.map((s, idx) => `
                             <button type="button" class="chip-option ${idx === 0 ? 'selected' : ''}" onclick="selectQuickViewSize(${jsArg(s)}, this)">
-                                ${s}
+                                ${escapeHtml(s)}
                             </button>
                         `).join('')}
                     </div>
@@ -754,7 +754,7 @@ function openQuickView(productId) {
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
                         ${prod.colors.map((c, idx) => `
                             <button type="button" class="color-chip-option ${idx === 0 ? 'selected' : ''}" onclick="selectQuickViewColor(${jsArg(c.name)}, this)">
-                                <span class="color-dot" style="background:${c.hex};"></span> ${c.name}
+                                <span class="color-dot" style="background:${escapeHtml(c.hex)};"></span> ${escapeHtml(c.name)}
                             </button>
                         `).join('')}
                     </div>
@@ -813,7 +813,7 @@ function openCheckoutModal() {
     if (summaryList) {
         summaryList.innerHTML = cart.map(i => `
             <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.84rem;color:#475569;">
-                <span>${i.name} (مقاس ${i.size} | ${i.color}) ×${i.quantity}</span>
+                <span>${escapeHtml(i.name)} (مقاس ${escapeHtml(i.size)} | ${escapeHtml(i.color)}) ×${i.quantity}</span>
                 <strong>₪${(i.price * i.quantity).toFixed(2)}</strong>
             </div>
         `).join('');
@@ -953,11 +953,11 @@ function openOrderSuccessModal(order) {
     msg.innerHTML = `
         <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:16px;margin:16px 0;text-align:right;">
             <div style="color:#166534;font-size:0.95rem;font-weight:800;margin-bottom:8px;">
-                رقم الطلب: <span style="font-family:monospace;font-size:1.1rem;">#${order.id}</span>
+                رقم الطلب: <span style="font-family:monospace;font-size:1.1rem;">#${escapeHtml(order.id)}</span>
             </div>
             <div style="font-size:0.85rem;color:#334155;line-height:1.7;">
-                العميل: <strong>${order.customer}</strong> (${order.phone})<br>
-                العنوان: <strong>${order.city} - ${order.address}</strong><br>
+                العميل: <strong>${escapeHtml(order.customer)}</strong> (${escapeHtml(order.phone)})<br>
+                العنوان: <strong>${escapeHtml(order.city)} - ${escapeHtml(order.address)}</strong><br>
                 الإجمالي: <strong style="color:#0f172a;font-size:1rem;">₪${order.total.toFixed(2)}</strong> (شامل التوصيل)
             </div>
         </div>
@@ -1101,7 +1101,7 @@ function updateCustomerHeaderUI() {
             </button>
             <button type="button" class="header-user-btn" onclick="openCustomerPortal('orders')" title="حسابي وطلباتي">
                 <i class="fas fa-user-circle"></i>
-                <span>${firstName}</span>
+                <span>${escapeHtml(firstName)}</span>
             </button>
         `;
         if (headerBox) headerBox.innerHTML = html;
@@ -1111,7 +1111,7 @@ function updateCustomerHeaderUI() {
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                     <button type="button" class="header-user-btn" style="flex:1;justify-content:flex-start;" onclick="openCustomerPortal('orders')">
                         <i class="fas fa-user-circle"></i>
-                        <span>حسابي: ${cust.name}</span>
+                        <span>حسابي: ${escapeHtml(cust.name)}</span>
                     </button>
                     <button type="button" class="notif-bell-icon-btn" onclick="openCustomerPortal('notifs')" title="الإشعارات">
                         <i class="far fa-bell"></i>
@@ -1438,14 +1438,14 @@ function renderCustomerOrders() {
             <div class="cust-order-card">
                 <div class="cust-order-header">
                     <div>
-                        <span class="cust-order-id">طلب رقم #${o.id}</span>
+                        <span class="cust-order-id">طلب رقم #${escapeHtml(o.id)}</span>
                         <div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">${dateStr}</div>
                     </div>
                     <div>${statusBadge}</div>
                 </div>
                 <div style="font-size:0.85rem;color:#334155;line-height:1.6;margin-bottom:10px;">
                     <div style="font-weight:700;margin-bottom:2px;">الأصناف المطلوبة:</div>
-                    <div style="color:#64748b;font-size:0.82rem;">${o.productName || 'تشكيلة ملابس'}</div>
+                    <div style="color:#64748b;font-size:0.82rem;">${escapeHtml(o.productName || 'تشكيلة ملابس')}</div>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px 12px;border-radius:8px;font-size:0.85rem;">
                     <div>
@@ -1505,10 +1505,10 @@ function renderCustomerNotifications() {
                 </div>
                 <div class="cust-notif-content" style="flex:1;">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                        <h5>${n.title}</h5>
+                        <h5>${escapeHtml(n.title)}</h5>
                         ${!n.read ? '<span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;"></span>' : ''}
                     </div>
-                    <p>${n.message}</p>
+                    <p>${escapeHtml(n.message)}</p>
                     <span class="cust-notif-time">${timeStr}</span>
                 </div>
             </div>

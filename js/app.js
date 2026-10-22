@@ -309,14 +309,14 @@ function fillAllDropdowns() {
     const catSelect = document.getElementById('p-category');
     if (catSelect) {
         catSelect.innerHTML = '<option value="">-- اختر تصنيف --</option>' +
-            getCategories().map(c => `<option value="${c}">${c}</option>`).join('');
+            getCategories().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     }
 
     const colorDropdown = document.getElementById('ms-color-dropdown');
     if (colorDropdown) {
         colorDropdown.innerHTML = getColors().map(c => `
             <label class="ms-item">
-                <input type="checkbox" name="p-colors" value="${c}" onchange="handleColorSelection()"> ${c}
+                <input type="checkbox" name="p-colors" value="${escapeHtml(c)}" onchange="handleColorSelection()"> ${escapeHtml(c)}
             </label>
         `).join('');
     }
@@ -325,7 +325,7 @@ function fillAllDropdowns() {
     if (sizeDropdown) {
         sizeDropdown.innerHTML = getSizes().map(s => `
             <label class="ms-item">
-                <input type="checkbox" name="p-sizes" value="${s}" onchange="updateSizeLabel()"> ${s}
+                <input type="checkbox" name="p-sizes" value="${escapeHtml(s)}" onchange="updateSizeLabel()"> ${escapeHtml(s)}
             </label>
         `).join('');
     }
@@ -334,14 +334,14 @@ function fillAllDropdowns() {
     if (restockSelect) {
         restockSelect.innerHTML = '<option value="">-- اختر منتج --</option>' +
             getProducts().map(p =>
-                `<option value="${p.id}">${p.name} (${p.size || '-'}) - متوفر: ${getProductQuantity(p.id)}</option>`
+                `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} (${escapeHtml(p.size || '-')}) - متوفر: ${getProductQuantity(p.id)}</option>`
             ).join('');
     }
 
     const branchSelect = document.getElementById('emp-branch');
     if (branchSelect) {
         branchSelect.innerHTML = '<option value="">بدون</option>' +
-            getBranches().map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            getBranches().map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join('');
     }
 
     if (typeof initPosCustomers === 'function') {
@@ -392,9 +392,9 @@ function handleColorSelection() {
         const colorStyle = colorImages[c] ? 'green' : '#64748b';
         html += `
             <div style="display:flex; align-items:center; gap:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
-                <div style="width:80px; font-weight:bold; color:var(--primary);">${c}</div>
+                <div style="width:80px; font-weight:bold; color:var(--primary);">${escapeHtml(c)}</div>
                 <input type="file" accept="image/*" class="form-control" style="font-size: 0.9rem; padding: 6px 10px; flex:1;" onchange="handleColorImageUpload(this, ${jsArg(c)})">
-                <span style="font-size:0.8rem; color:${colorStyle}; white-space:nowrap;" id="img-status-${c}">${hasImg}</span>
+                <span style="font-size:0.8rem; color:${colorStyle}; white-space:nowrap;" id="img-status-${escapeHtml(c)}">${hasImg}</span>
             </div>
         `;
     });
@@ -467,8 +467,8 @@ function loadDashboard() {
     } else {
         tbody.innerHTML = recentSales.map(s => `
             <tr>
-                <td><strong>#${s.id}</strong></td>
-                <td>${s.customer}</td>
+                <td><strong>#${escapeHtml(s.id)}</strong></td>
+                <td>${escapeHtml(s.customer)}</td>
                 <td><strong style="color:var(--success);">₪${Number(s.total).toFixed(2)}</strong></td>
                 <td style="font-size:.8rem;">${new Date(s.created_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</td>
             </tr>
@@ -518,23 +518,23 @@ function loadInventoryTable() {
         const isLoss = Number(p.price) <= avgCost;
 
         const imageHtml = p.image 
-            ? `<img src="${p.image}" alt="${p.name}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee;">`
+            ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee;">`
             : `<div style="width: 48px; height: 48px; border-radius: 12px; background: #f8fafc; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 18px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); border: 1px solid #e2e8f0;"><i class="fas fa-tshirt"></i></div>`;
 
         return `
             <tr>
-                <td><span class="badge primary">${p.code || '-'}</span></td>
+                <td><span class="badge primary">${escapeHtml(p.code || '-')}</span></td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 14px;">
                         ${imageHtml}
                         <div style="display: flex; flex-direction: column; align-items: start;">
-                            <strong style="font-size: 1.05rem; color: #1e293b;">${p.name}</strong>
+                            <strong style="font-size: 1.05rem; color: #1e293b;">${escapeHtml(p.name)}</strong>
                             ${isLoss ? '<span class="badge danger" style="margin-top: 4px; font-size: 0.7rem; padding: 2px 6px;">خاسر</span>' : ''}
                         </div>
                     </div>
                 </td>
-                <td>${p.category}</td>
-                <td>${p.size || '-'} ${p.color ? '<span style="color:#64748b; margin:0 4px;">•</span> ' + p.color : ''}</td>
+                <td>${escapeHtml(p.category)}</td>
+                <td>${escapeHtml(p.size || '-')} ${p.color ? '<span style="color:#64748b; margin:0 4px;">•</span> ' + escapeHtml(p.color) : ''}</td>
                 <td>₪${avgCost.toFixed(2)}</td>
                 <td><strong style="color:var(--primary);">₪${Number(p.price).toFixed(2)}</strong></td>
                 <td><span class="badge ${stockBadge}">${qty}</span></td>
@@ -718,7 +718,7 @@ function loadCategoriesTable() {
         const count = products.filter(p => p.category === cat).length;
         return `
             <tr>
-                <td><strong>${cat}</strong></td>
+                <td><strong>${escapeHtml(cat)}</strong></td>
                 <td><span class="badge primary">${count} منتج</span></td>
                 <td>
                     <button class="btn-icon" onclick="editCategory(${jsArg(cat)})"><i class="fas fa-edit"></i></button>
@@ -808,7 +808,7 @@ function loadColorsTable() {
         const count = products.filter(p => p.color === col).length;
         return `
             <tr>
-                <td><strong>${col}</strong></td>
+                <td><strong>${escapeHtml(col)}</strong></td>
                 <td><span class="badge primary">${count} منتج</span></td>
                 <td>
                     <button class="btn-icon" onclick="editColor(${jsArg(col)})"><i class="fas fa-edit"></i></button>
@@ -894,7 +894,7 @@ function loadSizesTable() {
         const count = products.filter(p => p.size === sz).length;
         return `
             <tr>
-                <td><strong>${sz}</strong></td>
+                <td><strong>${escapeHtml(sz)}</strong></td>
                 <td><span class="badge primary">${count} منتج</span></td>
                 <td>
                     <button class="btn-icon" onclick="editSize(${jsArg(sz)})"><i class="fas fa-edit"></i></button>
@@ -996,10 +996,10 @@ function loadPosProducts(filter = '') {
         return `
             <div class="product-card ${isOut ? 'disabled' : ''}" onclick="${isOut ? '' : `addToCart(${p.id})`}">
                 <div class="product-img">
-                    ${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;">` : '<i class="fas fa-tshirt"></i>'}
+                    ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" style="width:100%; height:100%; object-fit:cover;">` : '<i class="fas fa-tshirt"></i>'}
                 </div>
-                <h6>${p.name}</h6>
-                <span class="code">${p.size || '-'} ${p.color ? '• ' + p.color : ''}</span>
+                <h6>${escapeHtml(p.name)}</h6>
+                <span class="code">${escapeHtml(p.size || '-')} ${escapeHtml(p.color ? '• ' + p.color : '')}</span>
                 <div class="price">₪${Number(p.price).toFixed(2)}</div>
                 <div class="stock ${isOut ? 'out' : (qty <= LOW_STOCK ? 'low' : '')}">
                     ${isOut ? 'نفد' : 'متوفر: ' + qty}
@@ -1170,9 +1170,9 @@ function renderCartVariantChip(v, currentProductId, inColorGroup) {
     return `
         <div class="cart-variant-chip ${isCurrent ? 'current' : ''} ${isOut ? 'out' : ''} ${!isCurrent && !isOut ? 'clickable' : ''}"
              ${!isCurrent && !isOut ? `onclick="addToCart(${v.id})"` : ''}
-             title="${isCurrent ? 'الصنف المحدد حالياً بالسلة' : (isOut ? 'نفد من المخزون' : `اضغط لإضافة ${label} إلى السلة`)}">
+             title="${escapeHtml(isCurrent ? 'الصنف المحدد حالياً بالسلة' : (isOut ? 'نفد من المخزون' : `اضغط لإضافة ${label} إلى السلة`))}">
             ${!inColorGroup && v.color ? `<span class="variant-dot" style="background:${getColorHex(v.color)};"></span>` : ''}
-            <span class="chip-label">${label}</span>
+            <span class="chip-label">${escapeHtml(label)}</span>
             <span class="chip-qty ${stockClass}">${stockText}</span>
             ${isCurrent ? '<span class="chip-badge-current"><i class="fas fa-check"></i> الحالي</span>' : (!isOut ? '<span class="chip-badge-add"><i class="fas fa-plus"></i></span>' : '')}
         </div>
@@ -1218,7 +1218,7 @@ function renderCartVariantsBox(item) {
                 <div class="cart-color-group">
                     <div class="cart-color-title">
                         <span class="variant-dot" style="background:${hex};"></span>
-                        <span class="cart-color-name">${color}</span>
+                        <span class="cart-color-name">${escapeHtml(color)}</span>
                         <span class="cart-color-qty">(${groupTotal} متوفر)</span>
                     </div>
                     <div class="cart-variants-chips">
@@ -1269,10 +1269,10 @@ function renderCart() {
             <div class="cart-item">
                 <div class="cart-item-header">
                     <div class="cart-item-title-wrap">
-                        <span class="cart-item-name">${item.name}</span>
+                        <span class="cart-item-name">${escapeHtml(item.name)}</span>
                         <div class="cart-item-tags">
-                            ${item.color ? `<span class="cart-item-badge color-badge"><span class="variant-dot" style="background:${getColorHex(item.color)};"></span>${item.color}</span>` : ''}
-                            ${item.size ? `<span class="cart-item-badge size-badge">مقاس ${item.size}</span>` : ''}
+                            ${item.color ? `<span class="cart-item-badge color-badge"><span class="variant-dot" style="background:${getColorHex(item.color)};"></span>${escapeHtml(item.color)}</span>` : ''}
+                            ${item.size ? `<span class="cart-item-badge size-badge">مقاس ${escapeHtml(item.size)}</span>` : ''}
                         </div>
                     </div>
                     <button class="cart-item-remove" onclick="removeFromCart(${item.product_id})" title="حذف من السلة">
@@ -1470,7 +1470,7 @@ function initPosCustomers() {
         const paidTotal = custDebts.filter(d => d.type === 'payment').reduce((s, x) => s + Number(x.amount || 0), 0);
         const balance = invTotal - paidTotal;
         const balLabel = balance > 0 ? ` (دين سابق: ₪${balance.toFixed(2)})` : '';
-        return `<option value="${c.name}">${c.name} - ${c.phone || 'بدون هاتف'}${balLabel}</option>`;
+        return `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)} - ${escapeHtml(c.phone || 'بدون هاتف')}${balLabel}</option>`;
     }).join('');
 }
 window.initPosCustomers = initPosCustomers;
@@ -1992,7 +1992,7 @@ function checkout() {
 function printInvoice(sale) {
     const itemsHTML = sale.items.map(item => `
         <tr>
-            <td>${item.name} (${item.size || '-'})</td>
+            <td>${escapeHtml(item.name)} (${escapeHtml(item.size || '-')})</td>
             <td>${item.quantity}</td>
             <td>₪${item.sold_price.toFixed(2)}</td>
             <td>₪${item.subtotal.toFixed(2)}</td>
@@ -2002,9 +2002,9 @@ function printInvoice(sale) {
     let paymentInfo = '';
     const p = sale.payment || {};
     if (p.tender === 'split') {
-        paymentInfo = `<div style="text-align:center;font-size:12px;margin:10px 0;padding:8px;background:#f5f3ff;border-radius:6px;border:1px solid #ddd6fe;"><strong>طريقة الدفع: مقسم (نقد + تحويل)</strong><br>كاش: ₪${(p.paid_cash||0).toFixed(2)} | تحويل (${p.app_name || 'محفظة'}): ₪${(p.paid_digital||0).toFixed(2)}${p.debt_remaining > 0 ? `<br><strong style="color:#b91c1c;">المتبقي دين: ₪${p.debt_remaining.toFixed(2)}</strong>` : ''}</div>`;
+        paymentInfo = `<div style="text-align:center;font-size:12px;margin:10px 0;padding:8px;background:#f5f3ff;border-radius:6px;border:1px solid #ddd6fe;"><strong>طريقة الدفع: مقسم (نقد + تحويل)</strong><br>كاش: ₪${(p.paid_cash||0).toFixed(2)} | تحويل (${escapeHtml(p.app_name || 'محفظة')}): ₪${(p.paid_digital||0).toFixed(2)}${p.debt_remaining > 0 ? `<br><strong style="color:#b91c1c;">المتبقي دين: ₪${p.debt_remaining.toFixed(2)}</strong>` : ''}</div>`;
     } else if (p.tender === 'digital' || p.method === 'app') {
-        paymentInfo = `<div style="text-align:center;font-size:12px;margin:10px 0;padding:8px;background:#fffbeb;border-radius:6px;border:1px solid #fef3c7;"><strong>طريقة الدفع: ${p.app_name || 'تحويل إلكتروني'}</strong>${p.sender_name ? `<br>المرسل: ${p.sender_name}` : ''}${p.sender_phone ? `<br>الهاتف: ${p.sender_phone}` : ''}${p.debt_remaining > 0 ? `<br><strong style="color:#b91c1c;">المتبقي دين: ₪${p.debt_remaining.toFixed(2)}</strong>` : ''}</div>`;
+        paymentInfo = `<div style="text-align:center;font-size:12px;margin:10px 0;padding:8px;background:#fffbeb;border-radius:6px;border:1px solid #fef3c7;"><strong>طريقة الدفع: ${escapeHtml(p.app_name || 'تحويل إلكتروني')}</strong>${p.sender_name ? `<br>المرسل: ${escapeHtml(p.sender_name)}` : ''}${p.sender_phone ? `<br>الهاتف: ${escapeHtml(p.sender_phone)}` : ''}${p.debt_remaining > 0 ? `<br><strong style="color:#b91c1c;">المتبقي دين: ₪${p.debt_remaining.toFixed(2)}</strong>` : ''}</div>`;
     } else if (p.debt_remaining > 0) {
         paymentInfo = `<div style="text-align:center;font-size:12px;margin:10px 0;padding:8px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"><strong>فاتورة بيع آجل (دين)</strong><br>المدفوع فوراً: ₪${(p.paid_cash || p.total_paid || 0).toFixed(2)}<br><strong style="color:#b91c1c;">المتبقي ذمة على العميل: ₪${p.debt_remaining.toFixed(2)}</strong></div>`;
     }
@@ -2015,7 +2015,7 @@ function printInvoice(sale) {
         <html dir="rtl">
         <head>
             <meta charset="UTF-8">
-            <title>فاتورة #${sale.id}</title>
+            <title>فاتورة #${escapeHtml(sale.id)}</title>
             <style>
                 body{font-family:'Cairo',sans-serif;padding:20px;max-width:350px;margin:0 auto}
                 h2{text-align:center;margin:0 0 5px}
@@ -2030,10 +2030,10 @@ function printInvoice(sale) {
         <body>
             <h2>متجر الأناقة</h2>
             <div class="center">
-                فاتورة #${sale.id}<br>
+                فاتورة #${escapeHtml(sale.id)}<br>
                 ${new Date(sale.created_at).toLocaleString('ar-EG')}<br>
-                الكاشير: ${sale.cashier_name}<br>
-                العميل: ${sale.customer}
+                الكاشير: ${escapeHtml(sale.cashier_name)}<br>
+                العميل: ${escapeHtml(sale.customer)}
             </div>
             ${paymentInfo}
             <table>
@@ -2093,7 +2093,7 @@ function loadSalesHistory() {
         if (isSplitPayment) {
             paymentIcon = '<span class="badge" style="background:#f5f3ff;color:#6d28d9;font-size:0.7rem;"><i class="fas fa-layer-group"></i> مقسم</span>';
         } else if (isAppPayment) {
-            paymentIcon = `<span class="badge warning" style="font-size:0.7rem;"><i class="fas fa-mobile-alt"></i> ${p.app_name || 'تطبيق'}</span>`;
+            paymentIcon = `<span class="badge warning" style="font-size:0.7rem;"><i class="fas fa-mobile-alt"></i> ${escapeHtml(p.app_name || 'تطبيق')}</span>`;
         }
         if (hasDebt) {
             const debtAmt = p.debt_remaining !== undefined ? p.debt_remaining : (s.total - (p.paid_upfront || 0));
@@ -2103,16 +2103,16 @@ function loadSalesHistory() {
         return `
             <tr style="${isVoided ? 'opacity:0.55;background:#fef2f2;' : ''}">
                 <td>
-                    <strong>#${s.id}</strong>
+                    <strong>#${escapeHtml(s.id)}</strong>
                     ${isVoided ? '<br><span class="badge danger" style="font-size:0.65rem;">ملغاة</span>' : ''}
                 </td>
                 <td style="font-size:.8rem;">${new Date(s.created_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}</td>
-                <td>${s.customer}</td>
-                <td style="font-size:0.8rem;"><strong><i class="fas fa-user-tie"></i> ${s.cashier_name || '-'}</strong></td>
+                <td>${escapeHtml(s.customer)}</td>
+                <td style="font-size:0.8rem;"><strong><i class="fas fa-user-tie"></i> ${escapeHtml(s.cashier_name || '-')}</strong></td>
                 <td style="font-size:.8rem;color:var(--gray);max-width:230px;">
-                    ${itemsSummary}
+                    ${escapeHtml(itemsSummary)}
                     ${hasPriceChange ? '<br><span style="color:var(--warning);font-weight:700;font-size:.72rem;"><i class="fas fa-tag"></i> تعديل أسعار</span>' : ''}
-                    ${isVoided ? `<br><span style="color:var(--danger);font-size:0.7rem;"><i class="fas fa-ban"></i> السبب: ${s.voided_reason}</span>` : ''}
+                    ${isVoided ? `<br><span style="color:var(--danger);font-size:0.7rem;"><i class="fas fa-ban"></i> السبب: ${escapeHtml(s.voided_reason)}</span>` : ''}
                 </td>
                 <td>
                     <strong style="color:${isVoided ? 'var(--gray)' : 'var(--success)'};${isVoided ? 'text-decoration:line-through;' : ''}">₪${Number(s.total).toFixed(2)}</strong>
@@ -2265,15 +2265,15 @@ function viewPaymentDetails(id) {
             <div style="background:#fef3c7;border-radius:12px;padding:14px;margin-bottom:14px;">
                 <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #fcd34d;">
                     <span style="color:#92400e;font-weight:700;">التطبيق:</span>
-                    <strong style="color:#78350f;">${p.app_name}</strong>
+                    <strong style="color:#78350f;">${escapeHtml(p.app_name)}</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #fcd34d;">
                     <span style="color:#92400e;font-weight:700;">المرسل:</span>
-                    <strong style="color:#78350f;">${p.sender_name}</strong>
+                    <strong style="color:#78350f;">${escapeHtml(p.sender_name)}</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #fcd34d;">
                     <span style="color:#92400e;font-weight:700;">الهاتف:</span>
-                    <strong style="color:#78350f;" dir="ltr">${p.sender_phone}</strong>
+                    <strong style="color:#78350f;" dir="ltr">${escapeHtml(p.sender_phone)}</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:6px 0;">
                     <span style="color:#92400e;font-weight:700;">المبلغ:</span>
@@ -2288,7 +2288,7 @@ function viewPaymentDetails(id) {
                 <h6 style="font-weight:800;margin-bottom:8px;color:var(--dark);">
                     <i class="fas fa-image"></i> صورة الإشعار:
                 </h6>
-                <img src="${p.screenshot}" style="width:100%;border-radius:12px;border:2px solid #e2e8f0;cursor:pointer;" onclick="window.open(${jsArg(p.screenshot)},'_blank')">
+                <img src="${escapeHtml(p.screenshot)}" style="width:100%;border-radius:12px;border:2px solid #e2e8f0;cursor:pointer;" onclick="window.open(${jsArg(p.screenshot)},'_blank')">
                 <small style="display:block;text-align:center;color:var(--gray);font-size:.72rem;margin-top:5px;">
                     اضغط على الصورة لعرضها بحجم كامل
                 </small>
@@ -2300,7 +2300,7 @@ function viewPaymentDetails(id) {
             <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px;">
                 <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.85rem;">
                     <span style="color:var(--gray);">الكاشير:</span>
-                    <strong>${sale.cashier_name || '-'}</strong>
+                    <strong>${escapeHtml(sale.cashier_name || '-')}</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.85rem;">
                     <span style="color:var(--gray);">التاريخ:</span>
@@ -2316,7 +2316,7 @@ function viewPaymentDetails(id) {
     modal.innerHTML = `
         <div class="modal-box" style="max-width:460px;">
             <div class="modal-header">
-                <h5><i class="fas fa-receipt"></i> بيانات الدفع - #${sale.id}</h5>
+                <h5><i class="fas fa-receipt"></i> بيانات الدفع - #${escapeHtml(sale.id)}</h5>
                 <button class="modal-close" onclick="document.getElementById('paymentDetailsModal').remove()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -2549,15 +2549,15 @@ function renderQuickOpeningStockTable() {
     const sizes = (typeof PURCH_SIZES !== 'undefined' && PURCH_SIZES.length > 0) ? PURCH_SIZES : ['S', 'M', 'L', 'XL', '2XL', '3XL', 'حر (One Size)'];
 
     tbody.innerHTML = quickStockRows.map((r, idx) => {
-        const catOptions = categories.map(c => `<option value="${c}" ${c === r.category ? 'selected' : ''}>${c}</option>`).join('');
-        const sizeOptions = sizes.map(s => `<option value="${s}" ${s === r.size ? 'selected' : ''}>${s}</option>`).join('');
-        const colOptions = colors.map(c => `<option value="${c}" ${c === r.color ? 'selected' : ''}>${c}</option>`).join('');
+        const catOptions = categories.map(c => `<option value="${escapeHtml(c)}" ${c === r.category ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('');
+        const sizeOptions = sizes.map(s => `<option value="${escapeHtml(s)}" ${s === r.size ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+        const colOptions = colors.map(c => `<option value="${escapeHtml(c)}" ${c === r.color ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('');
 
         return `
-            <tr id="qsr-tr-${r.id}">
+            <tr id="qsr-tr-${escapeHtml(r.id)}">
                 <td style="text-align:center;color:var(--gray);font-weight:700;">${idx + 1}</td>
                 <td>
-                    <input type="text" id="qsr-name-${r.id}" class="quick-stock-input" value="${r.name || ''}"
+                    <input type="text" id="qsr-name-${escapeHtml(r.id)}" class="quick-stock-input" value="${escapeHtml(r.name || '')}"
                         placeholder="مثال: قميص قطني، تيشيرت..." oninput="onQuickStockRowChange(${jsArg(r.id)}, 'name', this.value)">
                 </td>
                 <td>
@@ -2586,7 +2586,7 @@ function renderQuickOpeningStockTable() {
                         oninput="onQuickStockRowChange(${jsArg(r.id)}, 'cost', this.value)">
                 </td>
                 <td>
-                    <input type="number" id="qsr-price-${r.id}" min="0" step="0.5" class="quick-stock-input" value="${r.price !== undefined ? r.price : ''}"
+                    <input type="number" id="qsr-price-${escapeHtml(r.id)}" min="0" step="0.5" class="quick-stock-input" value="${r.price !== undefined ? r.price : ''}"
                         placeholder="40" style="text-align:center;color:var(--primary);font-weight:700;"
                         oninput="onQuickStockRowChange(${jsArg(r.id)}, 'price', this.value)">
                 </td>
@@ -2873,7 +2873,7 @@ function fillPurchSuppliers() {
     // 1. Datalist for input combo
     const dl = document.getElementById('purchSupplierList');
     if (dl) {
-        dl.innerHTML = merchants.map(m => `<option value="${m.name}">${m.name} ${m.phone ? '(' + m.phone + ')' : ''}</option>`).join('');
+        dl.innerHTML = merchants.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)} ${escapeHtml(m.phone ? '(' + m.phone + ')' : '')}</option>`).join('');
     }
 
     // 2. Fallback if purchSupplier is still a select
@@ -2882,7 +2882,7 @@ function fillPurchSuppliers() {
         const currentVal = sel.value;
         let html = '<option value="">اختر المورد</option>';
         merchants.forEach(m => {
-            html += `<option value="${m.name}">${m.name} (${m.phone || 'مورد'})</option>`;
+            html += `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)} (${escapeHtml(m.phone || 'مورد')})</option>`;
         });
         html += '<option value="__new__">+ مورد جديد...</option>';
         sel.innerHTML = html;
@@ -2997,10 +2997,10 @@ function onPurchSearchInput() {
         resultsContainer.innerHTML = matches.map(p => `
             <div class="purch-search-item">
                 <div>
-                    <strong style="color:var(--dark);font-size:0.92rem;">${p.name}</strong>
+                    <strong style="color:var(--dark);font-size:0.92rem;">${escapeHtml(p.name)}</strong>
                     <div style="font-size:0.75rem;color:var(--gray);margin-top:2px;">
-                        ${p.code ? `<span class="badge primary" style="font-size:0.7rem;padding:2px 6px;">${p.code}</span>` : ''} 
-                        ${p.category ? `• ${p.category}` : ''}
+                        ${p.code ? `<span class="badge primary" style="font-size:0.7rem;padding:2px 6px;">${escapeHtml(p.code)}</span>` : ''} 
+                        ${escapeHtml(p.category ? `• ${p.category}` : '')}
                     </div>
                 </div>
                 <button class="btn btn-outline btn-sm" onclick="addExistingToPurchInvoice(${p.id})">
@@ -3109,7 +3109,7 @@ function fillPurchNewCategories() {
     const sel = document.getElementById('purchNewCategory');
     if (!sel) return;
     const cats = typeof getCategories === 'function' ? getCategories() : [];
-    sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    sel.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
 }
 
 function onPurchNewModeChange() {
@@ -3126,13 +3126,13 @@ function openPurchNewProductModal(prefillName = '') {
     // Populate colors
     const colSel = document.getElementById('purchNewColor');
     if (colSel) {
-        colSel.innerHTML = PURCH_COLORS.map(c => `<option value="${c[0]}">${c[0]}</option>`).join('');
+        colSel.innerHTML = PURCH_COLORS.map(c => `<option value="${escapeHtml(c[0])}">${escapeHtml(c[0])}</option>`).join('');
     }
 
     // Populate sizes
     const sizeSel = document.getElementById('purchNewSize');
     if (sizeSel) {
-        sizeSel.innerHTML = PURCH_SIZES.map(s => `<option value="${s}">${s}</option>`).join('');
+        sizeSel.innerHTML = PURCH_SIZES.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
     }
 
     if (document.getElementById('purchNewName')) document.getElementById('purchNewName').value = prefillName || '';
@@ -3329,14 +3329,14 @@ function renderPurchProducts() {
                 rowHtml += `
                     <td>
                         <span class="variant-pill">
-                            <span class="variant-dot" style="background:${v.hex || '#222831'};"></span>
-                            ${v.color || 'بدون'}
+                            <span class="variant-dot" style="background:${escapeHtml(v.hex || '#222831')};"></span>
+                            ${escapeHtml(v.color || 'بدون')}
                         </span>
                     </td>
                 `;
             }
             if (sizeMode) {
-                rowHtml += `<td><strong>${v.size || 'بدون'}</strong></td>`;
+                rowHtml += `<td><strong>${escapeHtml(v.size || 'بدون')}</strong></td>`;
             }
             rowHtml += `
                 <td style="color:var(--gray);">${stock}</td>
@@ -3353,12 +3353,12 @@ function renderPurchProducts() {
                 <td><strong>${newStock > 0 ? '₪' + newAvg.toFixed(2) : '—'}</strong></td>
                 <td>
                     <div style="display:inline-flex;align-items:center;gap:6px;">
-                        <input type="file" accept="image/*" id="purch-img-input-${p.uid}-${i}" style="display:none;"
+                        <input type="file" accept="image/*" id="purch-img-input-${escapeHtml(p.uid)}-${i}" style="display:none;"
                                onchange="handlePurchVariantImageUpload(${jsArg(p.uid)}, ${i}, event)" ${purchPosted ? 'disabled' : ''}>
                         
                         ${v.image ? `
                             <div class="purch-variant-img-box" style="position:relative;display:inline-block;">
-                                <img src="${v.image}" alt="صورة الصنف" class="purch-variant-thumb"
+                                <img src="${escapeHtml(v.image)}" alt="صورة الصنف" class="purch-variant-thumb"
                                      onclick="previewPurchVariantImage(${jsArg(v.image)}, ${jsArg(`${p.name} - ${v.color || ''} ${v.size || ''}`)})"
                                      title="اضغط لمعاينة الصورة">
                                 <button type="button" class="purch-thumb-change-btn"
@@ -3389,8 +3389,8 @@ function renderPurchProducts() {
             return rowHtml;
         }).join('');
 
-        const colOptions = PURCH_COLORS.map(c => `<option value="${c[0]}">${c[0]}</option>`).join('');
-        const sizeOptions = PURCH_SIZES.map(s => `<option value="${s}">${s}</option>`).join('');
+        const colOptions = PURCH_COLORS.map(c => `<option value="${escapeHtml(c[0])}">${escapeHtml(c[0])}</option>`).join('');
+        const sizeOptions = PURCH_SIZES.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
         const totalBatchQty = p.variants.reduce((acc, v) => acc + (Number(v.qty) || 0), 0);
         const totalBatchCost = p.variants.reduce((acc, v) => acc + ((Number(v.qty) || 0) * (Number(v.cost) || 0)), 0);
@@ -3399,10 +3399,10 @@ function renderPurchProducts() {
             <article class="purch-product">
                 <div class="purch-prod-head">
                     <div>
-                        <h4>${p.name}</h4>
+                        <h4>${escapeHtml(p.name)}</h4>
                         <div style="font-size:0.78rem;color:var(--gray);margin-top:2px;">
-                            ${p.code ? `<span class="badge primary" style="font-size:0.7rem;padding:2px 6px;">${p.code}</span>` : ''} 
-                            • ${p.category || 'ملابس'} 
+                            ${p.code ? `<span class="badge primary" style="font-size:0.7rem;padding:2px 6px;">${escapeHtml(p.code)}</span>` : ''} 
+                            • ${escapeHtml(p.category || 'ملابس')} 
                             • <span style="color:${p.isNew ? 'var(--warning)' : 'var(--success)'};font-weight:700;">${p.isNew ? 'منتج جديد — مسودة' : 'منتج موجود في المتجر'}</span>
                         </div>
                     </div>
@@ -3446,8 +3446,8 @@ function renderPurchProducts() {
                     </div>
 
                     <div class="purch-tools">
-                        ${colorMode ? `<select id="sel-col-${p.uid}">${colOptions}</select>` : ''}
-                        ${sizeMode ? `<select id="sel-size-${p.uid}">${sizeOptions}</select>` : ''}
+                        ${colorMode ? `<select id="sel-col-${escapeHtml(p.uid)}">${colOptions}</select>` : ''}
+                        ${sizeMode ? `<select id="sel-size-${escapeHtml(p.uid)}">${sizeOptions}</select>` : ''}
                         <button class="btn btn-outline btn-sm" onclick="addVariantToPurchProduct(${jsArg(p.uid)})" ${purchPosted ? 'disabled' : ''}>
                             <i class="fas fa-plus"></i> إضافة تركيبة / لون / مقاس
                         </button>
@@ -3596,8 +3596,8 @@ function renderPurchDraftBox() {
         box.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
                 <div>
-                    <strong style="display:block;color:var(--dark);">${d.invoiceNo || 'فاتورة بدون رقم'} ${isOpening ? '<span class="badge info" style="font-size:0.68rem;padding:2px 6px;">بضاعة أول المدة</span>' : ''}</strong>
-                    <small style="color:var(--gray);">${d.supplier || 'لم يحدد المورد'} · ${d.date || ''}</small>
+                    <strong style="display:block;color:var(--dark);">${escapeHtml(d.invoiceNo || 'فاتورة بدون رقم')} ${isOpening ? '<span class="badge info" style="font-size:0.68rem;padding:2px 6px;">بضاعة أول المدة</span>' : ''}</strong>
+                    <small style="color:var(--gray);">${escapeHtml(d.supplier || 'لم يحدد المورد')} · ${d.date || ''}</small>
                 </div>
                 <button class="btn btn-outline btn-sm" onclick="loadPurchDraft();showToast('تم استرجاع المسودة');">
                     استكمال
@@ -4007,18 +4007,18 @@ function loadPurchasesTable() {
 
     tbody.innerHTML = invoices.map((inv) => {
         const idBadge = inv.isOpening
-            ? `<strong style="color:#0284c7;font-family:monospace;font-size:0.95rem;">#${inv.id}</strong> <span class="badge info" style="font-size:0.7rem;vertical-align:middle;"><i class="fas fa-boxes"></i> رصيد افتتاحي</span>`
-            : `<strong style="color:var(--primary);font-family:monospace;font-size:0.95rem;">#${inv.id}</strong>`;
+            ? `<strong style="color:#0284c7;font-family:monospace;font-size:0.95rem;">#${escapeHtml(inv.id)}</strong> <span class="badge info" style="font-size:0.7rem;vertical-align:middle;"><i class="fas fa-boxes"></i> رصيد افتتاحي</span>`
+            : `<strong style="color:var(--primary);font-family:monospace;font-size:0.95rem;">#${escapeHtml(inv.id)}</strong>`;
 
         const supText = inv.isOpening
-            ? `<strong style="color:#0284c7;"><i class="fas fa-warehouse"></i> ${inv.supplier}</strong>`
-            : `<strong>${inv.supplier}</strong>`;
+            ? `<strong style="color:#0284c7;"><i class="fas fa-warehouse"></i> ${escapeHtml(inv.supplier)}</strong>`
+            : `<strong>${escapeHtml(inv.supplier)}</strong>`;
 
         return `
         <tr>
             <td>${idBadge}</td>
             <td style="font-size:.82rem;">${new Date(inv.date).toLocaleDateString('ar-EG')}</td>
-            <td>${supText} ${inv.note ? '<br><small style="color:var(--gray); font-size:0.75rem;">' + inv.note + '</small>' : ''}</td>
+            <td>${supText} ${inv.note ? '<br><small style="color:var(--gray); font-size:0.75rem;">' + escapeHtml(inv.note) + '</small>' : ''}</td>
             <td><span class="badge primary">${inv.itemsCount} أصناف</span></td>
             <td><span class="badge success">${inv.totalQty} قطع</span></td>
             <td><strong style="color:var(--primary);font-size:0.95rem;">₪${inv.totalCost.toFixed(2)}</strong></td>
@@ -4052,8 +4052,8 @@ function viewPurchaseInvoiceDetails(invId) {
     const titleEl = document.getElementById('purchModalTitle');
     if (titleEl) {
         titleEl.innerHTML = isOpening
-            ? `<i class="fas fa-boxes text-primary"></i> سند إدخال بضاعة أول المدة #${invId}`
-            : `<i class="fas fa-file-invoice text-primary"></i> فاتورة مشتريات #${invId}`;
+            ? `<i class="fas fa-boxes text-primary"></i> سند إدخال بضاعة أول المدة #${escapeHtml(invId)}`
+            : `<i class="fas fa-file-invoice text-primary"></i> فاتورة مشتريات #${escapeHtml(invId)}`;
     }
 
     const bodyEl = document.getElementById('purchInvoiceDetailsBody');
@@ -4062,9 +4062,9 @@ function viewPurchaseInvoiceDetails(invId) {
     let rowsHtml = purchases.map((p, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><strong>${p.product_name}</strong></td>
-            <td>${p.size || '—'}</td>
-            <td>${p.color || '—'}</td>
+            <td><strong>${escapeHtml(p.product_name)}</strong></td>
+            <td>${escapeHtml(p.size || '—')}</td>
+            <td>${escapeHtml(p.color || '—')}</td>
             <td><span class="badge success">${p.quantity}</span></td>
             <td>₪${Number(p.unit_cost).toFixed(2)}</td>
             <td><strong>₪${Number(p.total_cost).toFixed(2)}</strong></td>
@@ -4073,12 +4073,12 @@ function viewPurchaseInvoiceDetails(invId) {
 
     bodyEl.innerHTML = `
         <div style="background:#f8fafc;padding:14px;border-radius:12px;margin-bottom:16px;border:1px solid #e2e8f0;display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;">
-            <div><span style="color:var(--gray);font-size:0.8rem;">رقم السند/الفاتورة:</span> <strong style="display:block;">#${invId}</strong></div>
-            <div><span style="color:var(--gray);font-size:0.8rem;">${isOpening ? 'نوع العملية:' : 'المورد:'}</span> <strong style="display:block;">${first.supplier || (isOpening ? 'رصيد افتتاحي (مخزون المتجر)' : 'مورد عام')}</strong></div>
+            <div><span style="color:var(--gray);font-size:0.8rem;">رقم السند/الفاتورة:</span> <strong style="display:block;">#${escapeHtml(invId)}</strong></div>
+            <div><span style="color:var(--gray);font-size:0.8rem;">${isOpening ? 'نوع العملية:' : 'المورد:'}</span> <strong style="display:block;">${escapeHtml(first.supplier || (isOpening ? 'رصيد افتتاحي (مخزون المتجر)' : 'مورد عام'))}</strong></div>
             <div><span style="color:var(--gray);font-size:0.8rem;">التاريخ:</span> <strong style="display:block;">${new Date(first.created_at).toLocaleDateString('ar-EG')}</strong></div>
             <div><span style="color:var(--gray);font-size:0.8rem;">حالة القيد:</span> <strong style="display:block;">${isOpening ? 'بضاعة مملوكة للمتجر (رأسمال بدون ديون)' : (first.payment_method === 'bank' ? 'تحويل بنكي / محفظة' : (first.payment_method === 'credit' ? 'آجل' : 'نقدي'))}</strong></div>
-            ${!isOpening && first.bank_name ? `<div><span style="color:var(--gray);font-size:0.8rem;">البنك:</span> <strong style="display:block;">${first.bank_name}</strong></div>` : ''}
-            ${!isOpening && first.bank_ref ? `<div><span style="color:var(--gray);font-size:0.8rem;">رقم الحوالة:</span> <strong style="display:block;">${first.bank_ref}</strong></div>` : ''}
+            ${!isOpening && first.bank_name ? `<div><span style="color:var(--gray);font-size:0.8rem;">البنك:</span> <strong style="display:block;">${escapeHtml(first.bank_name)}</strong></div>` : ''}
+            ${!isOpening && first.bank_ref ? `<div><span style="color:var(--gray);font-size:0.8rem;">رقم الحوالة:</span> <strong style="display:block;">${escapeHtml(first.bank_ref)}</strong></div>` : ''}
         </div>
 
         <div class="table-responsive" style="max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;">
@@ -4115,7 +4115,7 @@ function printPurchaseInvoice(invId) {
 
     const itemsHTML = purchases.map(p => `
         <tr>
-            <td>${p.product_name} (${p.size || '-'} ${p.color ? '• ' + p.color : ''})</td>
+            <td>${escapeHtml(p.product_name)} (${escapeHtml(p.size || '-')} ${escapeHtml(p.color ? '• ' + p.color : '')})</td>
             <td>${p.quantity}</td>
             <td>₪${Number(p.unit_cost).toFixed(2)}</td>
             <td>₪${Number(p.total_cost).toFixed(2)}</td>
@@ -4128,7 +4128,7 @@ function printPurchaseInvoice(invId) {
         <html dir="rtl">
         <head>
             <meta charset="UTF-8">
-            <title>${isOpening ? 'سند إدخال بضاعة أول المدة' : 'فاتورة توريد مشتريات'} #${invId}</title>
+            <title>${isOpening ? 'سند إدخال بضاعة أول المدة' : 'فاتورة توريد مشتريات'} #${escapeHtml(invId)}</title>
             <style>
                 body{font-family:'Cairo',sans-serif;padding:24px;max-width:480px;margin:0 auto}
                 h2{text-align:center;margin:0 0 5px}
@@ -4143,8 +4143,8 @@ function printPurchaseInvoice(invId) {
             <h2>متجر الأناقة للملابس</h2>
             <div style="text-align:center;color:#64748b;font-size:12px;margin-bottom:10px;">${isOpening ? '📦 سند إدخال بضاعة أول المدة (رصيد افتتاحي للمخزون)' : 'سند استلام بضاعة / فاتورة مشتريات'}</div>
             <div class="meta">
-                <strong>رقم السند/الفاتورة:</strong> #${invId}<br>
-                <strong>${isOpening ? 'الجهة:' : 'المورد:'}</strong> ${first.supplier || (isOpening ? 'رصيد افتتاحي (مخزون المتجر)' : 'مورد عام')}<br>
+                <strong>رقم السند/الفاتورة:</strong> #${escapeHtml(invId)}<br>
+                <strong>${isOpening ? 'الجهة:' : 'المورد:'}</strong> ${escapeHtml(first.supplier || (isOpening ? 'رصيد افتتاحي (مخزون المتجر)' : 'مورد عام'))}<br>
                 <strong>التاريخ:</strong> ${new Date(first.created_at).toLocaleString('ar-EG')}<br>
                 <strong>القيد المالي:</strong> ${isOpening ? 'رأسمال مخزون مملوك للمتجر (بدون ديون)' : (first.payment_method === 'bank' ? 'تحويل بنكي' : (first.payment_method === 'credit' ? 'آجل' : 'نقدي'))}<br>
             </div>
@@ -4338,10 +4338,10 @@ function loadEmployeesTable() {
     tbody.innerHTML = users.map((u, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><strong>${u.name}</strong></td>
-            <td>${u.email}</td>
+            <td><strong>${escapeHtml(u.name)}</strong></td>
+            <td>${escapeHtml(u.email)}</td>
             <td><span class="badge ${u.role === 'manager' ? 'info' : 'primary'}">${u.role === 'manager' ? 'مدير فرع' : 'كاشير'}</span></td>
-            <td>${u.branch_id ? getBranchName(u.branch_id) : '-'}</td>
+            <td>${escapeHtml(u.branch_id ? getBranchName(u.branch_id) : '-')}</td>
             <td>
                 <button class="btn-icon" onclick="editEmployee(${u.id})"><i class="fas fa-edit"></i></button>
                 <button class="btn-icon danger" onclick="deleteEmployee(${u.id})"><i class="fas fa-trash"></i></button>
@@ -4444,10 +4444,10 @@ function loadBranchesTable() {
     tbody.innerHTML = branches.map((b, i) => `
         <tr>
             <td>${i + 1}</td>
-            <td><strong>${b.name}</strong></td>
-            <td><span class="badge primary">${b.code || '-'}</span></td>
-            <td>${b.phone || '-'}</td>
-            <td>${b.address || '-'}</td>
+            <td><strong>${escapeHtml(b.name)}</strong></td>
+            <td><span class="badge primary">${escapeHtml(b.code || '-')}</span></td>
+            <td>${escapeHtml(b.phone || '-')}</td>
+            <td>${escapeHtml(b.address || '-')}</td>
             <td>
                 <button class="btn-icon" onclick="editBranch(${b.id})"><i class="fas fa-edit"></i></button>
                 <button class="btn-icon danger" onclick="deleteBranch(${b.id})"><i class="fas fa-trash"></i></button>
@@ -4773,8 +4773,8 @@ function printMerchantStatement(merchantName) {
             <tr>
                 <td style="padding:7px;border:1px solid #cbd5e1;text-align:center;">${new Date(t.created_at).toLocaleDateString('ar-EG')}</td>
                 <td style="padding:7px;border:1px solid #cbd5e1;">${isInv ? 'فاتورة توريد' : 'سند صرف سداد'}</td>
-                <td style="padding:7px;border:1px solid #cbd5e1;text-align:center;">${t.reference || '-'}</td>
-                <td style="padding:7px;border:1px solid #cbd5e1;">${t.note || ''}</td>
+                <td style="padding:7px;border:1px solid #cbd5e1;text-align:center;">${escapeHtml(t.reference || '-')}</td>
+                <td style="padding:7px;border:1px solid #cbd5e1;">${escapeHtml(t.note || '')}</td>
                 <td style="padding:7px;border:1px solid #cbd5e1;text-align:right;">${isInv ? '₪' + Number(t.amount).toFixed(2) : '-'}</td>
                 <td style="padding:7px;border:1px solid #cbd5e1;text-align:right;">${!isInv ? '₪' + Number(t.amount).toFixed(2) : '-'}</td>
                 <td style="padding:7px;border:1px solid #cbd5e1;text-align:right;font-weight:bold;">₪${running.toFixed(2)}</td>
@@ -4786,7 +4786,7 @@ function printMerchantStatement(merchantName) {
     win.document.write(`
         <html dir="rtl" lang="ar">
         <head>
-            <title>كشف حساب مورد - ${merchantName}</title>
+            <title>كشف حساب مورد - ${escapeHtml(merchantName)}</title>
             <style>
                 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; margin: 0; color: #1e293b; }
                 .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px; }
@@ -4800,7 +4800,7 @@ function printMerchantStatement(merchantName) {
         <body onload="window.print(); window.close();">
             <div class="header">
                 <h2 style="margin:0 0 6px;">متجر الألبسة والأناقة</h2>
-                <h4 style="margin:0;color:#475569;">كشف حساب تفصيلي للمورد: ${merchantName}</h4>
+                <h4 style="margin:0;color:#475569;">كشف حساب تفصيلي للمورد: ${escapeHtml(merchantName)}</h4>
                 <div style="font-size:0.9rem;margin-top:6px;color:#0f172a;">تاريخ التقرير: <strong>${new Date().toLocaleDateString('ar-EG')}</strong></div>
             </div>
 
@@ -4933,7 +4933,7 @@ function loadExpensesTable() {
         <tr>
             <td style="font-size:.8rem;">${new Date(e.created_at).toLocaleDateString('ar-EG')}</td>
             <td><span class="badge ${e._type === 'ثابت' ? 'warning' : 'danger'}">${e._type}</span></td>
-            <td>${e._label}</td>
+            <td>${escapeHtml(e._label)}</td>
             <td><strong>₪${Number(e.amount).toFixed(2)}</strong></td>
             <td>
                 <button class="btn-icon danger" onclick="deleteExpense(${jsArg(e._type)}, ${e.id})">
@@ -5180,13 +5180,13 @@ function openOnlineOrderWhatsApp(target) {
     if (infoEl) {
         infoEl.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span>طلب <strong>#${order.id}</strong> — ${order.customer}</span>
+                <span>طلب <strong>#${escapeHtml(order.id)}</strong> — ${escapeHtml(order.customer)}</span>
                 <span class="badge ${order.status === 'accepted' ? 'success' : (order.status === 'rejected' ? 'danger' : 'warning')}">
                     ${order.status === 'accepted' ? 'مقبول' : (order.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار')}
                 </span>
             </div>
             <div style="font-size:0.8rem;color:var(--gray);margin-top:4px;">
-                المنتج: ${order.productName} (x${order.quantity}) | الإجمالي: <strong style="color:var(--success);">₪${Number(order.total).toFixed(2)}</strong>
+                المنتج: ${escapeHtml(order.productName)} (x${order.quantity}) | الإجمالي: <strong style="color:var(--success);">₪${Number(order.total).toFixed(2)}</strong>
             </div>
         `;
     }
@@ -5571,7 +5571,7 @@ function renderOnlineProducts(filterCat = null, searchQuery = null) {
     container.innerHTML = filtered.map(p => {
         const badgeHtml = p.badge && p.badge !== 'none' ? `
             <span style="position:absolute;top:10px;right:10px;background:rgba(225,29,72,0.95);color:#fff;font-size:0.7rem;font-weight:800;padding:3px 9px;border-radius:20px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-                ${p.badge}
+                ${escapeHtml(p.badge)}
             </span>
         ` : '';
 
@@ -5580,25 +5580,25 @@ function renderOnlineProducts(filterCat = null, searchQuery = null) {
         ` : '';
 
         const colorsHtml = (p.colors || []).map(c => `
-            <span title="${c.name || ''}" style="width:14px;height:14px;border-radius:50%;background:${c.hex || '#475569'};display:inline-block;border:1.5px solid #fff;box-shadow:0 0 2px rgba(0,0,0,0.3);"></span>
+            <span title="${escapeHtml(c.name || '')}" style="width:14px;height:14px;border-radius:50%;background:${escapeHtml(c.hex || '#475569')};display:inline-block;border:1.5px solid #fff;box-shadow:0 0 2px rgba(0,0,0,0.3);"></span>
         `).join('');
 
         const sizesHtml = (p.sizes || []).map(s => `
-            <span style="background:#f1f5f9;color:#475569;font-size:0.7rem;font-weight:700;padding:2px 6px;border-radius:4px;">${s}</span>
+            <span style="background:#f1f5f9;color:#475569;font-size:0.7rem;font-weight:700;padding:2px 6px;border-radius:4px;">${escapeHtml(s)}</span>
         `).join('');
 
         return `
             <div class="card" style="margin-bottom:0;display:flex;flex-direction:column;overflow:hidden;border:1.5px solid #e2e8f0;border-radius:14px;transition:transform 0.2s, box-shadow 0.2s;" onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)';" onmouseleave="this.style.transform='';this.style.boxShadow='';">
                 <div style="position:relative;background:#f8fafc;aspect-ratio:1/1.05;overflow:hidden;">
-                    <img src="${p.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80'}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">
+                    <img src="${escapeHtml(p.image || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80')}" alt="${escapeHtml(p.name)}" style="width:100%;height:100%;object-fit:cover;">
                     ${badgeHtml}
                     <span style="position:absolute;bottom:10px;left:10px;background:rgba(15,23,42,0.85);color:#fff;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:6px;">
-                        ${p.category}
+                        ${escapeHtml(p.category)}
                     </span>
                 </div>
                 <div style="padding:14px;display:flex;flex-direction:column;flex:1;">
-                    <div style="font-size:0.75rem;color:#64748b;font-weight:600;margin-bottom:2px;">${p.subCategory || p.category} • كود: ${p.id}</div>
-                    <h4 style="font-size:0.95rem;font-weight:800;color:#0f172a;margin-bottom:8px;line-height:1.4;">${p.name}</h4>
+                    <div style="font-size:0.75rem;color:#64748b;font-weight:600;margin-bottom:2px;">${escapeHtml(p.subCategory || p.category)} • كود: ${escapeHtml(p.id)}</div>
+                    <h4 style="font-size:0.95rem;font-weight:800;color:#0f172a;margin-bottom:8px;line-height:1.4;">${escapeHtml(p.name)}</h4>
                     
                     <div style="display:flex;align-items:center;margin-bottom:10px;">
                         <strong style="color:var(--primary);font-size:1.15rem;font-weight:900;">₪${Number(p.price).toFixed(2)}</strong>
@@ -5688,7 +5688,7 @@ function openOnlineProductModal(prodId = null) {
         const p = catalog.find(item => item.id === prodId);
         if (!p) return;
 
-        if (titleEl) titleEl.innerHTML = `<i class="fas fa-edit text-primary"></i> تعديل منتج: ${p.name}`;
+        if (titleEl) titleEl.innerHTML = `<i class="fas fa-edit text-primary"></i> تعديل منتج: ${escapeHtml(p.name)}`;
         if (idInput) idInput.value = p.id;
         if (nameInput) nameInput.value = p.name || '';
         if (catSelect) catSelect.value = p.category || 'رجالي';
@@ -6119,16 +6119,16 @@ function viewCustomerDetails(custId) {
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
             <div style="display:flex;align-items:center;gap:14px;">
                 <div style="width:54px;height:54px;border-radius:50%;background:#eef2ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;">
-                    ${initial}
+                    ${escapeHtml(initial)}
                 </div>
                 <div>
                     <h3 style="font-size:1.2rem;font-weight:900;color:#0f172a;margin:0 0 4px;">
-                        ${cust.name}
+                        ${escapeHtml(cust.name)}
                         ${isOnline ? '<span class="badge" style="background:#eef2ff;color:#4f46e5;font-size:0.75rem;padding:2px 8px;margin-right:6px;"><i class="fas fa-globe"></i> متجر أونلاين</span>' : '<span class="badge" style="background:#f1f5f9;color:#475569;font-size:0.75rem;padding:2px 8px;margin-right:6px;"><i class="fas fa-cash-register"></i> كاشير</span>'}
                     </h3>
                     <div style="font-size:0.85rem;color:#64748b;display:flex;gap:14px;flex-wrap:wrap;">
-                        <span><i class="fas fa-phone-alt"></i> ${cust.phone || 'بدون هاتف'}</span>
-                        <span><i class="fas fa-map-marker-alt"></i> ${cust.city || 'المدينة غير محددة'} ${cust.address ? ' - ' + cust.address : ''}</span>
+                        <span><i class="fas fa-phone-alt"></i> ${escapeHtml(cust.phone || 'بدون هاتف')}</span>
+                        <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(cust.city || 'المدينة غير محددة')} ${escapeHtml(cust.address ? ' - ' + cust.address : '')}</span>
                     </div>
                 </div>
             </div>
@@ -6196,9 +6196,9 @@ function viewCustomerDetails(custId) {
 
                             return `
                                 <tr>
-                                    <td><strong>#${o.id}</strong></td>
+                                    <td><strong>#${escapeHtml(o.id)}</strong></td>
                                     <td style="font-size:0.82rem;color:#64748b;">${dateFmt}</td>
-                                    <td style="font-size:0.85rem;max-width:220px;">${itemsDesc}</td>
+                                    <td style="font-size:0.85rem;max-width:220px;">${escapeHtml(itemsDesc)}</td>
                                     <td><strong style="color:#0f172a;">₪${Number(o.total || 0).toFixed(2)}</strong></td>
                                     <td>
                                         <span class="badge" style="${badgeStyle};padding:3px 8px;border-radius:12px;font-size:0.75rem;font-weight:800;">
@@ -6698,7 +6698,7 @@ function renderNotifList(allList = null) {
                 <p class="notif-item-desc">${escapeHtml(item.desc)}</p>
                 <div class="notif-item-footer">
                     <button class="notif-item-btn" onclick="${item.actionCode}">
-                        ${item.actionText} <i class="fas fa-arrow-left"></i>
+                        ${escapeHtml(item.actionText)} <i class="fas fa-arrow-left"></i>
                     </button>
                     <button class="notif-dismiss-btn" onclick="dismissNotification(${jsArg(item.id)}, event)" title="إخفاء التنبيه">
                         <i class="fas fa-times"></i>
@@ -6967,7 +6967,7 @@ function renderReturnRecentInvoiceChips() {
         <button type="button" class="btn btn-outline btn-sm"
                 onclick="searchInvoiceForReturn(${jsArg(s.id)})"
                 style="padding:2px 8px;font-size:0.75rem;border-radius:6px;background:#f8fafc;border-color:#cbd5e1;cursor:pointer;">
-            <i class="fas fa-receipt text-primary"></i> #${s.id} - ${s.customer || 'عميل'} (₪${Number(s.total).toFixed(0)})
+            <i class="fas fa-receipt text-primary"></i> #${escapeHtml(s.id)} - ${escapeHtml(s.customer || 'عميل')} (₪${Number(s.total).toFixed(0)})
         </button>
     `).join('');
 }
@@ -7032,7 +7032,7 @@ function loadInvoiceForReturn(sale) {
             <div>
                 <div style="display:flex;align-items:center;gap:10px;">
                     <h4 style="margin:0;font-weight:900;color:#1e293b;font-size:1.15rem;">
-                        <i class="fas fa-file-invoice text-primary"></i> فاتورة مبيعات #${sale.id}
+                        <i class="fas fa-file-invoice text-primary"></i> فاتورة مبيعات #${escapeHtml(sale.id)}
                     </h4>
                     <span class="badge ${sale.status === 'completed' ? 'success' : 'secondary'}">
                         ${sale.status === 'completed' ? 'مكتملة' : sale.status}
@@ -7040,10 +7040,10 @@ function loadInvoiceForReturn(sale) {
                     ${prevReturns.length > 0 ? `<span class="badge warning"><i class="fas fa-history"></i> تمت عليها ${prevReturns.length} عملية إرجاع سابقة</span>` : ''}
                 </div>
                 <div style="margin-top:6px;font-size:0.84rem;color:#64748b;display:flex;gap:16px;flex-wrap:wrap;">
-                    <span><i class="far fa-user text-primary"></i> العميل: <strong>${sale.customer || 'عميل نقدي'}</strong></span>
+                    <span><i class="far fa-user text-primary"></i> العميل: <strong>${escapeHtml(sale.customer || 'عميل نقدي')}</strong></span>
                     <span><i class="far fa-calendar-alt"></i> التاريخ: <strong>${new Date(sale.created_at).toLocaleDateString('ar-EG')} - ${new Date(sale.created_at).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</strong></span>
                     <span><i class="far fa-credit-card"></i> طريقة الدفع الأصلية: <strong>${paymentLabel}</strong></span>
-                    <span><i class="fas fa-user-tag"></i> الكاشير: <strong>${sale.cashier_name || 'الكاشير'}</strong></span>
+                    <span><i class="fas fa-user-tag"></i> الكاشير: <strong>${escapeHtml(sale.cashier_name || 'الكاشير')}</strong></span>
                 </div>
             </div>
             <div style="text-align:left;">
@@ -7136,8 +7136,8 @@ function renderReturnInvoiceItems() {
                 else diffText = `[نفس السعر]`;
 
                 return `
-                    <option value="${p.id}" ${isSelected ? 'selected' : ''} ${stock <= 0 ? 'disabled style="color:#94a3b8;"' : ''}>
-                        ${p.name} | لون: ${p.color || 'افتراضي'} | مقاس: ${p.size || 'افتراضي'} | سعر: ₪${Number(p.price).toFixed(2)} ${diffText} ${stockLabel} ${isSameVariant ? '← الصنف الحالي' : ''}
+                    <option value="${escapeHtml(p.id)}" ${isSelected ? 'selected' : ''} ${stock <= 0 ? 'disabled style="color:#94a3b8;"' : ''}>
+                        ${escapeHtml(p.name)} | لون: ${escapeHtml(p.color || 'افتراضي')} | مقاس: ${escapeHtml(p.size || 'افتراضي')} | سعر: ₪${Number(p.price).toFixed(2)} ${diffText} ${stockLabel} ${isSameVariant ? '← الصنف الحالي' : ''}
                     </option>
                 `;
             }).join('');
@@ -7148,11 +7148,11 @@ function renderReturnInvoiceItems() {
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
                     <div>
                         <div style="font-weight:800;font-size:0.95rem;color:#1e293b;">
-                            ${item.name}
+                            ${escapeHtml(item.name)}
                         </div>
                         <div style="font-size:0.8rem;color:#64748b;margin-top:3px;display:flex;gap:12px;flex-wrap:wrap;">
-                            <span>اللون: <strong style="color:#334155;">${item.color}</strong></span>
-                            <span>المقاس: <strong style="color:#334155;">${item.size}</strong></span>
+                            <span>اللون: <strong style="color:#334155;">${escapeHtml(item.color)}</strong></span>
+                            <span>المقاس: <strong style="color:#334155;">${escapeHtml(item.size)}</strong></span>
                             <span>سعر البيع: <strong style="color:#10b981;">₪${item.price.toFixed(2)}</strong></span>
                             <span>الكمية بالفاتورة: <strong>${item.original_qty}</strong></span>
                             ${item.already_returned_qty > 0 ? `<span style="color:#ef4444;">أُرجع سابقاً: ${item.already_returned_qty}</span>` : ''}
@@ -7216,7 +7216,7 @@ function renderReturnInvoiceItems() {
 
                         ${item.replacement_variant ? `
                             <div style="margin-top:8px;font-size:0.8rem;color:#4338ca;background:#eef2ff;padding:8px 12px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
-                                <span><i class="fas fa-check-circle"></i> تم اختيار: <strong>${item.replacement_variant.name} (${item.replacement_variant.color} - ${item.replacement_variant.size})</strong></span>
+                                <span><i class="fas fa-check-circle"></i> تم اختيار: <strong>${escapeHtml(item.replacement_variant.name)} (${escapeHtml(item.replacement_variant.color)} - ${escapeHtml(item.replacement_variant.size)})</strong></span>
                                 <span>سعر البديل: <strong>₪${item.replacement_variant.price.toFixed(2)}</strong> (${item.replacement_variant.price === item.price ? 'بدون فرق مالي' : (item.replacement_variant.price > item.price ? `فرق ₪${(item.replacement_variant.price - item.price).toFixed(2)} على الزبون` : `فرق ₪${(item.price - item.replacement_variant.price).toFixed(2)} للزبون`)})</span>
                             </div>
                         ` : `
@@ -7678,17 +7678,17 @@ function loadReturnsTable() {
 
         return `
             <tr>
-                <td><strong>#${r.id}</strong></td>
+                <td><strong>#${escapeHtml(r.id)}</strong></td>
                 <td>
                     <div style="font-weight:600;">${new Date(r.created_at).toLocaleDateString('ar-EG')}</div>
                     <small style="color:#64748b;">${new Date(r.created_at).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</small>
                 </td>
-                <td><a href="#" onclick="event.preventDefault();searchInvoiceForReturn(${jsArg(r.sale_id)})">#${r.sale_id}</a></td>
-                <td><strong>${r.customer_name || 'عميل'}</strong></td>
+                <td><a href="#" onclick="event.preventDefault();searchInvoiceForReturn(${jsArg(r.sale_id)})">#${escapeHtml(r.sale_id)}</a></td>
+                <td><strong>${escapeHtml(r.customer_name || 'عميل')}</strong></td>
                 <td>${typeBadge}</td>
-                <td><small style="max-width:200px;display:inline-block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${itemsSummary}</small></td>
+                <td><small style="max-width:200px;display:inline-block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(itemsSummary)}</small></td>
                 <td>${finBadge}</td>
-                <td>${r.user_name || 'الكاشير'}</td>
+                <td>${escapeHtml(r.user_name || 'الكاشير')}</td>
                 <td>
                     <button type="button" class="btn btn-outline btn-sm" onclick="viewReturnDetails(${jsArg(r.id)})" title="عرض السند وطباعته">
                         <i class="fas fa-print"></i> عرض
@@ -7752,7 +7752,7 @@ function viewReturnDetails(returnId) {
     const modalBody = document.getElementById('returnModalBody');
     const printBtn = document.getElementById('returnPrintBtn');
 
-    if (modalTitle) modalTitle.innerHTML = `<i class="fas fa-file-invoice text-primary"></i> سند إرجاع / تبديل #${ret.id}`;
+    if (modalTitle) modalTitle.innerHTML = `<i class="fas fa-file-invoice text-primary"></i> سند إرجاع / تبديل #${escapeHtml(ret.id)}`;
     if (printBtn) printBtn.setAttribute('onclick', `printReturnReceipt('${ret.id}')`);
 
     let finActionDesc = '';
@@ -7775,17 +7775,17 @@ function viewReturnDetails(returnId) {
                 <div style="text-align:center;border-bottom:2px dashed #cbd5e1;padding-bottom:12px;margin-bottom:12px;">
                     <h3 style="margin:0 0 4px;font-weight:900;color:#1e293b;">متجر الملابس والأناقة</h3>
                     <div style="font-size:0.85rem;color:#64748b;">سند إرجاع وتبديل بضاعة</div>
-                    <div style="font-size:1.1rem;font-weight:800;color:var(--primary);margin-top:4px;">#${ret.id}</div>
+                    <div style="font-size:1.1rem;font-weight:800;color:var(--primary);margin-top:4px;">#${escapeHtml(ret.id)}</div>
                 </div>
 
                 <!-- بيانات أساسية -->
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.84rem;margin-bottom:14px;background:#f8fafc;padding:12px;border-radius:8px;">
-                    <div><strong>الفاتورة الأصلية:</strong> #${ret.sale_id}</div>
+                    <div><strong>الفاتورة الأصلية:</strong> #${escapeHtml(ret.sale_id)}</div>
                     <div><strong>التاريخ:</strong> ${new Date(ret.created_at).toLocaleDateString('ar-EG')} - ${new Date(ret.created_at).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</div>
-                    <div><strong>العميل:</strong> ${ret.customer_name || 'عميل نقدي'}</div>
-                    <div><strong>الموظف المسؤول:</strong> ${ret.user_name || 'الكاشير'}</div>
-                    <div style="grid-column:1/-1;"><strong>السبب:</strong> ${ret.reason || 'إرجاع / تبديل'}</div>
-                    ${ret.note ? `<div style="grid-column:1/-1;"><strong>ملاحظات:</strong> ${ret.note}</div>` : ''}
+                    <div><strong>العميل:</strong> ${escapeHtml(ret.customer_name || 'عميل نقدي')}</div>
+                    <div><strong>الموظف المسؤول:</strong> ${escapeHtml(ret.user_name || 'الكاشير')}</div>
+                    <div style="grid-column:1/-1;"><strong>السبب:</strong> ${escapeHtml(ret.reason || 'إرجاع / تبديل')}</div>
+                    ${ret.note ? `<div style="grid-column:1/-1;"><strong>ملاحظات:</strong> ${escapeHtml(ret.note)}</div>` : ''}
                 </div>
 
                 <!-- جدول الأصناف المرتجعة -->
@@ -7804,9 +7804,9 @@ function viewReturnDetails(returnId) {
                     <tbody>
                         ${(ret.return_items || []).map(i => `
                             <tr style="border-bottom:1px solid #e2e8f0;">
-                                <td style="padding:6px;">${i.name}</td>
-                                <td style="padding:6px;text-align:center;">${i.color}</td>
-                                <td style="padding:6px;text-align:center;">${i.size}</td>
+                                <td style="padding:6px;">${escapeHtml(i.name)}</td>
+                                <td style="padding:6px;text-align:center;">${escapeHtml(i.color)}</td>
+                                <td style="padding:6px;text-align:center;">${escapeHtml(i.size)}</td>
                                 <td style="padding:6px;text-align:center;"><strong>${i.quantity}</strong></td>
                                 <td style="padding:6px;text-align:center;">₪${Number(i.unit_price).toFixed(2)}</td>
                                 <td style="padding:6px;text-align:left;font-weight:700;color:#dc2626;">₪${(i.quantity * i.unit_price).toFixed(2)}</td>
@@ -7832,9 +7832,9 @@ function viewReturnDetails(returnId) {
                         <tbody>
                             ${ret.exchange_items.map(i => `
                                 <tr style="border-bottom:1px solid #e2e8f0;">
-                                    <td style="padding:6px;">${i.name}</td>
-                                    <td style="padding:6px;text-align:center;">${i.color}</td>
-                                    <td style="padding:6px;text-align:center;">${i.size}</td>
+                                    <td style="padding:6px;">${escapeHtml(i.name)}</td>
+                                    <td style="padding:6px;text-align:center;">${escapeHtml(i.color)}</td>
+                                    <td style="padding:6px;text-align:center;">${escapeHtml(i.size)}</td>
                                     <td style="padding:6px;text-align:center;"><strong>${i.quantity}</strong></td>
                                     <td style="padding:6px;text-align:center;">₪${Number(i.unit_price).toFixed(2)}</td>
                                     <td style="padding:6px;text-align:left;font-weight:700;color:#4f46e5;">₪${(i.quantity * i.unit_price).toFixed(2)}</td>
@@ -8417,7 +8417,7 @@ function loadCashClosingsTable() {
 
         return `
             <tr>
-                <td><strong>#${c.id}</strong></td>
+                <td><strong>#${escapeHtml(c.id)}</strong></td>
                 <td>
                     <div>${new Date(c.date).toLocaleDateString('ar-EG')}</div>
                     <small style="color:#64748b;">${new Date(c.date).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</small>
@@ -8425,8 +8425,8 @@ function loadCashClosingsTable() {
                 <td>₪${Number(c.expected_cash).toFixed(2)}</td>
                 <td><strong>₪${Number(c.actual_cash).toFixed(2)}</strong></td>
                 <td>${statusBadge}</td>
-                <td>${c.user_name || 'الكاشير'}</td>
-                <td><small>${c.note || '-'}</small></td>
+                <td>${escapeHtml(c.user_name || 'الكاشير')}</td>
+                <td><small>${escapeHtml(c.note || '-')}</small></td>
             </tr>
         `;
     }).join('');
@@ -8654,13 +8654,13 @@ function renderCashJournal() {
                 <div>${new Date(e.time).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})}</div>
                 <small style="color:#64748b;">${new Date(e.time).toLocaleDateString('ar-EG')}</small>
             </td>
-            <td><i class="${e.typeIcon}"></i> ${e.typeLabel}</td>
-            <td><strong>${e.desc}</strong></td>
-            <td><span class="badge secondary">${e.ref}</span></td>
+            <td><i class="${e.typeIcon}"></i> ${escapeHtml(e.typeLabel)}</td>
+            <td><strong>${escapeHtml(e.desc)}</strong></td>
+            <td><span class="badge secondary">${escapeHtml(e.ref)}</span></td>
             <td style="color:#16a34a;font-weight:700;">${e.inAmt > 0 ? `+₪${e.inAmt.toFixed(2)}` : '-'}</td>
             <td style="color:#dc2626;font-weight:700;">${e.outAmt > 0 ? `-₪${e.outAmt.toFixed(2)}` : '-'}</td>
-            <td><small>${e.method}</small></td>
-            <td>${e.user}</td>
+            <td><small>${escapeHtml(e.method)}</small></td>
+            <td>${escapeHtml(e.user)}</td>
         </tr>
     `).join('');
 }
@@ -8695,11 +8695,11 @@ function renderCashDigitalTable() {
 
         return `
             <tr>
-                <td><strong>#${s.id}</strong></td>
+                <td><strong>#${escapeHtml(s.id)}</strong></td>
                 <td>${new Date(s.created_at).toLocaleDateString('ar-EG')}</td>
-                <td><span class="badge info"><i class="fas fa-university"></i> ${p.app_name || 'محفظة إلكترونية'}</span></td>
-                <td>${p.sender_name || s.customer || '-'}</td>
-                <td style="direction:ltr;text-align:right;">${p.sender_phone || '-'}</td>
+                <td><span class="badge info"><i class="fas fa-university"></i> ${escapeHtml(p.app_name || 'محفظة إلكترونية')}</span></td>
+                <td>${escapeHtml(p.sender_name || s.customer || '-')}</td>
+                <td style="direction:ltr;text-align:right;">${escapeHtml(p.sender_phone || '-')}</td>
                 <td><strong style="color:var(--primary);font-size:1.05rem;">₪${(p.paid_digital !== undefined ? Number(p.paid_digital) : Number(s.total)).toFixed(2)}</strong></td>
                 <td>${screenshotBtn}</td>
             </tr>
