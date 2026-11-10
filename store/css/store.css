@@ -1537,3 +1537,41 @@ body {
     margin-top: 4px;
     display: block;
 }
+
+/* الجوال: الهيدر كان أعرض من الشاشة (582px على شاشة 390px) فيخرج البحث والأيقونات خارجها.
+   البحث ينزل لسطر كامل تحت الهيدر، وزر الحساب يظهر كأيقونة فقط. */
+@media (max-width: 640px) {
+    .header-container {
+        position: relative;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px;
+        padding: 10px 14px 62px;
+    }
+
+    .brand-title {
+        font-size: 1.4rem;
+    }
+
+    .brand-subtitle {
+        letter-spacing: 2px;
+    }
+
+    .header-actions {
+        gap: 2px;
+    }
+
+    .header-search {
+        position: absolute !important;
+        right: 14px;
+        left: 14px;
+        bottom: 12px;
+    }
+
+    .header-search input {
+        width: 100% !important;
+    }
+
+    .header-user-btn span {
+        display: none;
+    }
+}
