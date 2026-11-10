@@ -148,7 +148,7 @@ function openOnlineCustomers() {
 
 function applyPanelBranding() {
     if (CURRENT_PANEL !== 'online') return;
-    document.title = 'لوحة الموقع الإلكتروني - متجر الأناقة';
+    document.title = 'الأناقة الذكي — لوحة الموقع';
     const header = document.querySelector('.sidebar-header span');
     if (header) header.textContent = 'لوحة الموقع';
     const storeName = document.querySelector('.topbar-store-name');

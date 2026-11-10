@@ -42,7 +42,8 @@ input, select, textarea {
 #loginScreen {
     position: fixed;
     inset: 0;
-    background: linear-gradient(135deg, #1e293b, #4f46e5, #7c3aed);
+    /* ألوان الشعار الرسمي (brand/README.md) */
+    background: linear-gradient(135deg, #0F1A3D, #1B2A5C, #24387A);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -62,9 +63,26 @@ input, select, textarea {
     margin: auto;
 }
 
-.login-box .logo {
-    font-size: 3rem;
-    margin-bottom: 10px;
+.login-box .brand-logo {
+    display: block;
+    width: 190px;
+    height: auto;
+    margin: -18px auto -8px;
+}
+
+/* أيقونة الشعار في القائمة الجانبية وترويسة الجوال */
+.brand-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.mobile-header h2 .brand-icon {
+    width: 28px;
+    height: 28px;
+    margin-left: 6px;
 }
 
 .login-box h2 {
@@ -206,7 +224,7 @@ input, select, textarea {
     gap: 10px;
     font-size: 1.15rem;
     font-weight: 800;
-    color: #fbbf24;
+    color: #C9A24A;
 }
 
 .sidebar-user {
